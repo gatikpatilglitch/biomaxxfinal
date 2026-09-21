@@ -1,0 +1,1076 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Activity, 
+  Moon, 
+  Zap, 
+  Flame, 
+  Plus, 
+  Award, 
+  Sparkles, 
+  ShieldAlert, 
+  ChevronRight, 
+  Dumbbell, 
+  Wind, 
+  AlertTriangle, 
+  Scale, 
+  Apple, 
+  MapPin, 
+  Heart, 
+  Bell, 
+  Volume2, 
+  VolumeX, 
+  BarChart2, 
+  Gamepad2, 
+  Check, 
+  RefreshCw, 
+  X, 
+  Droplets, 
+  Utensils, 
+  Smile, 
+  Info,
+  CircleDot,
+  Eye,
+  Camera,
+  Layers,
+  Search,
+  Scan,
+  CheckCircle2,
+  AlertCircle,
+  HelpCircle,
+  TrendingDown,
+  TrendingUp,
+  User,
+  Sliders,
+  Sparkle
+} from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts';
+
+const AQI_PRESETS = [
+  {
+    city: 'Bengaluru, IN',
+    aqi: 68,
+    status: 'Moderate',
+    pm25: 22.4,
+    pm10: 48.1,
+    o3: 35.0,
+    no2: 18.2,
+    temp: '26°C',
+    humidity: '62%'
+  },
+  {
+    city: 'New Delhi, IN',
+    aqi: 224,
+    status: 'Very Unhealthy',
+    pm25: 168.5,
+    pm10: 240.0,
+    o3: 88.2,
+    no2: 64.1,
+    temp: '31°C',
+    humidity: '45%'
+  },
+  {
+    city: 'Zurich, CH',
+    aqi: 22,
+    status: 'Good',
+    pm25: 5.2,
+    pm10: 11.0,
+    o3: 18.5,
+    no2: 8.1,
+    temp: '18°C',
+    humidity: '55%'
+  },
+  {
+    city: 'Los Angeles, US',
+    aqi: 138,
+    status: 'Unhealthy for Sensitive Groups',
+    pm25: 52.1,
+    pm10: 92.0,
+    o3: 65.4,
+    no2: 32.8,
+    temp: '24°C',
+    humidity: '50%'
+  }
+];
+
+// 14-Day AQI vs SpO2 & Symptom Correlation Data
+const correlationData = [
+  { day: 'Day 1', aqi: 42, spo2: 98, cough: 1 },
+  { day: 'Day 2', aqi: 55, spo2: 97, cough: 2 },
+  { day: 'Day 3', aqi: 78, spo2: 97, cough: 2 },
+  { day: 'Day 4', aqi: 115, spo2: 95, cough: 4 },
+  { day: 'Day 5', aqi: 145, spo2: 93, cough: 6 },
+  { day: 'Day 6', aqi: 160, spo2: 92, cough: 7 },
+  { day: 'Day 7', aqi: 90, spo2: 96, cough: 3 },
+  { day: 'Day 8', aqi: 62, spo2: 97, cough: 2 },
+  { day: 'Day 9', aqi: 130, spo2: 94, cough: 5 },
+  { day: 'Day 10', aqi: 185, spo2: 91, cough: 8 },
+  { day: 'Day 11', aqi: 210, spo2: 89, cough: 9 },
+  { day: 'Day 12', aqi: 95, spo2: 96, cough: 3 },
+  { day: 'Day 13', aqi: 70, spo2: 97, cough: 2 },
+  { day: 'Day 14', aqi: 48, spo2: 98, cough: 1 },
+];
+
+class AudioSynthesizer {
+  constructor() {
+    this.ctx = null;
+  }
+
+  init() {
+    if (!this.ctx) {
+      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+  }
+
+  playPopSound() {
+    this.init();
+    if (!this.ctx) return;
+
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(150, this.ctx.currentTime + 0.06);
+
+    gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.06);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.06);
+  }
+
+  playOceanWave(isInhale) {
+    this.init();
+    if (!this.ctx) return;
+
+    const bufferSize = this.ctx.sampleRate * 1.5;
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const output = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      output[i] = Math.random() * 2 - 1;
+    }
+
+    const whiteNoise = this.ctx.createBufferSource();
+    whiteNoise.buffer = buffer;
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(isInhale ? 200 : 600, this.ctx.currentTime);
+    filter.frequency.exponentialRampToValueAtTime(
+      isInhale ? 800 : 200, 
+      this.ctx.currentTime + (isInhale ? 2 : 4)
+    );
+
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.2, this.ctx.currentTime + 1);
+    gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + (isInhale ? 2 : 4));
+
+    whiteNoise.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    whiteNoise.start();
+    whiteNoise.stop(this.ctx.currentTime + (isInhale ? 2 : 4));
+  }
+
+  playZenChime() {
+    this.init();
+    if (!this.ctx) return;
+
+    const freqs = [528, 639, 741, 852];
+    const freq = freqs[Math.floor(Math.random() * freqs.length)];
+
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+
+    gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 1.8);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc.start();
+    osc.stop(this.ctx.currentTime + 1.8);
+  }
+}
+
+const soundFx = new AudioSynthesizer();
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState('dashboard'); // dashboard, bmi, aqi, analytics, games, eye_ai, nail_ai
+  const [selectedCityIdx, setSelectedCityIdx] = useState(0);
+  const currentAQI = AQI_PRESETS[selectedCityIdx];
+
+  // Predictive Flare-Up Alerts
+  const [showSpikeAlert, setShowSpikeAlert] = useState(true);
+  const [showMorningBrief, setShowMorningBrief] = useState(true);
+
+  // BMI & Macro State
+  const [heightCm, setHeightCm] = useState(175);
+  const [weightKg, setWeightKg] = useState(78);
+  const [age, setAge] = useState(28);
+  const [gender, setGender] = useState('male');
+  const [activityLevel, setActivityLevel] = useState(1.375);
+  const [goalType, setGoalType] = useState('loss');
+
+  // Biofeedback Breathing Game State
+  const [isBreathingInhale, setIsBreathingInhale] = useState(false);
+  const [balloonSize, setBalloonSize] = useState(1);
+  const [breathCycleCount, setBreathCycleCount] = useState(0);
+  const [breathPhaseText, setBreathPhaseText] = useState('Press & Hold to Inhale (2s)');
+  const breathTimerRef = useRef(null);
+
+  // Soundscape Garden State
+  const [gardenTiles, setGardenTiles] = useState(() => shuffleGardenTiles());
+  const [selectedTiles, setSelectedTiles] = useState([]);
+  const [unlockedSounds, setUnlockedSounds] = useState(['Rain']);
+
+  // Bubble Pop Game State
+  const [bubbles, setBubbles] = useState(Array(24).fill(false));
+
+  // AI Eye Health Scan State
+  const [eyeScanActive, setEyeScanActive] = useState(false);
+  const [eyeScanProgress, setEyeScanProgress] = useState(0);
+  const [eyeScanResult, setEyeScanResult] = useState(null);
+  const [blinkCounter, setBlinkCounter] = useState(0);
+
+  // AI Nail Diagnostic Scan State
+  const [nailScanActive, setNailScanActive] = useState(false);
+  const [nailScanProgress, setNailScanProgress] = useState(0);
+  const [nailScanResult, setNailScanResult] = useState(null);
+
+  // Helper for Garden Tiles
+  function shuffleGardenTiles() {
+    const items = ['🌸', '🌸', '🌿', '🌿', '💧', '💧', '🌾', '🌾', '🦋', '🦋', '🍁', '🍁'];
+    return items.sort(() => Math.random() - 0.5).map((icon, id) => ({ id, icon, matched: false }));
+  }
+
+  const calculateBMI = () => parseFloat((weightKg / Math.pow(heightCm / 100, 2)).toFixed(1));
+  const bmiValue = calculateBMI();
+
+  const getBMICategory = (bmi) => {
+    if (bmi < 18.5) return { category: 'Underweight', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/30' };
+    if (bmi < 25) return { category: 'Normal Weight', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30' };
+    if (bmi < 30) return { category: 'Overweight', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/30' };
+    return { category: 'Obese Class', color: 'text-rose-400', bg: 'bg-rose-500/10', border: 'border-rose-500/30' };
+  };
+
+  const bmiInfo = getBMICategory(bmiValue);
+
+  const calculateBMR = () => gender === 'male' ? (10 * weightKg + 6.25 * heightCm - 5 * age + 5) : (10 * weightKg + 6.25 * heightCm - 5 * age - 161);
+  const bmr = Math.round(calculateBMR());
+  const tdee = Math.round(bmr * activityLevel);
+  const targetCalories = goalType === 'loss' ? Math.max(1200, tdee - 500) : (goalType === 'gain' ? tdee + 400 : tdee);
+
+  // Macros Calculation (Protein 30%, Carbs 40%, Fats 30%)
+  const proteinGrams = Math.round((targetCalories * 0.3) / 4);
+  const carbsGrams = Math.round((targetCalories * 0.4) / 4);
+  const fatsGrams = Math.round((targetCalories * 0.3) / 9);
+
+  const getAQILevel = (aqi) => {
+    if (aqi <= 50) return { label: 'Good', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/40', badgeBg: 'bg-emerald-500' };
+    if (aqi <= 100) return { label: 'Moderate', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/40', badgeBg: 'bg-amber-500' };
+    if (aqi <= 150) return { label: 'Unhealthy Sensitive', color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/40', badgeBg: 'bg-orange-500' };
+    if (aqi <= 200) return { label: 'Unhealthy', color: 'text-rose-400', bg: 'bg-rose-500/10', border: 'border-rose-500/40', badgeBg: 'bg-rose-500' };
+    return { label: 'Very Unhealthy / Hazardous', color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/40', badgeBg: 'bg-purple-500' };
+  };
+
+  const currentAQIInfo = getAQILevel(currentAQI.aqi);
+
+  const startInhale = () => {
+    setIsBreathingInhale(true);
+    setBreathPhaseText('Inhaling... (Inflating Balloon)');
+    soundFx.playOceanWave(true);
+    let scale = 1;
+    clearInterval(breathTimerRef.current);
+    breathTimerRef.current = setInterval(() => {
+      scale += 0.05;
+      if (scale >= 2.2) scale = 2.2;
+      setBalloonSize(scale);
+    }, 50);
+  };
+
+  const startExhale = () => {
+    setIsBreathingInhale(false);
+    setBreathPhaseText('Slow Pursed-Lip Exhale... (Releasing)');
+    soundFx.playOceanWave(false);
+    clearInterval(breathTimerRef.current);
+    breathTimerRef.current = setInterval(() => {
+      setBalloonSize(prev => {
+        if (prev <= 1) {
+          clearInterval(breathTimerRef.current);
+          setBreathCycleCount(c => c + 1);
+          setBreathPhaseText('Press & Hold to Inhale (2s)');
+          return 1;
+        }
+        return prev - 0.03;
+      });
+    }, 50);
+  };
+
+  const handleGardenClick = (index) => {
+    if (selectedTiles.length === 2 || gardenTiles[index].matched || selectedTiles.includes(index)) return;
+
+    const newSelected = [...selectedTiles, index];
+    setSelectedTiles(newSelected);
+
+    if (newSelected.length === 2) {
+      const [first, second] = newSelected;
+      if (gardenTiles[first].icon === gardenTiles[second].icon) {
+        soundFx.playZenChime();
+        setGardenTiles(prev => prev.map((t, i) => i === first || i === second ? { ...t, matched: true } : t));
+        setSelectedTiles([]);
+        if (!unlockedSounds.includes('Wind Chimes')) {
+          setUnlockedSounds(s => [...s, 'Wind Chimes']);
+        }
+      } else {
+        setTimeout(() => setSelectedTiles([]), 800);
+      }
+    }
+  };
+
+  const handlePopBubble = (idx) => {
+    if (bubbles[idx]) return;
+    soundFx.playPopSound();
+    if (navigator.vibrate) navigator.vibrate(40);
+    setBubbles(prev => prev.map((b, i) => i === idx ? true : b));
+  };
+
+  const runEyeScan = () => {
+    setEyeScanActive(true);
+    setEyeScanProgress(0);
+    setEyeScanResult(null);
+    setBlinkCounter(0);
+
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += 5;
+      setEyeScanProgress(progress);
+      if (Math.random() > 0.6) setBlinkCounter(c => c + 1);
+
+      if (progress >= 100) {
+        clearInterval(interval);
+        setEyeScanActive(false);
+        setEyeScanResult({
+          bpm: 11,
+          status: 'Mild Screen Fatigue & Dryness',
+          ibi: '2.1 sec (Low Tear Film Stability)',
+          scleraRedness: 'Grade 2 (Conjunctival Injection)',
+          ptosis: 'Normal Eyelid Symmetry (Palpebral Fissure: 9.8mm)',
+          recommendation: 'Apply preservative-free lubricating drops. Take 20-20-20 screen break.'
+        });
+      }
+    }, 150);
+  };
+
+  const runNailScan = () => {
+    setNailScanActive(true);
+    setNailScanProgress(0);
+    setNailScanResult(null);
+
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += 10;
+      setNailScanProgress(progress);
+
+      if (progress >= 100) {
+        clearInterval(interval);
+        setNailScanActive(false);
+        setNailScanResult({
+          detected: 'Mild Leukonychia & Horizontal Surface Ridges',
+          deficiency: 'Zinc & Calcium Micronutrient Sub-optimality',
+          hemoglobinEst: '12.8 g/dL (Normal Nail Bed Pigmentation)',
+          structuralForm: 'Normal Curvature (No Koilonychia spooning)',
+          dietFixes: ['Pumpkin seeds & Cashews (Zinc)', 'Leafy Greens & Greek Yogurt (Calcium)', 'Eggs & Biotin-rich Whole Grains']
+        });
+      }
+    }, 200);
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans antialiased flex flex-col justify-between max-w-md mx-auto relative border-x border-slate-800 shadow-2xl">
+      
+      {/* Header Bar */}
+      <header className="p-4 bg-slate-900/90 backdrop-blur-md sticky top-0 z-20 border-b border-slate-800 flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold">
+            <Zap className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="text-base font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+              BIOMAXXX
+            </h1>
+            <p className="text-[10px] text-slate-400 uppercase tracking-widest font-mono">Quantified Health & AI Vision</p>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <button 
+            onClick={() => setShowSpikeAlert(!showSpikeAlert)}
+            className="p-1.5 rounded-lg bg-slate-800 border border-slate-700 text-amber-400 hover:text-amber-300 relative"
+            title="Toggle Alert Simulator"
+          >
+            <Bell className="w-4 h-4" />
+            <span className="absolute -top-1 -right-1 w-2 h-2 bg-rose-500 rounded-full animate-ping"></span>
+          </button>
+        </div>
+      </header>
+
+      {/* Main Scrollable View Area */}
+      <main className="flex-1 overflow-y-auto pb-24 p-4 space-y-4">
+        
+        {/* ================= PREDICTIVE PUSH ALERT BANNERS ================= */}
+        {showSpikeAlert && currentAQI.aqi > 100 && (
+          <div className="bg-rose-950/80 border border-rose-600/60 rounded-xl p-3.5 space-y-2 relative animate-in fade-in slide-in-from-top-2 duration-300">
+            <button 
+              onClick={() => setShowSpikeAlert(false)}
+              className="absolute top-2.5 right-2.5 text-rose-300 hover:text-white"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <div className="flex items-center space-x-2 text-rose-400 font-bold text-xs">
+              <ShieldAlert className="w-4 h-4 animate-bounce" />
+              <span>SUDDEN AQI SPIKE ALERT (Push Trigger)</span>
+            </div>
+            <p className="text-xs text-rose-100 leading-relaxed">
+              ⚠️ Atmospheric sensors in <span className="font-bold underline">{currentAQI.city}</span> detected rapid fine smog buildup (PM2.5: {currentAQI.pm25} µg/m³). 
+              <span className="font-semibold block mt-1">Immediate Action: Stay indoors, seal windows, keep rescue inhaler ready.</span>
+            </p>
+          </div>
+        )}
+
+        {showMorningBrief && (
+          <div className="bg-amber-950/40 border border-amber-500/40 rounded-xl p-3 space-y-1.5 relative">
+            <button 
+              onClick={() => setShowMorningBrief(false)}
+              className="absolute top-2 right-2 text-amber-400 hover:text-white"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+            <div className="flex items-center space-x-1.5 text-amber-400 font-mono text-[11px] font-bold">
+              <Bell className="w-3.5 h-3.5" />
+              <span>7:00 AM MORNING FLARE-UP BRIEFING</span>
+            </div>
+            <p className="text-xs text-amber-100">
+              Today's AQI forecast indicates high smog during 2:00 PM – 6:00 PM. Schedule outdoor movement before 10:00 AM.
+            </p>
+          </div>
+        )}
+
+        {/* ================= TAB 1: DASHBOARD ================= */}
+        {activeTab === 'dashboard' && (
+          <div className="space-y-4">
+            
+            {/* Readiness Score Ring Hero */}
+            <div className="bg-gradient-to-b from-slate-900 to-slate-900/90 border border-slate-800 rounded-2xl p-4 relative overflow-hidden shadow-lg">
+              <div className="flex items-center justify-between">
+                
+                <div className="relative w-24 h-24 flex items-center justify-center">
+                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                    <path
+                      className="text-slate-800"
+                      strokeWidth="3"
+                      stroke="currentColor"
+                      fill="none"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                    <path
+                      className="text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]"
+                      strokeDasharray="88, 100"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      stroke="currentColor"
+                      fill="none"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                  </svg>
+                  <div className="absolute flex flex-col items-center justify-center text-center">
+                    <span className="text-xl font-black font-mono text-emerald-400">88%</span>
+                    <span className="text-[8px] uppercase tracking-wider text-slate-400 font-semibold">Ready</span>
+                  </div>
+                </div>
+
+                <div className="flex-1 ml-4 space-y-1.5">
+                  <div className="flex items-center space-x-1.5 text-xs font-semibold text-emerald-400">
+                    <Sparkles className="w-4 h-4" />
+                    <span>COPD Readiness High</span>
+                  </div>
+                  <p className="text-xs text-slate-300 leading-normal">
+                    Resting SpO₂ is 97%. Low respiratory strain predicted for morning.
+                  </p>
+                  <div className="flex items-center space-x-2 pt-1">
+                    <span className="text-[10px] bg-slate-800 text-emerald-300 font-mono px-2 py-0.5 rounded border border-slate-700">
+                      SpO₂: 97%
+                    </span>
+                    <span className="text-[10px] bg-slate-800 text-cyan-300 font-mono px-2 py-0.5 rounded border border-slate-700">
+                      AQI: {currentAQI.aqi}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Diagnostic Shortcut Launchers */}
+            <div className="grid grid-cols-2 gap-3">
+              <button 
+                onClick={() => setActiveTab('eye_ai')}
+                className="bg-slate-900 border border-slate-800 hover:border-cyan-500/50 p-3 rounded-xl flex items-center space-x-3 transition-all text-left"
+              >
+                <div className="p-2 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+                  <Eye className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-slate-200">AI Dry Eye Scan</div>
+                  <div className="text-[10px] text-slate-400 font-mono">Blink & Redness</div>
+                </div>
+              </button>
+
+              <button 
+                onClick={() => setActiveTab('nail_ai')}
+                className="bg-slate-900 border border-slate-800 hover:border-purple-500/50 p-3 rounded-xl flex items-center space-x-3 transition-all text-left"
+              >
+                <div className="p-2 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/30">
+                  <Sparkle className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-slate-200">AI Nail Nutrient</div>
+                  <div className="text-[10px] text-slate-400 font-mono">Micro-Deficiency</div>
+                </div>
+              </button>
+            </div>
+
+            {/* Core Metrics Grid */}
+            <div className="grid grid-cols-2 gap-3">
+              <div 
+                onClick={() => setActiveTab('analytics')} 
+                className="bg-slate-900 border border-slate-800 p-3 rounded-xl cursor-pointer hover:border-emerald-500/40 transition-all space-y-1"
+              >
+                <div className="flex items-center justify-between text-emerald-400 text-xs font-semibold">
+                  <span>SpO₂ vs AQI</span>
+                  <BarChart2 className="w-3.5 h-3.5" />
+                </div>
+                <div className="text-lg font-bold font-mono text-slate-100">97% <span className="text-xs text-slate-400">SpO2</span></div>
+                <div className="text-[10px] text-emerald-400 font-mono">Correlation Analyzed</div>
+              </div>
+
+              <div 
+                onClick={() => setActiveTab('bmi')} 
+                className="bg-slate-900 border border-slate-800 p-3 rounded-xl cursor-pointer hover:border-amber-500/40 transition-all space-y-1"
+              >
+                <div className="flex items-center justify-between text-amber-400 text-xs font-semibold">
+                  <span>BMI Status</span>
+                  <Scale className="w-3.5 h-3.5" />
+                </div>
+                <div className="text-lg font-bold font-mono text-slate-100">{bmiValue}</div>
+                <div className={`text-[10px] font-mono ${bmiInfo.color}`}>{bmiInfo.category}</div>
+              </div>
+            </div>
+
+          </div>
+        )}
+
+        {/* ================= TAB 2: AI EYE HEALTH ASSESSMENT ================= */}
+        {activeTab === 'eye_ai' && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-base font-bold text-slate-100 flex items-center space-x-2">
+                <Eye className="w-5 h-5 text-cyan-400" />
+                <span>AI Dry Eye & Facial Droop Diagnostic</span>
+              </h2>
+              <p className="text-xs text-slate-400">
+                Front-camera computer vision tracking blink frequency, tear film IBI, and sclera inflammation.
+              </p>
+            </div>
+
+            {/* Interactive Scanner Viewport */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 relative overflow-hidden">
+              <div className="h-52 bg-slate-950 rounded-xl relative overflow-hidden flex flex-col items-center justify-center border border-slate-800">
+                
+                {/* Simulated Camera Feed Grid */}
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b15_1px,transparent_1px),linear-gradient(to_bottom,#1e293b15_1px,transparent_1px)] bg-[size:16px_16px]"></div>
+                
+                {/* Facial Reticle */}
+                <div className={`w-36 h-36 rounded-full border-2 border-dashed flex items-center justify-center relative transition-all duration-300 ${
+                  eyeScanActive ? 'border-cyan-400 animate-pulse scale-105' : 'border-slate-700'
+                }`}>
+                  <div className="w-24 h-12 border border-cyan-400/50 rounded-full flex items-center justify-around px-2">
+                    <div className="w-3 h-3 rounded-full bg-cyan-400/80 animate-ping"></div>
+                    <div className="w-3 h-3 rounded-full bg-cyan-400/80 animate-ping"></div>
+                  </div>
+                </div>
+
+                {/* Live Scanning Overlay Text */}
+                {eyeScanActive && (
+                  <div className="absolute bottom-3 bg-slate-900/90 border border-cyan-500/50 text-cyan-300 text-[10px] font-mono px-3 py-1 rounded-full flex items-center space-x-2">
+                    <Scan className="w-3 h-3 animate-spin" />
+                    <span>Analyzing Blink Rate & Sclera Vessel Density... {eyeScanProgress}%</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs text-slate-300 bg-slate-950 p-2.5 rounded-lg border border-slate-800 text-center font-serif italic">
+                  "Please look at the camera screen and read this paragraph naturally to measure blink frequency and inter-blink intervals."
+                </p>
+
+                <button 
+                  onClick={runEyeScan}
+                  disabled={eyeScanActive}
+                  className="w-full bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 font-bold text-xs py-2.5 rounded-xl shadow-lg transition-all disabled:opacity-50 flex items-center justify-center space-x-2"
+                >
+                  <Camera className="w-4 h-4" />
+                  <span>{eyeScanActive ? 'Scanning Front Camera...' : 'Start 10-Sec AI Vision Assessment'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Scan Diagnostic Results */}
+            {eyeScanResult && (
+              <div className="bg-slate-900 border border-cyan-500/40 rounded-2xl p-4 space-y-3 animate-in fade-in duration-300">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                  <span className="text-xs font-bold text-cyan-400 flex items-center space-x-1">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Diagnostic Report Ready</span>
+                  </span>
+                  <span className="text-[10px] font-mono text-slate-400">Confidence: 96.4%</span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+                    <span className="text-[10px] text-slate-400 block font-mono">Blink Rate</span>
+                    <span className="font-bold text-slate-100">{eyeScanResult.bpm} BPM</span>
+                    <span className="text-[9px] text-rose-400 block">(Low: Healthy is 15-20)</span>
+                  </div>
+
+                  <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+                    <span className="text-[10px] text-slate-400 block font-mono">Inter-Blink Interval</span>
+                    <span className="font-bold text-slate-100">{eyeScanResult.ibi}</span>
+                  </div>
+                </div>
+
+                <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800 space-y-1">
+                  <span className="text-[10px] text-slate-400 font-mono block">Sclera Redness & Ptosis Guard</span>
+                  <p className="text-xs text-slate-200">{eyeScanResult.scleraRedness}</p>
+                  <p className="text-[11px] text-emerald-400">{eyeScanResult.ptosis}</p>
+                </div>
+
+                <div className="bg-cyan-950/40 border border-cyan-500/30 p-2.5 rounded-lg text-xs text-cyan-200">
+                  <span className="font-bold block mb-0.5">💡 Actionable Medical Advice:</span>
+                  {eyeScanResult.recommendation}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ================= TAB 3: AI NAIL DEFICIENCY DIAGNOSTIC ================= */}
+        {activeTab === 'nail_ai' && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-base font-bold text-slate-100 flex items-center space-x-2">
+                <Sparkle className="w-5 h-5 text-purple-400" />
+                <span>AI Nail Micronutrient Scanner</span>
+              </h2>
+              <p className="text-xs text-slate-400">
+                Deep Learning colorimetry and edge texture mapping to detect systemic micronutrient deficiencies.
+              </p>
+            </div>
+
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+              <div className="h-44 bg-slate-950 rounded-xl border border-slate-800 relative flex flex-col items-center justify-center p-4">
+                <div className="w-20 h-28 border-2 border-dashed border-purple-500/50 rounded-2xl flex items-center justify-center relative bg-purple-950/10">
+                  <div className="w-12 h-16 rounded-t-full bg-purple-500/20 border border-purple-400/40"></div>
+                </div>
+
+                {nailScanActive && (
+                  <div className="absolute inset-0 bg-slate-950/80 flex flex-col items-center justify-center space-y-2">
+                    <Scan className="w-8 h-8 text-purple-400 animate-spin" />
+                    <span className="text-xs font-mono text-purple-300">Analyzing Nail Bed Colorimetry... {nailScanProgress}%</span>
+                  </div>
+                )}
+              </div>
+
+              <button 
+                onClick={runNailScan}
+                disabled={nailScanActive}
+                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs py-2.5 rounded-xl shadow-lg transition-all disabled:opacity-50 flex items-center justify-center space-x-2"
+              >
+                <Camera className="w-4 h-4" />
+                <span>{nailScanActive ? 'Processing Image...' : 'Capture / Upload Fingernail Photo'}</span>
+              </button>
+            </div>
+
+            {/* Scan Diagnostic Results */}
+            {nailScanResult && (
+              <div className="bg-slate-900 border border-purple-500/40 rounded-2xl p-4 space-y-3 animate-in fade-in duration-300">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                  <span className="text-xs font-bold text-purple-400 flex items-center space-x-1">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Nail Micronutrient Analysis</span>
+                  </span>
+                </div>
+
+                <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800 space-y-1 text-xs">
+                  <div className="text-slate-300"><span className="text-slate-400 font-mono">Visual Indicator:</span> {nailScanResult.detected}</div>
+                  <div className="text-amber-400 font-semibold"><span className="text-slate-400 font-mono">Potential Deficiency:</span> {nailScanResult.deficiency}</div>
+                  <div className="text-slate-300"><span className="text-slate-400 font-mono">Hemoglobin Est:</span> {nailScanResult.hemoglobinEst}</div>
+                </div>
+
+                <div className="bg-purple-950/30 border border-purple-500/30 p-3 rounded-lg text-xs space-y-1.5">
+                  <span className="font-bold text-purple-300 block">🥗 Recommended Dietary Fixes:</span>
+                  <ul className="list-disc pl-4 space-y-1 text-purple-100">
+                    {nailScanResult.dietFixes.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ================= TAB 4: CORRELATION ANALYTICS ================= */}
+        {activeTab === 'analytics' && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-base font-bold text-slate-100 flex items-center space-x-2">
+                <BarChart2 className="w-5 h-5 text-emerald-400" />
+                <span>AQI vs. SpO₂ Correlation Analytics</span>
+              </h2>
+              <p className="text-xs text-slate-400">
+                Medical evidence mapping ambient air quality against blood oxygen levels and cough severity.
+              </p>
+            </div>
+
+            <div className="bg-emerald-950/30 border border-emerald-500/40 p-3.5 rounded-xl space-y-1.5">
+              <div className="flex items-center space-x-2 text-xs font-bold text-emerald-400">
+                <Sparkles className="w-4 h-4" />
+                <span>Automated Clinical Insight</span>
+              </div>
+              <p className="text-xs text-slate-200 leading-relaxed">
+                📊 <span className="font-semibold text-emerald-300">Data Proof:</span> Your resting blood oxygen drops an average of <span className="font-bold underline text-rose-300">3.2%</span> on days when local AQI crosses <span className="font-bold text-amber-300">120</span>. Cough frequency increases by 2.4x.
+              </p>
+            </div>
+
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                <span className="text-xs font-mono uppercase font-bold text-slate-300">14-Day Cross Correlation</span>
+                <div className="flex items-center space-x-3 text-[10px] font-mono">
+                  <span className="text-cyan-400">― AQI</span>
+                  <span className="text-emerald-400">― SpO₂ %</span>
+                </div>
+              </div>
+
+              <div className="h-56 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={correlationData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                    <XAxis dataKey="day" stroke="#64748b" fontSize={9} />
+                    <YAxis yAxisId="left" stroke="#38bdf8" fontSize={9} domain={[0, 250]} />
+                    <YAxis yAxisId="right" orientation="right" stroke="#34d399" fontSize={9} domain={[85, 100]} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px', fontSize: '11px' }} 
+                    />
+                    <Line yAxisId="left" type="monotone" dataKey="aqi" stroke="#38bdf8" strokeWidth={2} dot={false} name="AQI Level" />
+                    <Line yAxisId="right" type="monotone" dataKey="spo2" stroke="#34d399" strokeWidth={2.5} dot={{ r: 3 }} name="SpO2 %" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ================= TAB 5: STRESS BUSTER GAMES HUB ================= */}
+        {activeTab === 'games' && (
+          <div className="space-y-5">
+            <div>
+              <h2 className="text-base font-bold text-slate-100 flex items-center space-x-2">
+                <Gamepad2 className="w-5 h-5 text-cyan-400" />
+                <span>Stress Busters & Biofeedback Games</span>
+              </h2>
+            </div>
+
+            {/* Belly Breath Balloon */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 relative overflow-hidden">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                <div>
+                  <h3 className="text-xs font-bold text-slate-100 flex items-center space-x-1.5">
+                    <CircleDot className="w-4 h-4 text-emerald-400" />
+                    <span>1. "Belly Breath" Balloon</span>
+                  </h3>
+                  <p className="text-[10px] text-slate-400">Pursed-Lip Breathing (2s Inhale / 4s Exhale)</p>
+                </div>
+                <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800">
+                  {breathCycleCount} Cycles
+                </span>
+              </div>
+
+              <div className="h-44 bg-slate-950 rounded-xl flex flex-col items-center justify-center relative select-none">
+                <div 
+                  className="rounded-full bg-gradient-to-tr from-emerald-500 to-cyan-400 shadow-lg shadow-emerald-500/20 transition-transform duration-75 flex items-center justify-center"
+                  style={{ 
+                    width: `${60 * balloonSize}px`, 
+                    height: `${60 * balloonSize}px` 
+                  }}
+                >
+                  <span className="text-[10px] font-bold text-slate-950 font-mono">
+                    {isBreathingInhale ? 'INHALE' : 'EXHALE'}
+                  </span>
+                </div>
+
+                <button
+                  onMouseDown={startInhale}
+                  onMouseUp={startExhale}
+                  onTouchStart={startInhale}
+                  onTouchEnd={startExhale}
+                  className="mt-3 bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-slate-950 font-bold text-xs px-5 py-2 rounded-full shadow-md transition-all active:scale-95"
+                >
+                  Hold Finger to Inhale
+                </button>
+                <span className="text-[10px] font-mono text-slate-400 mt-1">{breathPhaseText}</span>
+              </div>
+            </div>
+
+            {/* Soundscape Garden */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                <div>
+                  <h3 className="text-xs font-bold text-slate-100 flex items-center space-x-1.5">
+                    <Volume2 className="w-4 h-4 text-cyan-400" />
+                    <span>2. Soundscape Garden</span>
+                  </h3>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-4 gap-2">
+                {gardenTiles.map((tile, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleGardenClick(idx)}
+                    className={`h-12 rounded-xl text-lg flex items-center justify-center border transition-all ${
+                      tile.matched 
+                        ? 'bg-emerald-950/40 border-emerald-500/50' 
+                        : selectedTiles.includes(idx)
+                          ? 'bg-slate-800 border-cyan-400'
+                          : 'bg-slate-950 border-slate-800 hover:border-slate-700'
+                    }`}
+                  >
+                    {tile.matched || selectedTiles.includes(idx) ? tile.icon : '❓'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Bubble Pop */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                <h3 className="text-xs font-bold text-slate-100 flex items-center space-x-1.5">
+                  <Sparkles className="w-4 h-4 text-amber-400" />
+                  <span>3. Sensory Haptic Bubble Pop</span>
+                </h3>
+              </div>
+
+              <div className="grid grid-cols-6 gap-2 bg-slate-950 p-3 rounded-xl border border-slate-800">
+                {bubbles.map((popped, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handlePopBubble(idx)}
+                    className={`h-9 rounded-full border transition-all flex items-center justify-center active:scale-90 ${
+                      popped 
+                        ? 'bg-slate-900 border-slate-800 scale-90 opacity-40' 
+                        : 'bg-gradient-to-tr from-cyan-500/30 to-emerald-500/30 border-cyan-400/50 hover:border-cyan-300 shadow-sm'
+                    }`}
+                  >
+                    {popped ? '' : <div className="w-2 h-2 rounded-full bg-cyan-300/60"></div>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ================= TAB 6: AQI & COPD ================= */}
+        {activeTab === 'aqi' && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-base font-bold text-slate-100 flex items-center space-x-2">
+                <Wind className="w-5 h-5 text-cyan-400" />
+                <span>AQI & Environmental Safety</span>
+              </h2>
+            </div>
+
+            <div className="flex items-center space-x-2 bg-slate-900 border border-slate-800 p-2 rounded-xl">
+              <MapPin className="w-4 h-4 text-cyan-400 ml-1" />
+              <select 
+                value={selectedCityIdx}
+                onChange={(e) => setSelectedCityIdx(Number(e.target.value))}
+                className="bg-transparent text-xs font-mono font-bold text-slate-200 focus:outline-none flex-1 cursor-pointer"
+              >
+                {AQI_PRESETS.map((item, idx) => (
+                  <option key={idx} value={idx} className="bg-slate-900 text-slate-100">
+                    {item.city} (AQI {item.aqi})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className={`p-4 rounded-2xl border ${currentAQIInfo.border} ${currentAQIInfo.bg} space-y-2`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-mono text-slate-400">Current AQI</span>
+                  <div className={`text-3xl font-black font-mono ${currentAQIInfo.color}`}>{currentAQI.aqi}</div>
+                </div>
+                <span className={`text-xs font-mono font-bold px-2.5 py-1 rounded-full text-slate-950 ${currentAQIInfo.badgeBg}`}>
+                  {currentAQIInfo.label}
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+              <div className="bg-slate-900 p-2.5 rounded-xl border border-slate-800">PM2.5: <span className="text-cyan-400 font-bold">{currentAQI.pm25} µg/m³</span></div>
+              <div className="bg-slate-900 p-2.5 rounded-xl border border-slate-800">PM10: <span className="text-cyan-400 font-bold">{currentAQI.pm10} µg/m³</span></div>
+              <div className="bg-slate-900 p-2.5 rounded-xl border border-slate-800">Ozone (O₃): <span className="text-cyan-400 font-bold">{currentAQI.o3} ppb</span></div>
+              <div className="bg-slate-900 p-2.5 rounded-xl border border-slate-800">NO₂: <span className="text-cyan-400 font-bold">{currentAQI.no2} ppb</span></div>
+            </div>
+          </div>
+        )}
+
+        {/* ================= TAB 7: BMI & DIET PLANNER ================= */}
+        {activeTab === 'bmi' && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-base font-bold text-slate-100 flex items-center space-x-2">
+                <Scale className="w-5 h-5 text-emerald-400" />
+                <span>BMI, Macros & Workout Goal</span>
+              </h2>
+            </div>
+
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] font-mono text-slate-400 block mb-1">Height (cm)</label>
+                  <input 
+                    type="number" 
+                    value={heightCm} 
+                    onChange={(e) => setHeightCm(Number(e.target.value))}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs font-mono text-slate-100"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-mono text-slate-400 block mb-1">Weight (kg)</label>
+                  <input 
+                    type="number" 
+                    value={weightKg} 
+                    onChange={(e) => setWeightKg(Number(e.target.value))}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs font-mono text-slate-100"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-slate-800 flex justify-between items-center">
+                <div>
+                  <div className="text-2xl font-black font-mono text-slate-100">{bmiValue}</div>
+                  <div className={`text-[10px] font-mono ${bmiInfo.color}`}>{bmiInfo.category}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs font-mono font-bold text-emerald-400">{targetCalories} kcal / day</div>
+                  <div className="text-[10px] text-slate-400 font-mono">TDEE: {tdee} kcal</div>
+                </div>
+              </div>
+
+              {/* Macronutrients */}
+              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800 text-center font-mono text-xs">
+                <div className="bg-slate-950 p-2 rounded-lg border border-slate-800">
+                  <span className="text-[10px] text-slate-400 block">Protein</span>
+                  <span className="font-bold text-emerald-400">{proteinGrams}g</span>
+                </div>
+                <div className="bg-slate-950 p-2 rounded-lg border border-slate-800">
+                  <span className="text-[10px] text-slate-400 block">Carbs</span>
+                  <span className="font-bold text-cyan-400">{carbsGrams}g</span>
+                </div>
+                <div className="bg-slate-950 p-2 rounded-lg border border-slate-800">
+                  <span className="text-[10px] text-slate-400 block">Fats</span>
+                  <span className="font-bold text-amber-400">{fatsGrams}g</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+      </main>
+
+      {/* Navigation Footer */}
+      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-slate-900/95 backdrop-blur-md border-t border-slate-800 z-20 flex justify-around py-2">
+        <button 
+          onClick={() => setActiveTab('dashboard')}
+          className={`flex flex-col items-center space-y-1 py-1 px-2 rounded-lg transition-all ${
+            activeTab === 'dashboard' ? 'text-emerald-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Activity className="w-4 h-4" />
+          <span className="text-[9px] font-mono">Track</span>
+        </button>
+
+        <button 
+          onClick={() => setActiveTab('eye_ai')}
+          className={`flex flex-col items-center space-y-1 py-1 px-2 rounded-lg transition-all ${
+            activeTab === 'eye_ai' ? 'text-emerald-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Eye className="w-4 h-4" />
+          <span className="text-[9px] font-mono">Eye AI</span>
+        </button>
+
+        <button 
+          onClick={() => setActiveTab('nail_ai')}
+          className={`flex flex-col items-center space-y-1 py-1 px-2 rounded-lg transition-all ${
+            activeTab === 'nail_ai' ? 'text-emerald-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Sparkle className="w-4 h-4" />
+          <span className="text-[9px] font-mono">Nail AI</span>
+        </button>
+
+        <button 
+          onClick={() => setActiveTab('games')}
+          className={`flex flex-col items-center space-y-1 py-1 px-2 rounded-lg transition-all ${
+            activeTab === 'games' ? 'text-emerald-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Gamepad2 className="w-4 h-4" />
+          <span className="text-[9px] font-mono">Games</span>
+        </button>
+
+        <button 
+          onClick={() => setActiveTab('aqi')}
+          className={`flex flex-col items-center space-y-1 py-1 px-2 rounded-lg transition-all ${
+            activeTab === 'aqi' ? 'text-emerald-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Wind className="w-4 h-4" />
+          <span className="text-[9px] font-mono">AQI</span>
+        </button>
+
+        <button 
+          onClick={() => setActiveTab('bmi')}
+          className={`flex flex-col items-center space-y-1 py-1 px-2 rounded-lg transition-all ${
+            activeTab === 'bmi' ? 'text-emerald-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Scale className="w-4 h-4" />
+          <span className="text-[9px] font-mono">BMI</span>
+        </button>
+      </nav>
+
+    </div>
+  );
+}

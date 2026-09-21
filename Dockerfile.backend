@@ -1,0 +1,27 @@
+# ==========================================
+# BioMaxxx Backend Dockerfile (Node.js 20 Alpine)
+# ==========================================
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install dependencies first for Docker caching
+COPY package.json ./
+RUN npm install --omit=dev
+
+# Copy application source code
+COPY server.js ./
+COPY schema.sql ./
+
+# Set environment
+ENV NODE_ENV=production
+ENV PORT=5000
+
+# Expose backend API and WebSocket port
+EXPOSE 5000
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:5000/api/copd/correlations/1', (r) => {if (r.statusCode !== 200) process.exit(1)})" || exit 1
+
+CMD ["node", "server.js"]
