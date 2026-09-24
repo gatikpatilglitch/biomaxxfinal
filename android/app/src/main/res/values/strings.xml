@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">BioMaxxx</string>
+    <string name="title_activity_main">BioMaxxx</string>
+    <string name="package_name">com.biomaxxx.healthapp</string>
+    <string name="custom_url_scheme">com.biomaxxx.healthapp</string>
+</resources>
