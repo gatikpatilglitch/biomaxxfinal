@@ -25,6 +25,7 @@ import AqiCopdTracker from './components/AqiCopdTracker';
 import CorrelationAnalytics from './components/CorrelationAnalytics';
 import StressGamesHub from './components/StressGamesHub';
 import AqiWalkingPlanner from './components/AqiWalkingPlanner';
+import HomeHealthSummary from './components/HomeHealthSummary';
 
 import { AQI_PRESETS } from './utils/healthCalculations';
 import { soundFx } from './utils/audioSynthesizer';
@@ -93,77 +94,14 @@ export default function App() {
         {/* ================= VIEW: DASHBOARD OVERVIEW ================= */}
         {activeTab === 'dashboard' && (
           <div className="space-y-4 animate-in fade-in duration-300">
-            
-            {/* Hero Card: AQI & COPD-Optimized Best Walking Time */}
-            <AqiWalkingPlanner
+            <HomeHealthSummary
               currentCityIdx={currentCityIdx}
               setCurrentCityIdx={setCurrentCityIdx}
-              onNavigateToCopd={() => handleTabSwitch('copd_aqi')}
-            />
-
-            {/* Quick Diagnostic Shortcuts Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              
-              <button
-                onClick={() => handleTabSwitch('games')}
-                className="glass-card p-3.5 rounded-2xl border border-slate-800 hover:border-emerald-500/50 transition-all text-left group hover:scale-[1.02]"
-              >
-                <div className="p-2 w-fit rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 mb-2 group-hover:shadow-[0_0_12px_rgba(16,185,129,0.4)]">
-                  <Gamepad2 className="w-5 h-5" />
-                </div>
-                <div className="text-xs font-bold text-slate-200">Stress Busters</div>
-                <div className="text-[10px] text-slate-400 font-mono">Belly Breath & Pop</div>
-              </button>
-
-              <button
-                onClick={() => handleTabSwitch('analytics')}
-                className="glass-card p-3.5 rounded-2xl border border-slate-800 hover:border-amber-500/50 transition-all text-left group hover:scale-[1.02]"
-              >
-                <div className="p-2 w-fit rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/30 mb-2 group-hover:shadow-[0_0_12px_rgba(245,158,11,0.4)]">
-                  <BarChart2 className="w-5 h-5" />
-                </div>
-                <div className="text-xs font-bold text-slate-200">AQI Correlation</div>
-                <div className="text-[10px] text-slate-400 font-mono">SpO2 Drop Proof</div>
-              </button>
-
-            </div>
-
-            {/* Quick Metabolic Overview Card */}
-            <div 
-              onClick={() => handleTabSwitch('bmi')}
-              className="glass-card rounded-2xl p-4 border border-slate-800 hover:border-emerald-500/40 cursor-pointer transition-all space-y-3"
-            >
-              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                <span className="text-xs font-mono font-bold text-slate-300 flex items-center space-x-1.5">
-                  <Scale className="w-4 h-4 text-emerald-400" />
-                  <span>BMI, Nutrition & Workout Goal</span>
-                </span>
-                <ChevronRight className="w-4 h-4 text-slate-500" />
-              </div>
-
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <span className="text-[10px] font-mono text-slate-400">Body Mass Index</span>
-                  <div className="text-3xl font-black font-mono text-emerald-400">25.5</div>
-                  <span className="text-xs font-mono text-amber-400">Overweight Range</span>
-                </div>
-                <div className="sm:text-right text-xs font-mono space-y-1">
-                  <div className="text-slate-400">Target Intake: <strong className="text-emerald-300">1,950 kcal</strong></div>
-                  <div className="text-slate-400">Pace: <strong className="text-rose-300">-0.5 kg/wk</strong></div>
-                  <div className="text-slate-400">Routine: <strong className="text-slate-200">Zone 2 Cardio</strong></div>
-                </div>
-              </div>
-            </div>
-
-            {/* WHOOP Biometrics Hub Shortcut */}
-            <WhoopDeviceHub
-              whoopConnected={whoopConnected}
-              setWhoopConnected={setWhoopConnected}
               currentSpo2={currentSpo2}
-              setCurrentSpo2={setCurrentSpo2}
-              onTriggerSpike={handleTriggerSpike}
+              recoveryScore={65}
+              sleepHours={6.1}
+              onNavigateTab={handleTabSwitch}
             />
-
           </div>
         )}
 
