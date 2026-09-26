@@ -5,8 +5,17 @@ import { Server } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import pg from 'pg';
+import { createClient } from '@supabase/supabase-js';
 
 dotenv.config();
+
+// Optional Supabase JavaScript Client
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+export const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
+if (supabase) {
+  console.log('⚡ Supabase JS Client initialized successfully');
+}
 
 const { Pool } = pg;
 const app = express();
@@ -16,7 +25,7 @@ const io = new Server(server, { cors: { origin: '*' } });
 app.use(cors());
 app.use(express.json({ limit: '10mb' })); // Higher limit for camera photo uploads
 
-// Optional PostgreSQL Connection with graceful fallback
+// Optional PostgreSQL / Supabase Postgres Connection with graceful fallback
 let pool = null;
 try {
   const dbUrl = process.env.DATABASE_URL || 'postgres://postgres:password@localhost:1512/biomaxxx';
@@ -260,8 +269,14 @@ io.on('connection', (socket) => {
   });
 });
 
-// Start Server
+// Export for serverless environments (Vercel) and standalone execution
+export { app, server, io };
+export default app;
+
+// Start Server locally when not executed as a serverless function
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
-  console.log(`BioMaxxx Backend running on port ${PORT}`);
-});
+if (!process.env.VERCEL) {
+  server.listen(PORT, () => {
+    console.log(`BioMaxxx Backend running on port ${PORT}`);
+  });
+}
