@@ -11,7 +11,6 @@ import {
   ShieldAlert, 
   X, 
   CheckCircle2, 
-  Sparkle,
   Layers,
   Heart,
   Flame,
@@ -27,7 +26,6 @@ import AqiCopdTracker from './components/AqiCopdTracker';
 import CorrelationAnalytics from './components/CorrelationAnalytics';
 import StressGamesHub from './components/StressGamesHub';
 import AiDryEyeScanner from './components/AiDryEyeScanner';
-import AiNailScanner from './components/AiNailScanner';
 
 import { AQI_PRESETS } from './utils/healthCalculations';
 import { soundFx } from './utils/audioSynthesizer';
@@ -65,7 +63,6 @@ export default function App() {
     { id: 'analytics', label: 'Analytics', icon: BarChart2 },
     { id: 'games', label: 'Games', icon: Gamepad2 },
     { id: 'eye_ai', label: 'Eye AI', icon: Eye },
-    { id: 'nail_ai', label: 'Nail AI', icon: Sparkle },
   ];
 
   const handleTabSwitch = (id) => {
@@ -165,7 +162,7 @@ export default function App() {
             </div>
 
             {/* Quick Diagnostic Shortcuts Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               
               <button
                 onClick={() => handleTabSwitch('eye_ai')}
@@ -176,17 +173,6 @@ export default function App() {
                 </div>
                 <div className="text-xs font-bold text-slate-200">AI Dry Eye Scan</div>
                 <div className="text-[10px] text-slate-400 font-mono">Blink BPM & Ptosis</div>
-              </button>
-
-              <button
-                onClick={() => handleTabSwitch('nail_ai')}
-                className="glass-card p-3.5 rounded-2xl border border-slate-800 hover:border-purple-500/50 transition-all text-left group hover:scale-[1.02]"
-              >
-                <div className="p-2 w-fit rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/30 mb-2 group-hover:shadow-[0_0_12px_rgba(168,85,247,0.4)]">
-                  <Sparkle className="w-5 h-5" />
-                </div>
-                <div className="text-xs font-bold text-slate-200">AI Nail Nutrient</div>
-                <div className="text-[10px] text-slate-400 font-mono">Iron & Zinc Check</div>
               </button>
 
               <button
@@ -336,13 +322,6 @@ export default function App() {
         {activeTab === 'eye_ai' && (
           <div className="animate-in fade-in duration-300">
             <AiDryEyeScanner />
-          </div>
-        )}
-
-        {/* ================= VIEW: AI NAIL SCANNER ================= */}
-        {activeTab === 'nail_ai' && (
-          <div className="animate-in fade-in duration-300">
-            <AiNailScanner />
           </div>
         )}
 
