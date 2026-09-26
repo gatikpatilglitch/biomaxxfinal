@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 
 import Header from './components/Header';
-import IoTDeviceHub from './components/IoTDeviceHub';
+import WhoopDeviceHub from './components/WhoopDeviceHub';
 import BmiNutritionPlanner from './components/BmiNutritionPlanner';
 import AqiCopdTracker from './components/AqiCopdTracker';
 import CorrelationAnalytics from './components/CorrelationAnalytics';
@@ -36,10 +36,10 @@ export default function App() {
   // Navigation State
   const [activeTab, setActiveTab] = useState('dashboard');
   
-  // Audio & IoT Global States
+  // Audio & WHOOP Wearable Global States
   const [isMuted, setIsMuted] = useState(false);
-  const [iotConnected, setIotConnected] = useState(true);
-  const [currentSpo2, setCurrentSpo2] = useState(97);
+  const [whoopConnected, setWhoopConnected] = useState(true);
+  const [currentSpo2, setCurrentSpo2] = useState(98);
   const [currentCityIdx, setCurrentCityIdx] = useState(0);
 
   // Flare-Up Predictive Notifications
@@ -59,7 +59,7 @@ export default function App() {
 
   const navItems = [
     { id: 'dashboard', label: 'Home', icon: Activity },
-    { id: 'iot', label: 'IoT Mesh', icon: Radio },
+    { id: 'whoop', label: 'WHOOP', icon: Activity },
     { id: 'bmi', label: 'BMI & Diet', icon: Scale },
     { id: 'copd_aqi', label: 'AQI & COPD', icon: Wind },
     { id: 'analytics', label: 'Analytics', icon: BarChart2 },
@@ -79,10 +79,10 @@ export default function App() {
       
       {/* Sticky Header */}
       <Header
-        iotConnected={iotConnected}
-        onToggleIot={() => {
-          const next = !iotConnected;
-          setIotConnected(next);
+        whoopConnected={whoopConnected}
+        onToggleWhoop={() => {
+          const next = !whoopConnected;
+          setWhoopConnected(next);
           soundFx.playPopSound(next ? 1.5 : 0.8);
         }}
         isMuted={isMuted}
@@ -272,28 +272,26 @@ export default function App() {
 
             </div>
 
-            {/* IoT Telemetry Hub Shortcut */}
-            <IoTDeviceHub
-              iotConnected={iotConnected}
-              setIotConnected={setIotConnected}
+            {/* WHOOP Biometrics Hub Shortcut */}
+            <WhoopDeviceHub
+              whoopConnected={whoopConnected}
+              setWhoopConnected={setWhoopConnected}
               currentSpo2={currentSpo2}
               setCurrentSpo2={setCurrentSpo2}
-              currentAqi={currentAqiObj.aqi}
               onTriggerSpike={handleTriggerSpike}
             />
 
           </div>
         )}
 
-        {/* ================= VIEW: IOT TELEMETRY & HARDWARE ================= */}
-        {activeTab === 'iot' && (
+        {/* ================= VIEW: WHOOP 4.0 BIOMETRICS ================= */}
+        {activeTab === 'whoop' && (
           <div className="animate-in fade-in duration-300">
-            <IoTDeviceHub
-              iotConnected={iotConnected}
-              setIotConnected={setIotConnected}
+            <WhoopDeviceHub
+              whoopConnected={whoopConnected}
+              setWhoopConnected={setWhoopConnected}
               currentSpo2={currentSpo2}
               setCurrentSpo2={setCurrentSpo2}
-              currentAqi={currentAqiObj.aqi}
               onTriggerSpike={handleTriggerSpike}
             />
           </div>

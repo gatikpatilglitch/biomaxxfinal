@@ -7,6 +7,17 @@ import dotenv from 'dotenv';
 import pg from 'pg';
 import { createClient } from '@supabase/supabase-js';
 
+// Official WHOOP Developer API v2 Service (strictly read-only)
+import {
+  generateWhoopAuthUrl,
+  exchangeWhoopCode,
+  syncWhoopBiometrics,
+  getActiveWhoopIntegration,
+  disconnectWhoop,
+  getWhoopConfig,
+  WHOOP_READ_SCOPES,
+} from './whoopService.js';
+
 dotenv.config();
 
 // Optional Supabase JavaScript Client
@@ -242,7 +253,173 @@ app.post('/api/vision/nail-deficiency-scan', async (req, res) => {
 });
 
 // ==========================================
-// 4. BIOFEEDBACK & WEBSOCKET ENGINE
+// 4. WHOOP OFFICIAL API v2 INTEGRATION
+//    Source: https://developer.whoop.com/api
+//    All data is strictly read-only (GET only)
+// ==========================================
+
+/**
+ * GET /api/whoop/status
+ * Returns connection status and latest cached metrics
+ */
+app.get('/api/whoop/status', async (req, res) => {
+  try {
+    const userId = parseInt(req.query.userId || '1', 10);
+    const integration = await getActiveWhoopIntegration(userId, pool);
+    const config = getWhoopConfig();
+
+    if (!integration) {
+      return res.json({
+        connected:      false,
+        configured:     !!(config.clientId && config.clientSecret),
+        scopes:         WHOOP_READ_SCOPES,
+        latest_metrics: null,
+        message:        config.clientId
+          ? 'WHOOP not connected. Visit /api/whoop/auth to authorize.'
+          : 'WHOOP_CLIENT_ID not set. Register at https://developer-dashboard.whoop.com/',
+      });
+    }
+
+    return res.json({
+      connected:        true,
+      configured:       true,
+      scopes:           integration.scopes,
+      whoop_user_id:    integration.whoop_user_id || null,
+      last_synced_at:   integration.last_synced_at || null,
+      token_expires_at: integration.token_expires_at || null,
+      latest_metrics:   integration.latest_metrics || null,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /api/whoop/auth
+ * Redirects user to official WHOOP OAuth 2.0 consent screen.
+ * User grants permission; WHOOP redirects back to /api/whoop/callback.
+ */
+app.get('/api/whoop/auth', (req, res) => {
+  try {
+    const userId = parseInt(req.query.userId || '1', 10);
+    const host = req.get('x-forwarded-host') || req.get('host') || '';
+    const proto = req.get('x-forwarded-proto') || req.protocol || 'https';
+    let redirectUriOverride = req.query.redirect_uri || null;
+    
+    // Auto-detect production domain when running on Vercel
+    if (!redirectUriOverride && host && host.includes('vercel.app')) {
+      redirectUriOverride = `https://${host}/api/whoop/callback`;
+    }
+
+    const authUrl = generateWhoopAuthUrl(userId, redirectUriOverride);
+    res.redirect(authUrl);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /api/whoop/callback
+ * Official OAuth 2.0 redirect URI — receives authorization code from WHOOP.
+ * Exchanges code for access + refresh tokens, then syncs biometrics.
+ */
+app.get('/api/whoop/callback', async (req, res) => {
+  try {
+    const { code, state, error } = req.query;
+    const config = getWhoopConfig();
+    const host = req.get('x-forwarded-host') || req.get('host') || '';
+    const proto = req.get('x-forwarded-proto') || req.protocol || 'https';
+    const currentBaseUrl = host.includes('vercel.app') ? `https://${host}` : config.frontendUrl;
+
+    if (error) {
+      console.error('WHOOP OAuth error:', error);
+      return res.redirect(`${currentBaseUrl}?whoop_error=${encodeURIComponent(error)}`);
+    }
+
+    if (!code || !state) {
+      return res.status(400).json({ error: 'Missing code or state parameter from WHOOP callback' });
+    }
+
+    const { success, metrics } = await exchangeWhoopCode(code, state, pool);
+
+    // Redirect to frontend with success signal
+    res.redirect(
+      `${currentBaseUrl}?whoop_connected=true` +
+      `&recovery=${metrics?.recovery?.score ?? ''}` +
+      `&strain=${metrics?.strain?.day_strain ?? ''}`
+    );
+  } catch (err) {
+    console.error('WHOOP callback error:', err.message);
+    const config = getWhoopConfig();
+    const host = req.get('x-forwarded-host') || req.get('host') || '';
+    const currentBaseUrl = host.includes('vercel.app') ? `https://${host}` : config.frontendUrl;
+    res.redirect(`${currentBaseUrl}?whoop_error=${encodeURIComponent(err.message)}`);
+  }
+});
+
+/**
+ * POST /api/whoop/sync
+ * Manually trigger a read-only biometrics sync from WHOOP v2 API.
+ * Only fetches — never writes anything to WHOOP.
+ */
+app.post('/api/whoop/sync', async (req, res) => {
+  try {
+    const userId  = parseInt(req.body?.userId || '1', 10);
+    const metrics = await syncWhoopBiometrics(userId, pool);
+    res.json({ success: true, metrics });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /api/whoop/metrics
+ * Returns the latest cached WHOOP biometrics for the user.
+ */
+app.get('/api/whoop/metrics', async (req, res) => {
+  try {
+    const userId      = parseInt(req.query.userId || '1', 10);
+    const integration = await getActiveWhoopIntegration(userId, pool);
+
+    if (!integration) {
+      return res.status(404).json({
+        error:     'WHOOP not connected',
+        connected: false,
+      });
+    }
+
+    // Return cached metrics; trigger background refresh if stale > 30 min
+    const lastSync  = new Date(integration.last_synced_at || 0).getTime();
+    const stale     = Date.now() - lastSync > 30 * 60 * 1000;
+    let   metrics   = integration.latest_metrics || null;
+
+    if (stale || !metrics) {
+      metrics = await syncWhoopBiometrics(userId, pool);
+    }
+
+    res.json({ success: true, connected: true, metrics });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/whoop/disconnect
+ * Revokes local token storage and marks integration inactive.
+ * Does NOT call any WHOOP write endpoint.
+ */
+app.post('/api/whoop/disconnect', async (req, res) => {
+  try {
+    const userId = parseInt(req.body?.userId || '1', 10);
+    const result = await disconnectWhoop(userId, pool);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ==========================================
+// 5. BIOFEEDBACK & WEBSOCKET ENGINE
 // ==========================================
 
 // Save Biofeedback Session

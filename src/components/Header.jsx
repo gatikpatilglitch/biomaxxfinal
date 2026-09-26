@@ -12,7 +12,9 @@ import {
 import { soundFx } from '../utils/audioSynthesizer';
 
 export default function Header({ 
+  whoopConnected,
   iotConnected, 
+  onToggleWhoop,
   onToggleIot, 
   isMuted, 
   setIsMuted, 
@@ -20,6 +22,9 @@ export default function Header({
   onToggleAlertModal,
   activeSpikeAlert 
 }) {
+  const isConnected = whoopConnected ?? iotConnected;
+  const handleToggle = onToggleWhoop ?? onToggleIot;
+
   const toggleAudio = () => {
     const next = !isMuted;
     setIsMuted(next);
@@ -39,7 +44,7 @@ export default function Header({
                 <Zap className="w-5 h-5 text-emerald-400 fill-emerald-400/20" />
               </div>
             </div>
-            {iotConnected && (
+            {isConnected && (
               <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full animate-ping"></span>
             )}
           </div>
@@ -50,7 +55,7 @@ export default function Header({
                 BIOMAXXX
               </h1>
               <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                v2.4 IoT
+                WHOOP 4.0
               </span>
             </div>
             <p className="text-[10px] text-slate-400 font-mono tracking-wider uppercase">
@@ -62,19 +67,19 @@ export default function Header({
         {/* Action Controls & Telemetry Status */}
         <div className="flex items-center space-x-2.5">
           
-          {/* IoT Telemetry State Badge */}
+          {/* WHOOP Telemetry State Badge */}
           <button
-            onClick={onToggleIot}
-            title={iotConnected ? "IoT Node Active (ESP32 + BLE PulseOx)" : "Click to Connect IoT Hardware"}
+            onClick={handleToggle}
+            title={isConnected ? "WHOOP 4.0 Connected • Live Telemetry" : "Click to Pair WHOOP"}
             className={`flex items-center space-x-1.5 text-xs font-mono px-2.5 py-1.5 rounded-lg border transition-all ${
-              iotConnected
+              isConnected
                 ? 'bg-emerald-950/50 border-emerald-500/50 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.25)]'
                 : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600'
             }`}
           >
-            <Bluetooth className={`w-3.5 h-3.5 ${iotConnected ? 'text-emerald-400 animate-pulse' : 'text-slate-500'}`} />
+            <Bluetooth className={`w-3.5 h-3.5 ${isConnected ? 'text-emerald-400 animate-pulse' : 'text-slate-500'}`} />
             <span className="hidden sm:inline text-[11px] font-medium">
-              {iotConnected ? 'IoT Live' : 'Pair BLE'}
+              {isConnected ? 'WHOOP Live' : 'Pair WHOOP'}
             </span>
           </button>
 

@@ -60,6 +60,31 @@ CREATE TABLE IF NOT EXISTS biofeedback_sessions (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS whoop_integrations (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id) ON DELETE CASCADE,
+    whoop_user_id VARCHAR(100),
+    access_token TEXT,
+    refresh_token TEXT,
+    token_expires_at TIMESTAMP,
+    scopes TEXT DEFAULT 'read:recovery read:cycles read:workout read:sleep read:profile read:body_measurement offline',
+    profile_data JSONB,
+    latest_metrics JSONB,
+    last_synced_at TIMESTAMP,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT unique_user_whoop UNIQUE(user_id)
+);
+
+CREATE TABLE IF NOT EXISTS whoop_biometrics_logs (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id) ON DELETE CASCADE,
+    metric_type VARCHAR(50) NOT NULL, -- 'recovery', 'cycle', 'sleep', 'workout'
+    data JSONB NOT NULL,
+    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Seed default user for foreign key integrity
 INSERT INTO users (id, name, email) 
 VALUES (1, 'BioMaxxx User', 'user@biomaxxx.local') 
