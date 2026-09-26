@@ -76,7 +76,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#070b14] text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-black">
       
-      {/* Sticky Header with Three-Dot Menu (⋮) */}
+      {/* Sticky Header */}
       <Header
         whoopConnected={whoopConnected}
         onToggleWhoop={() => {
@@ -89,9 +89,7 @@ export default function App() {
         unreadAlertsCount={(showSpikeAlert ? 1 : 0) + (showMorningBrief ? 1 : 0)}
         onToggleAlertModal={() => setShowAlertModal(!showAlertModal)}
         activeSpikeAlert={showSpikeAlert}
-        activeTab={activeTab}
         onTabSwitch={handleTabSwitch}
-        navItems={navItems}
       />
 
       {/* Main Container */}
