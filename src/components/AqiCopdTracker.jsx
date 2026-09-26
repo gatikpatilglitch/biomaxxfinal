@@ -2,10 +2,7 @@ import React, { useState } from 'react';
 import { 
   Wind, 
   MapPin, 
-  ShieldAlert, 
-  Bell, 
   AlertTriangle, 
-  X, 
   CheckCircle2, 
   Thermometer, 
   Droplets, 
@@ -22,11 +19,7 @@ import { soundFx } from '../utils/audioSynthesizer';
 
 export default function AqiCopdTracker({
   currentCityIdx,
-  setCurrentCityIdx,
-  showSpikeAlert,
-  setShowSpikeAlert,
-  showMorningBrief,
-  setShowMorningBrief
+  setCurrentCityIdx
 }) {
   const current = AQI_PRESETS[currentCityIdx];
   const aqiInfo = getAQIClassification(current.aqi);
@@ -35,9 +28,6 @@ export default function AqiCopdTracker({
   const handleCityChange = (idx) => {
     setCurrentCityIdx(idx);
     soundFx.playPopSound(1.2);
-    if (AQI_PRESETS[idx].aqi > 130) {
-      setShowSpikeAlert(true);
-    }
   };
 
   const handleSimulateGeolocation = () => {
@@ -83,54 +73,6 @@ export default function AqiCopdTracker({
           <span className="hidden sm:inline">GPS Sync</span>
         </button>
       </div>
-
-      {/* ================= PREDICTIVE FLARE-UP NOTIFICATION BANNERS ================= */}
-      {showSpikeAlert && current.aqi > 120 && (
-        <div className="glass-card-rose rounded-2xl p-4 border border-rose-500/60 relative animate-in fade-in slide-in-from-top-2 duration-300 space-y-2">
-          <button
-            onClick={() => setShowSpikeAlert(false)}
-            className="absolute top-3 right-3 text-rose-300 hover:text-white p-1 rounded-lg hover:bg-rose-900/40"
-          >
-            <X className="w-4 h-4" />
-          </button>
-          
-          <div className="flex items-center space-x-2 text-rose-400 font-bold text-xs font-mono">
-            <ShieldAlert className="w-4 h-4 animate-bounce" />
-            <span>SUDDEN ATMOSPHERIC SPIKE ALERT (Push Broadcast)</span>
-          </div>
-
-          <p className="text-xs text-rose-100 leading-relaxed">
-            ⚠️ <strong>Air quality has deteriorated rapidly in your area ({current.city})</strong>. PM2.5 particulate concentration spiked to <span className="font-bold text-white underline">{current.pm25} µg/m³</span>.
-          </p>
-
-          <div className="bg-rose-950/60 p-2.5 rounded-xl border border-rose-800/80 text-[11px] text-rose-200 flex items-center justify-between">
-            <span>Action Required: Move indoors immediately. Keep rescue inhaler within reach.</span>
-            <span className="font-mono font-bold text-rose-300 bg-rose-900/60 px-2 py-0.5 rounded">
-              High Flare-Up Risk
-            </span>
-          </div>
-        </div>
-      )}
-
-      {showMorningBrief && (
-        <div className="glass-card rounded-2xl p-3.5 border border-amber-500/40 bg-amber-950/30 relative space-y-1.5">
-          <button
-            onClick={() => setShowMorningBrief(false)}
-            className="absolute top-2.5 right-2.5 text-amber-400 hover:text-white p-1"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-
-          <div className="flex items-center space-x-2 text-amber-400 font-mono text-xs font-bold">
-            <Bell className="w-3.5 h-3.5" />
-            <span>7:00 AM MORNING PREDICTIVE BRIEFING</span>
-          </div>
-
-          <p className="text-xs text-amber-100 leading-relaxed">
-            Local forecast models predict stagnant thermal inversion pushing AQI into the <strong>{aqiInfo.label}</strong> zone this afternoon (2:00 PM – 6:00 PM). Complete outdoor errands before 10:00 AM.
-          </p>
-        </div>
-      )}
 
       {/* Dynamic AQI Gauge & Medical Advice Hero */}
       <div className={`glass-card rounded-2xl p-5 border ${aqiInfo.border} space-y-4 relative overflow-hidden`}>

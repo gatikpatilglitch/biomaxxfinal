@@ -1,13 +1,11 @@
 import React from 'react';
 import { 
   Zap, 
-  Bell, 
   Bluetooth, 
   Wifi, 
   Volume2, 
   VolumeX, 
-  Radio, 
-  ShieldAlert 
+  Radio
 } from 'lucide-react';
 import { soundFx } from '../utils/audioSynthesizer';
 
@@ -18,9 +16,6 @@ export default function Header({
   onToggleIot, 
   isMuted, 
   setIsMuted, 
-  unreadAlertsCount, 
-  onToggleAlertModal,
-  activeSpikeAlert,
   onTabSwitch
 }) {
   const isConnected = whoopConnected ?? iotConnected;
@@ -100,29 +95,6 @@ export default function Header({
           >
             {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
           </button>
-
-          {/* Push Alert / Flare-Up Bell */}
-          <button
-            onClick={onToggleAlertModal}
-            title="Predictive Flare-Up Notifications"
-            className={`relative p-2 rounded-lg border transition-all ${
-              activeSpikeAlert
-                ? 'bg-rose-950/80 border-rose-500 text-rose-300 shadow-[0_0_15px_rgba(244,63,94,0.4)] animate-pulse'
-                : 'bg-slate-900 border-slate-800 text-slate-300 hover:text-white'
-            }`}
-          >
-            {activeSpikeAlert ? (
-              <ShieldAlert className="w-4 h-4 text-rose-400" />
-            ) : (
-              <Bell className="w-4 h-4" />
-            )}
-            {unreadAlertsCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white rounded-full text-[9px] font-bold flex items-center justify-center font-mono">
-                {unreadAlertsCount}
-              </span>
-            )}
-          </button>
-
         </div>
       </div>
     </header>

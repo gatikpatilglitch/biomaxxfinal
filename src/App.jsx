@@ -7,7 +7,6 @@ import {
   Gamepad2, 
   Sparkles, 
   Radio, 
-  ShieldAlert, 
   X, 
   CheckCircle2, 
   Layers,
@@ -42,19 +41,12 @@ export default function App() {
   const [currentSpo2, setCurrentSpo2] = useState(98);
   const [currentCityIdx, setCurrentCityIdx] = useState(0);
 
-  // Flare-Up Predictive Notifications
-  const [showSpikeAlert, setShowSpikeAlert] = useState(false);
-  const [showMorningBrief, setShowMorningBrief] = useState(true);
-  const [showAlertModal, setShowAlertModal] = useState(false);
-
   const currentAqiObj = AQI_PRESETS[currentCityIdx];
 
   // Handler to trigger sudden smog spike simulation
   const handleTriggerSpike = () => {
     setCurrentCityIdx(1); // Switch to New Delhi (High AQI 248)
     setCurrentSpo2(91);   // Oxygen desaturation
-    setShowSpikeAlert(true);
-    soundFx.playSpikeAlert();
   };
 
   const navItems = [
@@ -86,9 +78,6 @@ export default function App() {
         }}
         isMuted={isMuted}
         setIsMuted={setIsMuted}
-        unreadAlertsCount={(showSpikeAlert ? 1 : 0) + (showMorningBrief ? 1 : 0)}
-        onToggleAlertModal={() => setShowAlertModal(!showAlertModal)}
-        activeSpikeAlert={showSpikeAlert}
         onTabSwitch={handleTabSwitch}
       />
 
@@ -155,10 +144,6 @@ export default function App() {
             <AqiCopdTracker
               currentCityIdx={currentCityIdx}
               setCurrentCityIdx={setCurrentCityIdx}
-              showSpikeAlert={showSpikeAlert}
-              setShowSpikeAlert={setShowSpikeAlert}
-              showMorningBrief={showMorningBrief}
-              setShowMorningBrief={setShowMorningBrief}
             />
           </div>
         )}
@@ -177,53 +162,7 @@ export default function App() {
           </div>
         )}
 
-
       </main>
-
-      {/* ================= PREDICTIVE ALERTS MODAL ================= */}
-      {showAlertModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0e1526] border border-slate-700 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center space-x-2 text-rose-400 font-mono font-bold text-sm">
-                <ShieldAlert className="w-5 h-5" />
-                <span>Predictive Flare-Up Notifications</span>
-              </div>
-              <button
-                onClick={() => setShowAlertModal(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-3 text-xs">
-              <div className="bg-rose-950/50 p-3 rounded-xl border border-rose-500/40 space-y-1">
-                <span className="font-bold text-rose-300 font-mono">1. Sudden Smog Spike Push Alert</span>
-                <p className="text-slate-300">
-                  Broadcasts when PM2.5 or Ozone jumps past 120 µg/m³. Directs patient to move indoors and verify rescue inhaler location.
-                </p>
-              </div>
-
-              <div className="bg-amber-950/40 p-3 rounded-xl border border-amber-500/40 space-y-1">
-                <span className="font-bold text-amber-300 font-mono">2. 7:00 AM Morning Flare-Up Briefing</span>
-                <p className="text-slate-300">
-                  Sends weather & atmospheric forecast advising patient to schedule outdoor movement before peak afternoon stagnation.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-2">
-              <button
-                onClick={() => setShowAlertModal(false)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono font-bold rounded-xl"
-              >
-                Close Window
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ================= FIXED BOTTOM TAB NAVIGATION ================= */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#0a0f1d]/95 backdrop-blur-xl border-t border-slate-800/90 py-1.5 px-2 shadow-2xl">
