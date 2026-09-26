@@ -95,7 +95,7 @@ export default function App() {
       />
 
       {/* Main Container */}
-      <main className="flex-1 max-w-5xl w-full mx-auto p-3 sm:p-5 pb-10 space-y-4">
+      <main className="flex-1 max-w-5xl w-full mx-auto p-3 sm:p-5 pb-28 space-y-4">
         
         {/* ================= VIEW: DASHBOARD OVERVIEW ================= */}
         {activeTab === 'dashboard' && (
@@ -227,6 +227,38 @@ export default function App() {
         </div>
       )}
 
+      {/* ================= FIXED BOTTOM TAB NAVIGATION ================= */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#0a0f1d]/95 backdrop-blur-xl border-t border-slate-800/90 py-1.5 px-2 shadow-2xl">
+        <div className="max-w-2xl mx-auto flex items-center justify-around">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.id;
+            const shortLabel = item.id === 'dashboard' ? 'Home' :
+                               item.id === 'whoop' ? 'WHOOP' :
+                               item.id === 'sleep' ? 'Sleep' :
+                               item.id === 'copd_aqi' ? 'AQI' :
+                               item.id === 'analytics' ? 'Insights' :
+                               item.id === 'bmi' ? 'BMI' : 'Games';
+            return (
+              <button
+                key={item.id}
+                onClick={() => handleTabSwitch(item.id)}
+                className={`flex flex-col items-center py-1 px-1.5 sm:px-2 rounded-xl transition-all cursor-pointer ${
+                  isActive
+                    ? 'text-emerald-400 font-bold scale-105'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Icon className={`w-4 h-4 mb-0.5 ${isActive ? 'stroke-[2.5px] text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]' : ''}`} />
+                <span className="text-[10px] font-mono tracking-tight">{shortLabel}</span>
+                {isActive && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-0.5 shadow-[0_0_6px_#34d399]" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </nav>
 
     </div>
   );
