@@ -349,3 +349,119 @@ export const CORRELATION_DATA_14DAYS = [
   { day: 'Day 13', date: '09/19', aqi: 72, spo2: 97.2, coughSeverity: 2, inhalerPuffs: 1 },
   { day: 'Day 14', date: '09/20', aqi: 50, spo2: 98.2, coughSeverity: 1, inhalerPuffs: 0 },
 ];
+
+export function getWalkingWindowRecommendation(aqi) {
+  if (aqi <= 50) {
+    return {
+      safetyLevel: 'Optimal',
+      isWalkSafe: true,
+      badgeText: 'Optimal Walking Conditions',
+      badgeColor: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40',
+      bestWindow: '6:30 AM – 9:00 AM',
+      secondaryWindow: '5:30 PM – 7:30 PM',
+      duration: '45 – 60 mins',
+      pace: 'Brisk / Zone 2 Aerobic',
+      statusSummary: 'Pristine atmospheric conditions. Clean ambient air minimizes bronchial airway stress.',
+      copdGuidance: 'Ideal conditions for cardiopulmonary conditioning. Rhythmic nasal breathing encouraged; virtually zero particulate-induced airway irritation.',
+      inhalerPrecaution: 'Baseline inhaler check; safe for unassisted sustained outdoor walking.',
+      hourlyForecast: [
+        { time: '6 AM', aqi: Math.max(12, Math.round(aqi * 0.8)), status: 'Ideal', isBest: true },
+        { time: '9 AM', aqi: Math.round(aqi * 0.95), status: 'Good', isBest: false },
+        { time: '12 PM', aqi: Math.round(aqi * 1.15), status: 'Moderate', isBest: false },
+        { time: '3 PM', aqi: Math.round(aqi * 1.1), status: 'Moderate', isBest: false },
+        { time: '6 PM', aqi: Math.max(15, Math.round(aqi * 0.85)), status: 'Great', isBest: false },
+        { time: '9 PM', aqi: Math.round(aqi * 1.0), status: 'Good', isBest: false },
+      ]
+    };
+  }
+  if (aqi <= 100) {
+    return {
+      safetyLevel: 'Moderate',
+      isWalkSafe: true,
+      badgeText: 'Moderate – Walk with Care',
+      badgeColor: 'bg-amber-500/20 text-amber-400 border-amber-500/40',
+      bestWindow: '7:00 AM – 8:30 AM',
+      secondaryWindow: '5:00 PM – 6:15 PM',
+      duration: '25 – 35 mins',
+      pace: 'Steady Zone 2 (Nasal Inhale)',
+      statusSummary: 'Air quality is acceptable. Morning air is freshest before peak commuter exhaust and midday ozone accumulation.',
+      copdGuidance: 'Safe for steady Zone-2 walk. Emphasize rhythmic nasal breathing to naturally filter ambient particulates. Avoid steep uphill terrain.',
+      inhalerPrecaution: 'Have fast-acting rescue inhaler accessible; take 1 preventive puff 15 mins prior if directed by your pulmonologist.',
+      hourlyForecast: [
+        { time: '6 AM', aqi: Math.round(aqi * 0.9), status: 'Good', isBest: false },
+        { time: '7:30 AM', aqi: Math.round(aqi * 0.85), status: 'Optimal', isBest: true },
+        { time: '12 PM', aqi: Math.round(aqi * 1.2), status: 'Ozone Peak', isBest: false },
+        { time: '3 PM', aqi: Math.round(aqi * 1.25), status: 'Elevated', isBest: false },
+        { time: '5:30 PM', aqi: Math.round(aqi * 0.95), status: 'Good', isBest: false },
+        { time: '9 PM', aqi: Math.round(aqi * 1.1), status: 'Traffic PM', isBest: false },
+      ]
+    };
+  }
+  if (aqi <= 150) {
+    return {
+      safetyLevel: 'Caution for COPD',
+      isWalkSafe: false,
+      badgeText: 'Sensitive Airway Caution',
+      badgeColor: 'bg-orange-500/20 text-orange-400 border-orange-500/40',
+      bestWindow: '6:00 AM – 7:15 AM',
+      secondaryWindow: 'Indoor Mall / HEPA Track',
+      duration: '15 – 20 mins max',
+      pace: 'Gentle Pacing (No Exertion)',
+      statusSummary: 'Elevated PM2.5 particulates. High probability of bronchial hyper-reactivity and airway constriction in COPD individuals.',
+      copdGuidance: 'Outdoor walk restricted to dawn before traffic builds. Otherwise transition to indoor climate-controlled spaces. Stop immediately if chest tightness begins.',
+      inhalerPrecaution: 'Must carry rescue bronchodilator. Pre-dose with bronchodilator as prescribed.',
+      hourlyForecast: [
+        { time: '6 AM', aqi: Math.round(aqi * 0.88), status: 'Best Window', isBest: true },
+        { time: '9 AM', aqi: Math.round(aqi * 1.05), status: 'Traffic Spike', isBest: false },
+        { time: '12 PM', aqi: Math.round(aqi * 1.15), status: 'High Ozone', isBest: false },
+        { time: '3 PM', aqi: Math.round(aqi * 1.18), status: 'Peak Smog', isBest: false },
+        { time: '6 PM', aqi: Math.round(aqi * 1.1), status: 'Restricted', isBest: false },
+        { time: '9 PM', aqi: Math.round(aqi * 0.98), status: 'Caution', isBest: false },
+      ]
+    };
+  }
+  if (aqi <= 200) {
+    return {
+      safetyLevel: 'Unsafe for COPD',
+      isWalkSafe: false,
+      badgeText: 'Outdoor Walk Contraindicated',
+      badgeColor: 'bg-rose-500/20 text-rose-400 border-rose-500/40',
+      bestWindow: 'Indoor HEPA Walking Only',
+      secondaryWindow: 'Indoor Track / Treadmill',
+      duration: '20 – 30 mins (Indoors)',
+      pace: 'Indoor Gentle Stride',
+      statusSummary: 'Smog alert. Inhaling ambient air triggers acute mucosal inflammation and airway resistance.',
+      copdGuidance: 'Do NOT walk outdoors. Perform gentle indoor pacing or low-resistance stationary cycling in a HEPA-purified room. Keep windows sealed.',
+      inhalerPrecaution: 'Rescue inhaler must be within arm’s reach. Monitor SpO2 levels closely.',
+      hourlyForecast: [
+        { time: '6 AM', aqi: Math.round(aqi * 0.92), status: 'Unsafe', isBest: false },
+        { time: '9 AM', aqi: Math.round(aqi * 1.05), status: 'Severe', isBest: false },
+        { time: '12 PM', aqi: Math.round(aqi * 1.0), status: 'Unsafe', isBest: false },
+        { time: '3 PM', aqi: Math.round(aqi * 1.12), status: 'Dangerous', isBest: false },
+        { time: '6 PM', aqi: Math.round(aqi * 1.15), status: 'Severe', isBest: false },
+        { time: '9 PM', aqi: Math.round(aqi * 1.02), status: 'Unhealthy', isBest: false },
+      ]
+    };
+  }
+  return {
+    safetyLevel: 'Hazardous Air Alert',
+    isWalkSafe: false,
+    badgeText: 'Severe Respiratory Hazard',
+    badgeColor: 'bg-purple-500/20 text-purple-400 border-purple-500/40',
+    bestWindow: 'Strictly Indoors (Zero Outdoor Walk)',
+    secondaryWindow: 'Rest & Diaphragmatic Breath',
+    duration: '0 mins outdoor',
+    pace: 'Indoor Seated Recovery',
+    statusSummary: 'Emergency atmospheric conditions. Toxic microscopic particulates cause acute COPD exacerbations.',
+    copdGuidance: 'Remain strictly inside with HEPA filtration running. Avoid cardiovascular exertion. Practice pursed-lip and belly breathing.',
+    inhalerPrecaution: 'Critical: keep nebulizer and rescue inhaler nearby. Contact emergency services if dyspnea accelerates.',
+    hourlyForecast: [
+      { time: '6 AM', aqi: Math.round(aqi * 0.95), status: 'Hazardous', isBest: false },
+      { time: '9 AM', aqi: Math.round(aqi * 1.08), status: 'Critical', isBest: false },
+      { time: '12 PM', aqi: Math.round(aqi * 1.0), status: 'Hazardous', isBest: false },
+      { time: '3 PM', aqi: Math.round(aqi * 1.05), status: 'Hazardous', isBest: false },
+      { time: '6 PM', aqi: Math.round(aqi * 1.12), status: 'Critical', isBest: false },
+      { time: '9 PM', aqi: Math.round(aqi * 1.02), status: 'Hazardous', isBest: false },
+    ]
+  };
+}

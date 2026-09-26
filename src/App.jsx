@@ -24,6 +24,7 @@ import BmiNutritionPlanner from './components/BmiNutritionPlanner';
 import AqiCopdTracker from './components/AqiCopdTracker';
 import CorrelationAnalytics from './components/CorrelationAnalytics';
 import StressGamesHub from './components/StressGamesHub';
+import AqiWalkingPlanner from './components/AqiWalkingPlanner';
 
 import { AQI_PRESETS } from './utils/healthCalculations';
 import { soundFx } from './utils/audioSynthesizer';
@@ -93,70 +94,12 @@ export default function App() {
         {activeTab === 'dashboard' && (
           <div className="space-y-4 animate-in fade-in duration-300">
             
-            {/* Hero Card: COPD Readiness & Daily Status */}
-            <div className="glass-card-emerald rounded-3xl p-5 border border-emerald-500/30 relative overflow-hidden shadow-2xl">
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-5">
-                
-                {/* Readiness Ring */}
-                <div className="relative w-28 h-28 flex items-center justify-center shrink-0">
-                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                    <path
-                      className="text-slate-800/80"
-                      strokeWidth="3.2"
-                      stroke="currentColor"
-                      fill="none"
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    />
-                    <path
-                      className="text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.8)]"
-                      strokeDasharray="92, 100"
-                      strokeWidth="3.2"
-                      strokeLinecap="round"
-                      stroke="currentColor"
-                      fill="none"
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    />
-                  </svg>
-                  <div className="absolute flex flex-col items-center justify-center text-center">
-                    <span className="text-2xl font-black font-mono text-emerald-400">92%</span>
-                    <span className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold">Ready</span>
-                  </div>
-                </div>
-
-                {/* Status Telemetry */}
-                <div className="flex-1 space-y-2 text-center sm:text-left">
-                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                    <span className="text-xs font-bold font-mono px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center space-x-1">
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>Optimal Pulmonary Vitals</span>
-                    </span>
-                    <span className="text-xs font-mono text-slate-400">
-                      Station: {currentAqiObj.city}
-                    </span>
-                  </div>
-
-                  <h2 className="text-lg sm:text-xl font-black text-slate-100">
-                    Low Bronchial Airway Strain Predicted
-                  </h2>
-                  <p className="text-xs text-slate-300 leading-relaxed max-w-xl">
-                    Wearable pulse oximetry confirms resting blood oxygen at <strong className="text-emerald-400">{currentSpo2}%</strong>. Local ambient AQI is <strong className="text-cyan-400">{currentAqiObj.aqi}</strong> ({currentAqiObj.status}). Scheduled morning light cardio is safe.
-                  </p>
-
-                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1 font-mono text-xs">
-                    <span className="bg-slate-950/80 px-2.5 py-1 rounded-lg border border-slate-800 text-emerald-300">
-                      SpO₂: <strong>{currentSpo2}%</strong>
-                    </span>
-                    <span className="bg-slate-950/80 px-2.5 py-1 rounded-lg border border-slate-800 text-cyan-300">
-                      PM2.5: <strong>{currentAqiObj.pm25} µg/m³</strong>
-                    </span>
-                    <span className="bg-slate-950/80 px-2.5 py-1 rounded-lg border border-slate-800 text-amber-300">
-                      Inhaler: <strong>142 / 200 Doses</strong>
-                    </span>
-                  </div>
-                </div>
-
-              </div>
-            </div>
+            {/* Hero Card: AQI & COPD-Optimized Best Walking Time */}
+            <AqiWalkingPlanner
+              currentCityIdx={currentCityIdx}
+              setCurrentCityIdx={setCurrentCityIdx}
+              onNavigateToCopd={() => handleTabSwitch('copd_aqi')}
+            />
 
             {/* Quick Diagnostic Shortcuts Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -185,63 +128,31 @@ export default function App() {
 
             </div>
 
-            {/* In-Line Overview of Core Modules */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              
-              {/* Quick AQI Card */}
-              <div 
-                onClick={() => handleTabSwitch('copd_aqi')}
-                className="glass-card rounded-2xl p-4 border border-slate-800 hover:border-cyan-500/40 cursor-pointer transition-all space-y-3"
-              >
-                <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                  <span className="text-xs font-mono font-bold text-slate-300 flex items-center space-x-1.5">
-                    <Wind className="w-4 h-4 text-cyan-400" />
-                    <span>Atmospheric Flare-Up Guardian</span>
-                  </span>
-                  <ChevronRight className="w-4 h-4 text-slate-500" />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] font-mono text-slate-400">Current AQI</span>
-                    <div className="text-3xl font-black font-mono text-cyan-400">{currentAqiObj.aqi}</div>
-                    <span className="text-xs font-mono text-slate-300">{currentAqiObj.status}</span>
-                  </div>
-                  <div className="text-right text-xs font-mono space-y-1">
-                    <div className="text-slate-400">PM2.5: <strong className="text-cyan-300">{currentAqiObj.pm25} µg/m³</strong></div>
-                    <div className="text-slate-400">PM10: <strong className="text-cyan-300">{currentAqiObj.pm10} µg/m³</strong></div>
-                    <div className="text-slate-400">O₃: <strong className="text-cyan-300">{currentAqiObj.o3} ppb</strong></div>
-                  </div>
-                </div>
+            {/* Quick Metabolic Overview Card */}
+            <div 
+              onClick={() => handleTabSwitch('bmi')}
+              className="glass-card rounded-2xl p-4 border border-slate-800 hover:border-emerald-500/40 cursor-pointer transition-all space-y-3"
+            >
+              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                <span className="text-xs font-mono font-bold text-slate-300 flex items-center space-x-1.5">
+                  <Scale className="w-4 h-4 text-emerald-400" />
+                  <span>BMI, Nutrition & Workout Goal</span>
+                </span>
+                <ChevronRight className="w-4 h-4 text-slate-500" />
               </div>
 
-              {/* Quick Metabolic Card */}
-              <div 
-                onClick={() => handleTabSwitch('bmi')}
-                className="glass-card rounded-2xl p-4 border border-slate-800 hover:border-emerald-500/40 cursor-pointer transition-all space-y-3"
-              >
-                <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                  <span className="text-xs font-mono font-bold text-slate-300 flex items-center space-x-1.5">
-                    <Scale className="w-4 h-4 text-emerald-400" />
-                    <span>BMI, Nutrition & Workout Goal</span>
-                  </span>
-                  <ChevronRight className="w-4 h-4 text-slate-500" />
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <span className="text-[10px] font-mono text-slate-400">Body Mass Index</span>
+                  <div className="text-3xl font-black font-mono text-emerald-400">25.5</div>
+                  <span className="text-xs font-mono text-amber-400">Overweight Range</span>
                 </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] font-mono text-slate-400">Body Mass Index</span>
-                    <div className="text-3xl font-black font-mono text-emerald-400">25.5</div>
-                    <span className="text-xs font-mono text-amber-400">Overweight Range</span>
-                  </div>
-                  <div className="text-right text-xs font-mono space-y-1">
-                    <div className="text-slate-400">Target Intake: <strong className="text-emerald-300">1,950 kcal</strong></div>
-                    <div className="text-slate-400">Pace: <strong className="text-rose-300">-0.5 kg/wk</strong></div>
-                    <div className="text-slate-400">Routine: <strong className="text-slate-200">Zone 2 Cardio</strong></div>
-                  </div>
+                <div className="sm:text-right text-xs font-mono space-y-1">
+                  <div className="text-slate-400">Target Intake: <strong className="text-emerald-300">1,950 kcal</strong></div>
+                  <div className="text-slate-400">Pace: <strong className="text-rose-300">-0.5 kg/wk</strong></div>
+                  <div className="text-slate-400">Routine: <strong className="text-slate-200">Zone 2 Cardio</strong></div>
                 </div>
               </div>
-
             </div>
 
             {/* WHOOP Biometrics Hub Shortcut */}
