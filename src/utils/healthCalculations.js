@@ -465,3 +465,102 @@ export function getWalkingWindowRecommendation(aqi) {
     ]
   };
 }
+
+/**
+ * Calculates optimal bedtime, wake-up time, and total sleep need
+ * based on WHOOP day strain, recovery score, HRV, resting HR, and previous sleep.
+ */
+export function calculateSleepRecommendation({
+  dayStrain = 14.2,
+  recoveryScore = 65,
+  hrv = 72,
+  rhr = 54,
+  previousSleepHours = 6.1,
+  targetWakeTime = '06:45',
+  targetGoal = 'perform' // 'peak' (100%), 'perform' (85%), 'get_by' (70%)
+} = {}) {
+  const baselineNeedHours = 7.6;
+  const strainExtraHours = dayStrain > 10 ? Math.min(1.2, ((dayStrain - 10) * 0.08)) : 0;
+  const sleepDebtHours = Math.max(0, (baselineNeedHours - previousSleepHours) * 0.45);
+  const fullNeedHours = baselineNeedHours + strainExtraHours + sleepDebtHours;
+  
+  const goalMultiplier = targetGoal === 'peak' ? 1.0 : targetGoal === 'perform' ? 0.92 : 0.82;
+  const totalSleepNeedHours = parseFloat((fullNeedHours * goalMultiplier).toFixed(2));
+  const latencyMinutes = 15;
+  
+  const [wakeH, wakeM] = (targetWakeTime || '06:45').split(':').map(Number);
+  const wakeTotalMinutes = wakeH * 60 + wakeM;
+  const timeInBedMinutes = Math.round(totalSleepNeedHours * 60) + latencyMinutes;
+  
+  let bedtimeMinutes = wakeTotalMinutes - timeInBedMinutes;
+  while (bedtimeMinutes < 0) {
+    bedtimeMinutes += 24 * 60;
+  }
+  
+  const bedH = Math.floor(bedtimeMinutes / 60);
+  const bedM = bedtimeMinutes % 60;
+  
+  const formatTime12h = (h, m) => {
+    const period = h >= 12 ? 'PM' : 'AM';
+    const displayH = h % 12 === 0 ? 12 : h % 12;
+    const displayM = String(m).padStart(2, '0');
+    return `${displayH}:${displayM} ${period}`;
+  };
+  
+  const optimalBedtime = formatTime12h(bedH, bedM);
+  const optimalWakeup = formatTime12h(wakeH, wakeM);
+  
+  const hours = Math.floor(totalSleepNeedHours);
+  const mins = Math.round((totalSleepNeedHours - hours) * 60);
+  const recoveryBoost = targetGoal === 'peak' ? 28 : targetGoal === 'perform' ? 22 : 12;
+  const projectedRecovery = Math.min(98, Math.round(recoveryScore + recoveryBoost));
+
+  return {
+    baselineNeedHours,
+    baselineNeedFormatted: '7h 36m',
+    strainExtraMinutes: Math.round(strainExtraHours * 60),
+    sleepDebtMinutes: Math.round(sleepDebtHours * 60),
+    totalSleepNeedHours,
+    sleepNeedFormatted: `${hours}h ${mins}m`,
+    optimalBedtime,
+    optimalWakeup,
+    targetWakeTime,
+    bedH,
+    bedM,
+    projectedRecovery,
+    cycles: [
+      { 
+        count: 4, 
+        durationHours: 6.0, 
+        label: 'Get By (4 Cycles)', 
+        quality: 'Sufficient', 
+        targetWake: formatTime12h((bedH + 6) % 24, (bedM + latencyMinutes) % 60),
+        recoveryRange: '68% – 76%' 
+      },
+      { 
+        count: 5, 
+        durationHours: 7.5, 
+        label: 'Optimal Recovery (5 Cycles) ⭐', 
+        quality: 'Recommended', 
+        targetWake: formatTime12h((bedH + 7 + Math.floor((bedM + 30 + latencyMinutes)/60)) % 24, (bedM + 30 + latencyMinutes) % 60),
+        recoveryRange: '85% – 92%', 
+        isRecommended: true 
+      },
+      { 
+        count: 6, 
+        durationHours: 9.0, 
+        label: 'Peak Athletic (6 Cycles)', 
+        quality: 'Maximum Restoration', 
+        targetWake: formatTime12h((bedH + 9) % 24, (bedM + latencyMinutes) % 60),
+        recoveryRange: '95% – 99%' 
+      },
+    ],
+    physiologicalAnalysis: {
+      strainImpact: dayStrain >= 14 
+        ? `High Day Strain of ${dayStrain} requires +${Math.round(strainExtraHours * 60)}m extra sleep to restore muscular glycogen and lower cortisol.` 
+        : `Moderate Day Strain of ${dayStrain} requires normal baseline recovery.`,
+      hrvRestoration: `Current HRV of ${hrv} ms indicates sympathetic dominance. A solid 5-cycle sleep block resets autonomic parasympathetic tone.`,
+      rhrImpact: `Resting heart rate (${rhr} bpm) needs at least 4 hours of slow-wave sleep before midnight to reach physiological nadir.`
+    }
+  };
+}

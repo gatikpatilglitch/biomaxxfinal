@@ -15,7 +15,8 @@ import {
   Flame,
   Zap,
   ChevronRight,
-  TrendingDown
+  TrendingDown,
+  Moon
 } from 'lucide-react';
 
 import Header from './components/Header';
@@ -26,6 +27,7 @@ import CorrelationAnalytics from './components/CorrelationAnalytics';
 import StressGamesHub from './components/StressGamesHub';
 import AqiWalkingPlanner from './components/AqiWalkingPlanner';
 import HomeHealthSummary from './components/HomeHealthSummary';
+import SleepOptimizerHub from './components/SleepOptimizerHub';
 
 import { AQI_PRESETS } from './utils/healthCalculations';
 import { soundFx } from './utils/audioSynthesizer';
@@ -57,6 +59,7 @@ export default function App() {
 
   const navItems = [
     { id: 'dashboard', label: 'Home', icon: Activity },
+    { id: 'sleep', label: 'Sleep', icon: Moon },
     { id: 'whoop', label: 'WHOOP', icon: Activity },
     { id: 'bmi', label: 'BMI & Diet', icon: Scale },
     { id: 'copd_aqi', label: 'AQI & COPD', icon: Wind },
@@ -100,7 +103,27 @@ export default function App() {
               currentSpo2={currentSpo2}
               recoveryScore={65}
               sleepHours={6.1}
+              dayStrain={14.2}
+              hrv={72}
+              rhr={54}
               onNavigateTab={handleTabSwitch}
+            />
+          </div>
+        )}
+
+        {/* ================= VIEW: CIRCADIAN SLEEP OPTIMIZER ================= */}
+        {activeTab === 'sleep' && (
+          <div className="animate-in fade-in duration-300">
+            <SleepOptimizerHub
+              whoopData={{
+                recoveryScore: 65,
+                dayStrain: 14.2,
+                hrv: 72,
+                rhr: 54,
+                previousSleepHours: 6.1,
+                spo2: currentSpo2
+              }}
+              onNavigateHome={() => handleTabSwitch('dashboard')}
             />
           </div>
         )}

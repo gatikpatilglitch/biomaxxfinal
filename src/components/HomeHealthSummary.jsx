@@ -7,11 +7,16 @@ import {
   ChevronUp, 
   Sparkles,
   ExternalLink,
-  Navigation
+  Navigation,
+  Moon,
+  X,
+  Bell,
+  ChevronRight
 } from 'lucide-react';
 import { 
   AQI_PRESETS, 
-  getWalkingWindowRecommendation 
+  getWalkingWindowRecommendation,
+  calculateSleepRecommendation
 } from '../utils/healthCalculations';
 import { soundFx } from '../utils/audioSynthesizer';
 
@@ -21,11 +26,26 @@ export default function HomeHealthSummary({
   currentSpo2 = 97,
   recoveryScore = 65,
   sleepHours = 6.1,
+  dayStrain = 14.2,
+  hrv = 72,
+  rhr = 54,
   onNavigateTab
 }) {
   const [showPlan, setShowPlan] = useState(false);
+  const [showBedtimeNotification, setShowBedtimeNotification] = useState(true);
   const currentAqiObj = AQI_PRESETS[currentCityIdx] || AQI_PRESETS[0];
   const walkRec = getWalkingWindowRecommendation(currentAqiObj.aqi);
+
+  // Calculate WHOOP-informed sleep recommendation
+  const sleepRec = calculateSleepRecommendation({
+    dayStrain,
+    recoveryScore,
+    hrv,
+    rhr,
+    previousSleepHours: sleepHours,
+    targetWakeTime: '06:45',
+    targetGoal: 'perform'
+  });
 
   // Time-based greeting
   const getGreeting = () => {
@@ -132,6 +152,58 @@ export default function HomeHealthSummary({
             </div>
           </div>
         </div>
+
+        {/* ================= BEDTIME SLEEP NOTIFICATION (HOME TAB) ================= */}
+        {showBedtimeNotification && (
+          <div className="bg-gradient-to-r from-indigo-950/70 via-slate-900/90 to-purple-950/40 p-3.5 sm:p-4 rounded-2xl border border-indigo-500/40 relative animate-in fade-in slide-in-from-top-2 duration-300 shadow-[0_0_15px_rgba(99,102,241,0.2)]">
+            <button
+              onClick={() => {
+                setShowBedtimeNotification(false);
+                soundFx.playPopSound(0.8);
+              }}
+              className="absolute top-2.5 right-2.5 text-slate-500 hover:text-white p-1 rounded-lg transition-colors"
+              title="Dismiss notification"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+
+            <div className="flex items-start space-x-3 pr-5">
+              <div className="p-2 rounded-xl bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0 mt-0.5 shadow-[0_0_8px_rgba(99,102,241,0.4)]">
+                <Moon className="w-4 h-4 animate-pulse text-indigo-300" />
+              </div>
+
+              <div className="space-y-1 font-mono text-xs">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-bold text-indigo-300 tracking-wider flex items-center space-x-1">
+                    <Bell className="w-3 h-3 text-amber-400" />
+                    <span>BEDTIME PROTOCOL NOTIFICATION</span>
+                  </span>
+                  <span className="text-[10px] bg-indigo-500/20 text-indigo-200 px-2 py-0.5 rounded-full border border-indigo-500/30">
+                    WHOOP Strain {dayStrain}
+                  </span>
+                </div>
+
+                <p className="text-slate-200 text-xs sm:text-sm leading-snug">
+                  Optimal Bedtime: <strong className="text-white font-bold">{sleepRec.optimalBedtime}</strong> • Wake: <strong className="text-cyan-300 font-bold">{sleepRec.optimalWakeup}</strong>
+                </p>
+
+                <p className="text-[11px] text-slate-400 leading-normal">
+                  Requires <strong className="text-emerald-300">{sleepRec.sleepNeedFormatted}</strong> sleep to clear {sleepRec.sleepDebtMinutes}m debt & recover to <strong className="text-emerald-400 font-bold">{sleepRec.projectedRecovery}%</strong>.
+                </p>
+
+                <div className="pt-1.5 flex items-center space-x-3">
+                  <button
+                    onClick={() => onNavigateTab && onNavigateTab('sleep')}
+                    className="text-xs font-bold text-indigo-400 hover:text-indigo-300 flex items-center space-x-1 underline decoration-indigo-500/50 hover:decoration-indigo-400 transition-all cursor-pointer"
+                  >
+                    <span>View Full Sleep Analysis & Cycles</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Section 1: Your Health Today */}
         <div className="space-y-4">
