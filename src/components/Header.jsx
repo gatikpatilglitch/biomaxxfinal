@@ -59,7 +59,7 @@ export default function Header({
               </span>
             </div>
             <p className="text-[10px] text-slate-400 font-mono tracking-wider uppercase">
-              COPD Guardian & AI Vision
+              COPD Guardian & Biofeedback Engine
             </p>
           </div>
         </div>

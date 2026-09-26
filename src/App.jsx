@@ -5,7 +5,6 @@ import {
   Wind, 
   BarChart2, 
   Gamepad2, 
-  Eye, 
   Sparkles, 
   Radio, 
   ShieldAlert, 
@@ -25,7 +24,6 @@ import BmiNutritionPlanner from './components/BmiNutritionPlanner';
 import AqiCopdTracker from './components/AqiCopdTracker';
 import CorrelationAnalytics from './components/CorrelationAnalytics';
 import StressGamesHub from './components/StressGamesHub';
-import AiDryEyeScanner from './components/AiDryEyeScanner';
 
 import { AQI_PRESETS } from './utils/healthCalculations';
 import { soundFx } from './utils/audioSynthesizer';
@@ -62,7 +60,6 @@ export default function App() {
     { id: 'copd_aqi', label: 'AQI & COPD', icon: Wind },
     { id: 'analytics', label: 'Analytics', icon: BarChart2 },
     { id: 'games', label: 'Games', icon: Gamepad2 },
-    { id: 'eye_ai', label: 'Eye AI', icon: Eye },
   ];
 
   const handleTabSwitch = (id) => {
@@ -162,19 +159,8 @@ export default function App() {
             </div>
 
             {/* Quick Diagnostic Shortcuts Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               
-              <button
-                onClick={() => handleTabSwitch('eye_ai')}
-                className="glass-card p-3.5 rounded-2xl border border-slate-800 hover:border-cyan-500/50 transition-all text-left group hover:scale-[1.02]"
-              >
-                <div className="p-2 w-fit rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 mb-2 group-hover:shadow-[0_0_12px_rgba(6,182,212,0.4)]">
-                  <Eye className="w-5 h-5" />
-                </div>
-                <div className="text-xs font-bold text-slate-200">AI Dry Eye Scan</div>
-                <div className="text-[10px] text-slate-400 font-mono">Blink BPM & Ptosis</div>
-              </button>
-
               <button
                 onClick={() => handleTabSwitch('games')}
                 className="glass-card p-3.5 rounded-2xl border border-slate-800 hover:border-emerald-500/50 transition-all text-left group hover:scale-[1.02]"
@@ -318,12 +304,6 @@ export default function App() {
           </div>
         )}
 
-        {/* ================= VIEW: AI EYE HEALTH SCANNER ================= */}
-        {activeTab === 'eye_ai' && (
-          <div className="animate-in fade-in duration-300">
-            <AiDryEyeScanner />
-          </div>
-        )}
 
       </main>
 
