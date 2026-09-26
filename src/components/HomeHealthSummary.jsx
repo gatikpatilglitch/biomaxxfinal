@@ -6,7 +6,8 @@ import {
   ChevronDown, 
   ChevronUp, 
   Sparkles,
-  ExternalLink
+  ExternalLink,
+  Navigation
 } from 'lucide-react';
 import { 
   AQI_PRESETS, 
@@ -37,12 +38,27 @@ export default function HomeHealthSummary({
   // Status message logic
   const getOverallStatus = () => {
     if (currentAqiObj.aqi > 200 || recoveryScore < 40) {
-      return { dot: '🔴', title: 'Caution advised today', subtitle: 'Rest and indoor recovery recommended' };
+      return { 
+        color: 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.9)]', 
+        textColor: 'text-rose-400',
+        title: 'Overall Status', 
+        subtitle: 'Rest and indoor recovery recommended today' 
+      };
     }
     if (currentAqiObj.aqi > 100 || recoveryScore < 60) {
-      return { dot: '🟡', title: 'Moderate strain predicted', subtitle: 'Take it easy and monitor breathing' };
+      return { 
+        color: 'bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.9)]', 
+        textColor: 'text-amber-400',
+        title: 'Overall Status', 
+        subtitle: 'Moderate airway strain — take it easy today' 
+      };
     }
-    return { dot: '🟢', title: 'Overall Status', subtitle: "You're doing okay today" };
+    return { 
+      color: 'bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)]', 
+      textColor: 'text-emerald-400',
+      title: 'Overall Status', 
+      subtitle: "You're doing okay today" 
+    };
   };
 
   const statusInfo = getOverallStatus();
@@ -52,7 +68,7 @@ export default function HomeHealthSummary({
     if (currentAqiObj.aqi <= 50) {
       return {
         line1: 'Air quality is pristine.',
-        line2: 'Optimal conditions for sustained outdoor walking and deep cardio.'
+        line2: 'Optimal conditions for sustained outdoor walking and cardio.'
       };
     }
     if (currentAqiObj.aqi <= 100) {
@@ -63,39 +79,44 @@ export default function HomeHealthSummary({
     }
     if (currentAqiObj.aqi <= 150) {
       return {
-        line1: 'Air quality is sensitive for airways.',
+        line1: 'Air quality is sensitive for bronchial airways.',
         line2: 'Keep outdoor walks brief and carry your rescue inhaler.'
       };
     }
     return {
-      line1: 'Air quality is hazardous.',
-      line2: 'Stay indoors with HEPA air filtration running.'
+      line1: 'Air quality is hazardous (Smog Inversion).',
+      line2: 'Avoid outdoor movement and stay indoors with HEPA air filtration.'
     };
   };
 
   const oneThing = getOneThingToKnow();
 
   return (
-    <div className="w-full max-w-md mx-auto py-2">
-      {/* Matte Dark Card matching exact design */}
-      <div className="bg-[#141519] border border-[#23262e] rounded-3xl p-6 sm:p-7 shadow-2xl text-slate-200 font-mono space-y-6">
+    <div className="w-full max-w-xl mx-auto py-2">
+      {/* Biomaxxx Glass Card Theme with subtle glowing gradient edge */}
+      <div className="glass-card-emerald rounded-3xl p-6 sm:p-8 border border-emerald-500/20 shadow-2xl relative overflow-hidden space-y-6">
         
-        {/* Top Header: Greeting & Subtle Status */}
-        <div className="flex items-center justify-between">
-          <span className="text-xs sm:text-sm font-bold tracking-wider text-slate-300 uppercase">
+        {/* Subtle Ambient Background Gradients */}
+        <div className="absolute -top-32 -right-32 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-32 -left-32 w-80 h-80 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
+
+        {/* Top Header: Greeting & Battery / Station Info */}
+        <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+          <span className="text-xs sm:text-sm font-bold font-mono tracking-widest text-slate-300 uppercase">
             {getGreeting()}
           </span>
-          <div className="flex items-center space-x-2 text-slate-500">
+
+          <div className="flex items-center space-x-2 text-slate-400">
             {/* Ambient Station Selector */}
-            <div className="flex items-center space-x-1 text-[11px] text-slate-400 bg-[#1c1e24] px-2 py-0.5 rounded-md border border-[#2a2e38]">
-              <MapPin className="w-3 h-3 text-cyan-400" />
+            <div className="flex items-center space-x-1.5 text-[11px] font-mono bg-slate-950/80 px-2.5 py-1 rounded-lg border border-slate-800 hover:border-cyan-500/40 transition-colors">
+              <MapPin className="w-3 h-3 text-cyan-400 shrink-0" />
               <select
                 value={currentCityIdx}
                 onChange={(e) => {
                   setCurrentCityIdx(Number(e.target.value));
                   soundFx.playPopSound(1.2);
                 }}
-                className="bg-transparent text-slate-300 text-[11px] focus:outline-none cursor-pointer"
+                className="bg-transparent text-slate-200 text-[11px] focus:outline-none cursor-pointer"
                 title="Change Ambient Atmospheric Station"
               >
                 {AQI_PRESETS.map((p, idx) => (
@@ -105,138 +126,146 @@ export default function HomeHealthSummary({
                 ))}
               </select>
             </div>
-            <Battery className="w-4 h-4 text-slate-400" />
+
+            <div className="p-1 rounded bg-slate-950/60 border border-slate-800 text-slate-400">
+              <Battery className="w-3.5 h-3.5" />
+            </div>
           </div>
         </div>
 
         {/* Section 1: Your Health Today */}
         <div className="space-y-4">
           <div>
-            <h2 className="text-base sm:text-lg font-bold text-slate-100 tracking-wide font-sans">
+            <h2 className="text-lg sm:text-xl font-black text-slate-100 tracking-tight font-sans">
               Your health today
             </h2>
-            <div className="w-36 h-[1.5px] bg-[#323642] mt-1.5" />
+            <div className="w-36 h-[2px] bg-gradient-to-r from-emerald-400 via-cyan-400 to-transparent mt-2 rounded-full" />
           </div>
 
           {/* Status Headline */}
           <div className="space-y-1 pt-1">
-            <div className="flex items-center space-x-2 text-xs font-semibold text-slate-300">
-              <span>{statusInfo.dot}</span>
-              <span>{statusInfo.title}</span>
+            <div className="flex items-center space-x-2">
+              <span className={`w-2.5 h-2.5 rounded-full ${statusInfo.color} animate-pulse inline-block`} />
+              <span className={`text-xs font-mono font-bold uppercase tracking-wider ${statusInfo.textColor}`}>
+                {statusInfo.title}
+              </span>
             </div>
-            <p className="text-sm sm:text-base text-slate-100 font-normal">
+            <p className="text-sm sm:text-base font-medium text-slate-200 pl-4.5">
               {statusInfo.subtitle}
             </p>
           </div>
 
           {/* 4 Core Metrics Table */}
-          <div className="space-y-2.5 pt-2 text-sm sm:text-base">
+          <div className="space-y-2 pt-2 text-sm sm:text-base font-mono">
             
             {/* Recovery */}
             <div 
               onClick={() => onNavigateTab && onNavigateTab('whoop')}
-              className="flex items-center justify-between py-0.5 cursor-pointer hover:text-emerald-400 transition-colors group"
+              className="flex items-center justify-between py-1 px-2.5 rounded-xl hover:bg-slate-800/40 border border-transparent hover:border-slate-800 transition-all cursor-pointer group"
+              title="View WHOOP Recovery"
             >
-              <div className="flex items-center space-x-2.5">
-                <span className="text-base">❤️</span>
-                <span className="text-slate-300 group-hover:text-emerald-300">Recovery</span>
+              <div className="flex items-center space-x-3">
+                <span className="text-base group-hover:scale-110 transition-transform">❤️</span>
+                <span className="text-slate-300 group-hover:text-emerald-300 transition-colors">Recovery</span>
               </div>
-              <span className="font-bold text-slate-100">{recoveryScore}%</span>
+              <span className="font-bold text-emerald-400 font-mono text-base">{recoveryScore}%</span>
             </div>
 
             {/* Sleep */}
             <div 
               onClick={() => onNavigateTab && onNavigateTab('whoop')}
-              className="flex items-center justify-between py-0.5 cursor-pointer hover:text-cyan-400 transition-colors group"
+              className="flex items-center justify-between py-1 px-2.5 rounded-xl hover:bg-slate-800/40 border border-transparent hover:border-slate-800 transition-all cursor-pointer group"
+              title="View WHOOP Sleep"
             >
-              <div className="flex items-center space-x-2.5">
-                <span className="text-base">😴</span>
-                <span className="text-slate-300 group-hover:text-cyan-300">Sleep</span>
+              <div className="flex items-center space-x-3">
+                <span className="text-base group-hover:scale-110 transition-transform">😴</span>
+                <span className="text-slate-300 group-hover:text-cyan-300 transition-colors">Sleep</span>
               </div>
-              <span className="font-bold text-slate-100">{sleepHours}h</span>
+              <span className="font-bold text-cyan-400 font-mono text-base">{sleepHours}h</span>
             </div>
 
             {/* SpO2 */}
-            <div className="flex items-center justify-between py-0.5">
-              <div className="flex items-center space-x-2.5">
+            <div className="flex items-center justify-between py-1 px-2.5 rounded-xl hover:bg-slate-800/40 border border-transparent hover:border-slate-800 transition-all">
+              <div className="flex items-center space-x-3">
                 <span className="text-base">🫁</span>
                 <span className="text-slate-300">SpO₂</span>
               </div>
-              <span className="font-bold text-slate-100">{currentSpo2}%</span>
+              <span className="font-bold text-emerald-300 font-mono text-base">{currentSpo2}%</span>
             </div>
 
             {/* Air Quality */}
             <div 
               onClick={() => onNavigateTab && onNavigateTab('copd_aqi')}
-              className="flex items-center justify-between py-0.5 cursor-pointer hover:text-cyan-400 transition-colors group"
+              className="flex items-center justify-between py-1 px-2.5 rounded-xl hover:bg-slate-800/40 border border-transparent hover:border-slate-800 transition-all cursor-pointer group"
+              title="View AQI & COPD Tracker"
             >
-              <div className="flex items-center space-x-2.5">
-                <span className="text-base">🌫️</span>
-                <span className="text-slate-300 group-hover:text-cyan-300">Air Quality</span>
+              <div className="flex items-center space-x-3">
+                <span className="text-base group-hover:scale-110 transition-transform">🌫️</span>
+                <span className="text-slate-300 group-hover:text-cyan-300 transition-colors">Air Quality</span>
               </div>
-              <span className="font-bold text-slate-100">{currentAqiObj.aqi}</span>
+              <span className="font-bold text-cyan-300 font-mono text-base">{currentAqiObj.aqi}</span>
             </div>
 
           </div>
         </div>
 
         {/* Section Divider */}
-        <div className="w-full h-[1px] bg-[#292c36]" />
+        <div className="w-full h-[1px] bg-slate-800/80" />
 
         {/* Section 2: Today's Recommendation */}
         <div className="space-y-3.5">
-          <div className="text-[11px] uppercase tracking-wider text-slate-400 font-bold">
+          <div className="text-xs uppercase font-mono font-bold tracking-wider text-slate-400">
             TODAY'S RECOMMENDATION
           </div>
 
-          <div className="space-y-1">
-            <div className="flex items-center space-x-2 text-sm text-slate-300">
+          <div className="space-y-1.5">
+            <div className="flex items-center space-x-2 text-sm text-slate-300 font-mono">
               <span className="text-base">🚶</span>
-              <span className="font-medium">Best time to walk</span>
+              <span className="font-semibold text-slate-200">Best time to walk</span>
             </div>
-            <div className="text-xl sm:text-2xl font-bold text-slate-100 tracking-tight pl-6">
+            <div className="text-2xl sm:text-3xl font-black font-mono text-white tracking-tight pl-6 text-glow-emerald">
               {walkRec.bestWindow}
             </div>
           </div>
 
-          <div className="space-y-0.5 pl-6 text-sm text-slate-300">
-            <div>{walkRec.duration}</div>
+          <div className="space-y-1 pl-6 text-xs sm:text-sm font-mono text-slate-300">
+            <div className="font-bold text-emerald-300">{walkRec.duration}</div>
             <div className="text-slate-400">{walkRec.pace}</div>
           </div>
 
           {/* Interactive [ View walking plan ] Button */}
-          <div className="pt-1">
+          <div className="pt-1 pl-6">
             <button
               onClick={() => {
                 setShowPlan(!showPlan);
                 soundFx.playPopSound(showPlan ? 0.9 : 1.2);
               }}
-              className="text-xs sm:text-sm font-mono text-slate-300 hover:text-emerald-400 transition-colors focus:outline-none flex items-center space-x-1"
+              className="text-xs sm:text-sm font-mono text-emerald-400 hover:text-emerald-300 underline decoration-emerald-500/50 hover:decoration-emerald-400 transition-all focus:outline-none flex items-center space-x-1"
             >
               <span>[ {showPlan ? 'Hide walking plan' : 'View walking plan'} ]</span>
               {showPlan ? <ChevronUp className="w-3.5 h-3.5 ml-1" /> : <ChevronDown className="w-3.5 h-3.5 ml-1" />}
             </button>
           </div>
 
-          {/* Expanded Walking Plan & Hourly Timeline */}
+          {/* Expanded Walking Plan & Hourly Atmospheric Timeline */}
           {showPlan && (
-            <div className="bg-[#1a1c23] border border-[#2b2f3a] rounded-2xl p-4 mt-3 space-y-3 animate-in fade-in duration-200">
-              <div className="flex items-center justify-between text-xs text-slate-400 border-b border-[#2b2f3a] pb-2">
-                <span className="flex items-center space-x-1">
-                  <Clock className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>24-Hour Air Quality Timeline</span>
+            <div className="glass-card rounded-2xl p-4 mt-3 border border-emerald-500/30 space-y-3 animate-in fade-in duration-200">
+              <div className="flex items-center justify-between text-xs font-mono text-slate-400 border-b border-slate-800 pb-2">
+                <span className="flex items-center space-x-1.5 text-cyan-300">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>24-Hour Atmospheric Forecast</span>
                 </span>
-                <span className="text-[10px] text-emerald-400">Optimal Window Highlighted</span>
+                <span className="text-[10px] text-emerald-400 font-bold">Optimal Window Highlighted</span>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 text-center text-xs">
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 text-center font-mono text-xs">
                 {walkRec.hourlyForecast.map((slot, i) => (
                   <div 
                     key={i} 
                     className={`p-2 rounded-xl border ${
                       slot.isBest 
-                        ? 'bg-emerald-950/40 border-emerald-500/50 text-emerald-300' 
-                        : 'bg-[#141519] border-[#292c36] text-slate-400'
+                        ? 'bg-emerald-950/50 border-emerald-500/60 text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.3)] ring-1 ring-emerald-500/50' 
+                        : 'bg-slate-950/70 border-slate-800 text-slate-400'
                     }`}
                   >
                     <div className="text-[10px] text-slate-400">{slot.time}</div>
@@ -246,8 +275,8 @@ export default function HomeHealthSummary({
                 ))}
               </div>
 
-              <div className="text-[11px] text-slate-400 pt-1 leading-relaxed">
-                <strong className="text-slate-200">Guidance: </strong>
+              <div className="text-xs text-slate-300 pt-1 leading-relaxed bg-slate-950/50 p-3 rounded-xl border border-slate-800/80">
+                <strong className="text-emerald-400 font-mono">COPD Protocol: </strong>
                 {walkRec.copdGuidance}
               </div>
             </div>
@@ -255,18 +284,18 @@ export default function HomeHealthSummary({
         </div>
 
         {/* Section Divider */}
-        <div className="w-full h-[1px] bg-[#292c36]" />
+        <div className="w-full h-[1px] bg-slate-800/80" />
 
         {/* Section 3: One Thing to Know */}
         <div className="space-y-2">
-          <div className="flex items-center space-x-2 text-sm font-semibold text-slate-200">
+          <div className="flex items-center space-x-2 text-xs font-mono font-bold text-amber-400 uppercase tracking-wider">
             <span>⚠️</span>
             <span>One thing to know</span>
           </div>
 
-          <div className="text-sm text-slate-300 leading-relaxed pl-6 space-y-0.5">
-            <div>{oneThing.line1}</div>
-            <div className="text-slate-400">{oneThing.line2}</div>
+          <div className="text-xs sm:text-sm font-mono text-slate-200 leading-relaxed pl-6 space-y-1">
+            <div className="font-semibold text-slate-100">{oneThing.line1}</div>
+            <div className="text-slate-300">{oneThing.line2}</div>
           </div>
         </div>
 
