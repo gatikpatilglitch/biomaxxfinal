@@ -380,18 +380,6 @@ export default function WhoopDeviceHub({
         </button>
 
         <button
-          onClick={() => setActiveTab('architecture')}
-          className={`text-xs font-mono px-3.5 py-1.5 rounded-lg transition-all flex items-center space-x-1.5 ${
-            activeTab === 'architecture' 
-              ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 font-bold shadow-sm' 
-              : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <Cpu className="w-3.5 h-3.5" />
-          <span>Architecture & Sync Pipeline</span>
-        </button>
-
-        <button
           onClick={() => setActiveTab('clinical')}
           className={`text-xs font-mono px-3.5 py-1.5 rounded-lg transition-all flex items-center space-x-1.5 ${
             activeTab === 'clinical' 
@@ -400,7 +388,7 @@ export default function WhoopDeviceHub({
           }`}
         >
           <Sparkles className="w-3.5 h-3.5" />
-          <span>COPD & Clinical Correlation</span>
+          <span>COPD & Clinical Intelligence</span>
         </button>
       </div>
 
@@ -689,120 +677,7 @@ export default function WhoopDeviceHub({
         </div>
       )}
 
-      {/* ================= TAB 2: ARCHITECTURE & SYNC PIPELINE ================= */}
-      {activeTab === 'architecture' && (
-        <div className="glass-card rounded-2xl p-5 border border-slate-800 space-y-5">
-          <div>
-            <div className="flex items-center space-x-2">
-              <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-cyan-500/20 text-cyan-300 rounded border border-cyan-500/30">
-                IDIOT-PROOF ARCHITECTURE
-              </span>
-              <h3 className="text-sm font-bold text-slate-100 font-mono uppercase tracking-wider">
-                How Your WHOOP Data Travels Into BioMaxxx
-              </h3>
-            </div>
-            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-              Every detail of how your physical WHOOP strap syncs to your phone, touches official WHOOP servers, and streams into BioMaxxx without any third-party middleman.
-            </p>
-          </div>
 
-          {/* 5-Step Visual Pipeline */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-            
-            <div className="bg-slate-950/80 p-3.5 rounded-xl border border-slate-800 space-y-2 relative">
-              <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 font-mono font-bold text-xs flex items-center justify-center border border-emerald-500/40">
-                1
-              </div>
-              <h4 className="text-xs font-bold text-slate-100 font-sans">WHOOP 4.0 Strap</h4>
-              <p className="text-[11px] text-slate-400 leading-relaxed">
-                Optical PPG diodes pulse green & infrared light 100x every second to read capillary blood volume, skin temperature, and SpO₂.
-              </p>
-              <div className="text-[10px] font-mono text-emerald-400/90 pt-1">
-                BLE 5.0 Encrypted
-              </div>
-            </div>
-
-            <div className="bg-slate-950/80 p-3.5 rounded-xl border border-slate-800 space-y-2 relative">
-              <div className="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 font-mono font-bold text-xs flex items-center justify-center border border-cyan-500/40">
-                2
-              </div>
-              <h4 className="text-xs font-bold text-slate-100 font-sans">WHOOP Cloud API</h4>
-              <p className="text-[11px] text-slate-400 leading-relaxed">
-                Your phone's WHOOP App uploads raw sensor data to <code className="text-cyan-300 text-[10px]">api.prod.whoop.com</code>, where WHOOP computes Recovery, Sleep & Strain.
-              </p>
-              <div className="text-[10px] font-mono text-cyan-400/90 pt-1">
-                Cloud Processing
-              </div>
-            </div>
-
-            <div className="bg-slate-950/80 p-3.5 rounded-xl border border-slate-800 space-y-2 relative">
-              <div className="w-6 h-6 rounded-full bg-indigo-500/20 text-indigo-400 font-mono font-bold text-xs flex items-center justify-center border border-indigo-500/40">
-                3
-              </div>
-              <h4 className="text-xs font-bold text-slate-100 font-sans">OAuth 2.0 Handshake</h4>
-              <p className="text-[11px] text-slate-400 leading-relaxed">
-                BioMaxxx initiates standard OAuth 2.0 with HMAC-signed CSRF tokens. You grant permission on WHOOP's official login screen.
-              </p>
-              <div className="text-[10px] font-mono text-indigo-400/90 pt-1">
-                Strictly Read-Only Scopes
-              </div>
-            </div>
-
-            <div className="bg-slate-950/80 p-3.5 rounded-xl border border-slate-800 space-y-2 relative">
-              <div className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 font-mono font-bold text-xs flex items-center justify-center border border-amber-500/40">
-                4
-              </div>
-              <h4 className="text-xs font-bold text-slate-100 font-sans">BioMaxxx Engine</h4>
-              <p className="text-[11px] text-slate-400 leading-relaxed">
-                Our backend polls v2 endpoints (<code className="text-amber-300 text-[10px]">/v2/recovery</code>, <code className="text-amber-300 text-[10px]">/v2/cycle</code>, <code className="text-amber-300 text-[10px]">/v2/activity/sleep</code>) using raw Node.js fetch.
-              </p>
-              <div className="text-[10px] font-mono text-amber-400/90 pt-1">
-                Zero 3rd-Party SDKs
-              </div>
-            </div>
-
-            <div className="bg-slate-950/80 p-3.5 rounded-xl border border-slate-800 space-y-2 relative">
-              <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 font-mono font-bold text-xs flex items-center justify-center border border-emerald-500/40">
-                5
-              </div>
-              <h4 className="text-xs font-bold text-slate-100 font-sans">Supabase & UI Sync</h4>
-              <p className="text-[11px] text-slate-400 leading-relaxed">
-                Metrics are cached in Supabase PostgreSQL tables (<code className="text-emerald-300 text-[10px]">whoop_integrations</code>) and displayed live on this dashboard.
-              </p>
-              <div className="text-[10px] font-mono text-emerald-400/90 pt-1">
-                Real-Time Telemetry
-              </div>
-            </div>
-
-          </div>
-
-          {/* Deep Architectural Breakdown Table */}
-          <div className="border border-slate-800 rounded-xl overflow-hidden text-xs">
-            <div className="bg-slate-900/80 px-4 py-2.5 font-mono font-bold text-slate-200 border-b border-slate-800">
-              Technical Security & Data Flow Guarantees
-            </div>
-            <div className="divide-y divide-slate-800/80 bg-slate-950/50 font-mono text-[11px]">
-              <div className="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <span className="text-slate-300 font-bold">1. Zero Write Access:</span>
-                <span className="text-emerald-400">Strictly GET HTTP requests. Our codebase throws an exception if any POST/PUT/DELETE is ever attempted against WHOOP.</span>
-              </div>
-              <div className="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <span className="text-slate-300 font-bold">2. Token Auto-Refresh:</span>
-                <span className="text-slate-400">Access tokens expire every 60 minutes. The backend checks expiration and refreshes automatically using the refresh_token grant type before each fetch.</span>
-              </div>
-              <div className="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <span className="text-slate-300 font-bold">3. Database Persistence:</span>
-                <span className="text-slate-400">Stored in Supabase Postgres under table <code>whoop_integrations</code> with encrypted columns and automatic fallback to memory if database is down.</span>
-              </div>
-              <div className="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <span className="text-slate-300 font-bold">4. Real-time Caching:</span>
-                <span className="text-slate-400">Data cached for 30 minutes to prevent hitting WHOOP API rate limits. Clicking "Sync" forces a fresh pull.</span>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      )}
 
       {/* ================= TAB 3: CLINICAL & COPD CORRELATION ================= */}
       {activeTab === 'clinical' && (
