@@ -327,10 +327,10 @@ export async function syncWhoopBiometrics(userId = 1, pool = null) {
   const [profileResult, recoveryResult, cycleResult, sleepResult, workoutResult] =
     await Promise.allSettled([
       _whoopGet(WHOOP_V2.PROFILE, token),                          // GET /v2/user/profile/basic
-      _fetchCollection(WHOOP_V2.RECOVERY, token, 7),              // GET /v2/recovery
-      _fetchCollection(WHOOP_V2.CYCLE, token, 7),                 // GET /v2/cycle
-      _fetchCollection(WHOOP_V2.SLEEP, token, 7),                 // GET /v2/activity/sleep
-      _fetchCollection(WHOOP_V2.WORKOUT, token, 7),               // GET /v2/activity/workout
+      _fetchCollection(WHOOP_V2.RECOVERY, token, 25),             // GET /v2/recovery (25 days)
+      _fetchCollection(WHOOP_V2.CYCLE, token, 25),                // GET /v2/cycle (25 days)
+      _fetchCollection(WHOOP_V2.SLEEP, token, 25),                // GET /v2/activity/sleep (25 days)
+      _fetchCollection(WHOOP_V2.WORKOUT, token, 25),              // GET /v2/activity/workout (25 days)
     ]);
 
   // ── Parse Profile ──────────────────────────────────────────────────────────
@@ -354,12 +354,13 @@ export async function syncWhoopBiometrics(userId = 1, pool = null) {
     spo2_percentage:  latestRec?.score?.spo2_percentage  ?? null,
     skin_temp_celsius:latestRec?.score?.skin_temp_celsius ?? null,
     history: recoveryRecords.map(r => ({
-      created_at:      r.created_at,
-      score:           r.score?.recovery_score,
-      hrv_rmssd_milli: r.score?.hrv_rmssd_milli,
+      created_at:         r.created_at,
+      score:              r.score?.recovery_score,
+      hrv_rmssd_milli:    r.score?.hrv_rmssd_milli,
       resting_heart_rate: r.score?.resting_heart_rate,
-      spo2_percentage: r.score?.spo2_percentage,
-      score_state:     r.score_state,
+      spo2_percentage:    r.score?.spo2_percentage,
+      skin_temp_celsius:  r.score?.skin_temp_celsius,
+      score_state:        r.score_state,
     })),
   };
 
@@ -382,11 +383,15 @@ export async function syncWhoopBiometrics(userId = 1, pool = null) {
     max_heart_rate:     latestCycle?.score?.max_heart_rate      ?? null,
     score_state:        latestCycle?.score_state                ?? null,
     history: cycleRecords.map(c => ({
-      created_at: c.created_at,
-      start:      c.start,
-      strain:     c.score?.strain,
-      kilojoule:  c.score?.kilojoule,
-      score_state: c.score_state,
+      created_at:         c.created_at,
+      start:              c.start,
+      end:                c.end,
+      strain:             c.score?.strain,
+      kilojoule:          c.score?.kilojoule,
+      calories:           c.score?.kilojoule ? Math.round(c.score.kilojoule / 4.184) : null,
+      average_heart_rate: c.score?.average_heart_rate,
+      max_heart_rate:     c.score?.max_heart_rate,
+      score_state:        c.score_state,
     })),
   };
 
@@ -428,16 +433,24 @@ export async function syncWhoopBiometrics(userId = 1, pool = null) {
       sleep_cycle_count:              ss.sleep_cycle_count              ?? null,
       disturbance_count:              ss.disturbance_count              ?? null,
     },
-    history: sleepRecords.map(s => ({
-      id:          s.id,
-      created_at:  s.created_at,
-      start:       s.start,
-      end:         s.end,
-      nap:         s.nap,
-      score_state: s.score_state,
-      performance: s.score?.sleep_performance_percentage,
-      respiratory_rate: s.score?.respiratory_rate,
-    })),
+    history: sleepRecords.map(s => {
+      const sStage = s.score?.stage_summary || {};
+      const sSleepMilli = (sStage.total_in_bed_time_milli || 0) - (sStage.total_awake_time_milli || 0);
+      return {
+        id:                     s.id,
+        created_at:             s.created_at,
+        start:                  s.start,
+        end:                    s.end,
+        nap:                    s.nap,
+        score_state:            s.score_state,
+        performance:            s.score?.sleep_performance_percentage,
+        respiratory_rate:       s.score?.respiratory_rate,
+        efficiency:             s.score?.sleep_efficiency_percentage,
+        consistency:            s.score?.sleep_consistency_percentage,
+        total_sleep_hours:      sSleepMilli > 0 ? parseFloat((sSleepMilli / 3_600_000).toFixed(2)) : null,
+        stage_summary:          sStage,
+      };
+    }),
   };
 
   // ── Parse Workouts ────────────────────────────────────────────────────────
@@ -466,6 +479,9 @@ export async function syncWhoopBiometrics(userId = 1, pool = null) {
       sport_id:    w.sport_id,
       strain:      w.score?.strain,
       avg_hr:      w.score?.average_heart_rate,
+      max_hr:      w.score?.max_heart_rate,
+      kilojoule:   w.score?.kilojoule,
+      calories:    w.score?.kilojoule ? Math.round(w.score.kilojoule / 4.184) : null,
       score_state: w.score_state,
     })),
   };
