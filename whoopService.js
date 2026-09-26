@@ -28,10 +28,10 @@ const WHOOP_V2 = {
   WORKOUT:        '/v2/activity/workout',
 };
 
-// ── Strictly Read-Only Scopes (official scope names) ──────────────────────────
+// ── Strictly Read-Only Scopes (official scope names permitted on Sandbox) ────
 // https://developer.whoop.com/docs
 export const WHOOP_READ_SCOPES =
-  'offline read:recovery read:cycles read:workout read:sleep read:profile read:body_measurement';
+  'offline read:recovery read:cycles read:workout read:sleep';
 
 // ── In-Memory Fallback Store ───────────────────────────────────────────────────
 const _mem = {
