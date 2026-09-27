@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { soundFx } from '../utils/audioSynthesizer';
+import { getInitialMsritEnvironment, fetchLiveMsritEnvironment } from '../utils/msritWeatherService';
 
 const WhoopDataContext = createContext(null);
 
@@ -350,11 +351,16 @@ const INITIAL_ACCURATE_WHOOP_DATA = {
   sleepConsistency: 56,
   spo2: 97.3,
   calendar30D: generate30DayWhoopCalendar(),
-  aqi: 68,
-  aqiStatus: 'Moderate',
-  pm25: 22.4,
-  pm10: 48.1,
-  o3: 35,
+  aqi: 55,
+  aqiStatus: 'Satisfactory',
+  pm25: 11.1,
+  pm10: 18.7,
+  o3: 126.0,
+  no2: 1.9,
+  temperature: 29.5,
+  humidity: 45,
+  locationName: 'MSRIT Campus, Mathikere',
+  locationAddress: 'MSRIT Post, M.S. Ramaiah Nagar, Mathikere, Bengaluru – 560054',
   respiratoryStatus: 'LOW RISK',
   respiratoryStrain: 'Low',
   breathsPerMin: 16.2,
@@ -502,6 +508,51 @@ export function WhoopDataProvider({ children }) {
   const syncWhoop = useCallback(() => {
     fetchWhoopMetrics(true);
   }, [fetchWhoopMetrics]);
+
+  // MSRIT Mathikere Environmental & Weather Telemetry
+  const [environmentData, setEnvironmentData] = useState(() => getInitialMsritEnvironment());
+  const [isRefreshingEnv, setIsRefreshingEnv] = useState(false);
+
+  const refreshEnvironmentData = useCallback(async (isManual = false) => {
+    if (isManual) {
+      setIsRefreshingEnv(true);
+      soundFx?.playPopSound?.(1.2);
+    }
+    try {
+      const live = await fetchLiveMsritEnvironment();
+      if (live) {
+        setEnvironmentData(live);
+        setWhoopData(prev => ({
+          ...prev,
+          aqi: live.aqi,
+          aqiStatus: live.aqiStatus,
+          pm25: live.pollutants.pm25,
+          pm10: live.pollutants.pm10,
+          o3: live.pollutants.o3,
+          no2: live.pollutants.no2,
+          temperature: live.weather.temperature,
+          humidity: live.weather.humidity,
+          locationName: live.location.name,
+          locationAddress: live.location.fullAddress
+        }));
+      }
+    } catch (e) {
+      console.warn("Could not fetch live MSRIT environmental telemetry:", e);
+    } finally {
+      if (isManual) {
+        setTimeout(() => setIsRefreshingEnv(false), 500);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshEnvironmentData(false);
+    // Poll MSRIT weather and atmospheric conditions every 15 minutes
+    const envInterval = setInterval(() => {
+      refreshEnvironmentData(false);
+    }, 15 * 60 * 1000);
+    return () => clearInterval(envInterval);
+  }, [refreshEnvironmentData]);
 
   // Inhaler & Medication State
   const [inhalerData, setInhalerData] = useState({
@@ -664,7 +715,10 @@ export function WhoopDataProvider({ children }) {
         toggleMedication,
         syncWhoop,
         fetchWhoopMetrics,
-        updateUserData
+        updateUserData,
+        environmentData,
+        refreshEnvironmentData,
+        isRefreshingEnv
       }}
     >
       {children}
