@@ -22,6 +22,7 @@ import { useWhoopData } from '../../context/WhoopDataContext';
 import { soundFx } from '../../utils/audioSynthesizer';
 import MindfulMazeGame from './MindfulMazeGame';
 import ColorCalmGame from './ColorCalmGame';
+import BreatheAndPlayGame from './BreatheAndPlayGame';
 
 export default function ActionsScreen() {
   const { 
@@ -357,7 +358,7 @@ export default function ActionsScreen() {
       )}
 
       {/* ========================================================================= */}
-      {/* 4. GAMES (Mindful Maze, Color Calm & Relaxing Activities)                 */}
+      {/* 4. GAMES (Mindful Maze, Color Calm, Breathe & Play)                       */}
       {/* ========================================================================= */}
       {actionsSubView === 'games' && (
         <div className="space-y-4 font-sans">
@@ -365,6 +366,8 @@ export default function ActionsScreen() {
             <MindfulMazeGame onBack={() => setActiveGame(null)} />
           ) : activeGame === 'color' ? (
             <ColorCalmGame onBack={() => setActiveGame(null)} />
+          ) : activeGame === 'breathe' ? (
+            <BreatheAndPlayGame onBack={() => setActiveGame(null)} />
           ) : (
             <div className="space-y-3">
               <div className="px-1 flex items-center justify-between">
@@ -376,7 +379,7 @@ export default function ActionsScreen() {
                 {[
                   { id: 'maze', name: 'Mindful Maze', sub: 'Focus & Serenity', icon: '🌀', actionText: '✦ Play Mindful Maze', featured: true },
                   { id: 'color', name: 'Color Calm', sub: 'Creative stillness', icon: '🎨', actionText: '✦ Play Color Calm', featured: true },
-                  { id: 'breathe', name: 'Breathe & Play', sub: 'Follow your breath', icon: '🍃', actionText: 'Coming Soon', featured: false },
+                  { id: 'breathe', name: 'Breathe & Play', sub: 'Memory match cards', icon: '🍃', actionText: '✦ Play Memory Match', featured: true },
                   { id: 'memory', name: 'Zen Patterns', sub: 'Gentle focus', icon: '🧠', actionText: 'Coming Soon', featured: false }
                 ].map((game) => (
                   <div
@@ -386,6 +389,8 @@ export default function ActionsScreen() {
                         setActiveGame('maze');
                       } else if (game.id === 'color') {
                         setActiveGame('color');
+                      } else if (game.id === 'breathe') {
+                        setActiveGame('breathe');
                       } else {
                         soundFx.playPopSound(1.2);
                       }
