@@ -21,6 +21,7 @@ import {
 import { useWhoopData } from '../../context/WhoopDataContext';
 import { soundFx } from '../../utils/audioSynthesizer';
 import MindfulMazeGame from './MindfulMazeGame';
+import ColorCalmGame from './ColorCalmGame';
 
 export default function ActionsScreen() {
   const { 
@@ -356,12 +357,14 @@ export default function ActionsScreen() {
       )}
 
       {/* ========================================================================= */}
-      {/* 4. GAMES (Image 4 Screen 4 - Mindful Maze & Calm Games)                   */}
+      {/* 4. GAMES (Mindful Maze, Color Calm & Relaxing Activities)                 */}
       {/* ========================================================================= */}
       {actionsSubView === 'games' && (
         <div className="space-y-4 font-sans">
           {activeGame === 'maze' ? (
             <MindfulMazeGame onBack={() => setActiveGame(null)} />
+          ) : activeGame === 'color' ? (
+            <ColorCalmGame onBack={() => setActiveGame(null)} />
           ) : (
             <div className="space-y-3">
               <div className="px-1 flex items-center justify-between">
@@ -371,16 +374,18 @@ export default function ActionsScreen() {
 
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { id: 'maze', name: 'Mindful Maze', sub: 'Focus & Serenity', icon: '🌀', featured: true },
-                  { id: 'breathe', name: 'Breathe & Play', sub: 'Follow your breath', icon: '🍃' },
-                  { id: 'color', name: 'Color Calm', sub: 'Soothing visuals', icon: '🎨' },
-                  { id: 'memory', name: 'Zen Patterns', sub: 'Gentle focus', icon: '🧠' }
+                  { id: 'maze', name: 'Mindful Maze', sub: 'Focus & Serenity', icon: '🌀', actionText: '✦ Play Mindful Maze', featured: true },
+                  { id: 'color', name: 'Color Calm', sub: 'Creative stillness', icon: '🎨', actionText: '✦ Play Color Calm', featured: true },
+                  { id: 'breathe', name: 'Breathe & Play', sub: 'Follow your breath', icon: '🍃', actionText: 'Coming Soon', featured: false },
+                  { id: 'memory', name: 'Zen Patterns', sub: 'Gentle focus', icon: '🧠', actionText: 'Coming Soon', featured: false }
                 ].map((game) => (
                   <div
                     key={game.id}
                     onClick={() => {
                       if (game.id === 'maze') {
                         setActiveGame('maze');
+                      } else if (game.id === 'color') {
+                        setActiveGame('color');
                       } else {
                         soundFx.playPopSound(1.2);
                       }
@@ -393,7 +398,7 @@ export default function ActionsScreen() {
                     <div className="font-bold text-xs text-white">{game.name}</div>
                     <div className="text-[10px] text-slate-400">{game.sub}</div>
                     <span className="text-[9px] font-mono text-cyan-400 block pt-1 font-semibold">
-                      {game.id === 'maze' ? '✦ Play Mindful Maze' : 'Coming Soon'}
+                      {game.actionText}
                     </span>
                   </div>
                 ))}
