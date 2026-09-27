@@ -31,12 +31,10 @@ export default function GuardianScreen() {
     syncWhoop, 
     setIsWalkingModalOpen, 
     setIsRespiratoryModalOpen, 
-    setIsSleepModalOpen,
-    alerts
+    setIsSleepModalOpen
   } = useWhoopData();
 
   const [trendRange, setTrendRange] = useState('7D'); // '7D' | '30D' | '3M'
-  const [healthDataTab, setHealthDataTab] = useState('respiratory'); // 'respiratory' | 'environment' | 'body'
 
   const subNavItems = [
     { id: 'overview', label: 'Overview' },
@@ -46,8 +44,6 @@ export default function GuardianScreen() {
     { id: 'sleep', label: 'Sleep' },
     { id: 'trends', label: 'Trends' },
     { id: 'ai_insights', label: 'AI Insights' },
-    { id: 'alerts', label: 'Alerts' },
-    { id: 'health_data', label: 'Data' },
   ];
 
   const handleSelectSubView = (id) => {
@@ -511,62 +507,6 @@ export default function GuardianScreen() {
               >
                 View walking plan →
               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* VIEW 8: ALERTS & NOTIFICATIONS (Image 3 Screen 8)                         */}
-      {/* ========================================================================= */}
-      {guardianSubView === 'alerts' && (
-        <div className="space-y-3 font-sans">
-          <h3 className="text-xs font-mono uppercase text-slate-400 font-bold px-1">Guardian Alerts</h3>
-          <div className="space-y-2.5">
-            {alerts.map((alert) => (
-              <div key={alert.id} className="p-3.5 rounded-2xl bg-[#0e1628] border border-slate-800 space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-white">{alert.title}</span>
-                  <span className="text-[10px] font-mono text-slate-400">{alert.time}</span>
-                </div>
-                <p className="text-xs text-slate-300 leading-snug">{alert.subtitle}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* VIEW 9: DETAILED HEALTH DATA (Image 3 Screen 9)                           */}
-      {/* ========================================================================= */}
-      {guardianSubView === 'health_data' && (
-        <div className="space-y-4 font-mono">
-          <div className="flex space-x-1.5 bg-[#0c1220] p-1 rounded-xl border border-slate-800">
-            {['respiratory', 'environment', 'body'].map(tab => (
-              <button
-                key={tab}
-                onClick={() => setHealthDataTab(tab)}
-                className={`flex-1 py-1.5 rounded-lg text-xs capitalize transition-colors ${
-                  healthDataTab === tab ? 'bg-cyan-500/20 text-[#00F2FE] font-bold border border-cyan-500/40' : 'text-slate-400'
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-
-          <div className="p-4 rounded-3xl bg-[#0e1628] border border-slate-800 space-y-3">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-white font-bold">SpO₂ 7-Day History</span>
-              <span className="text-emerald-400 font-bold">{whoopData.spo2}% avg</span>
-            </div>
-            <div className="h-24 flex items-end justify-between px-2 pt-2">
-              {[97, 98, 98, 97, 98, 98, 98].map((val, i) => (
-                <div key={i} className="flex flex-col items-center">
-                  <div style={{ height: `${(val - 90) * 10}px` }} className="w-5 bg-cyan-400 rounded-t" />
-                  <span className="text-[9px] text-slate-400 mt-1">D{i+1}</span>
-                </div>
-              ))}
             </div>
           </div>
         </div>
