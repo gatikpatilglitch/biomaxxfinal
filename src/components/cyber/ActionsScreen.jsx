@@ -47,10 +47,6 @@ export default function ActionsScreen() {
   // Meditation State
   const [isMeditationPlaying, setIsMeditationPlaying] = useState(false);
 
-  // Health Tracker Symptoms State
-  const [selectedSymptom, setSelectedSymptom] = useState('None');
-  const [symptomNote, setSymptomNote] = useState('');
-  const [symptomSaved, setSymptomSaved] = useState(false);
 
   // AI Assistant Chat State
   const [messages, setMessages] = useState([
@@ -134,8 +130,6 @@ export default function ActionsScreen() {
     { id: 'stress', label: 'Stress Relief' },
     { id: 'games', label: 'Games' },
     { id: 'inhaler', label: 'Inhaler' },
-    { id: 'health_tips', label: 'Tips' },
-    { id: 'health_tracker', label: 'Tracker' },
     { id: 'reminders', label: 'Reminders' },
     { id: 'ai_assistant', label: 'AI Bot' },
   ];
@@ -181,7 +175,7 @@ export default function ActionsScreen() {
               { id: 'stress', title: 'Stress Relief', desc: 'Relax, reset, feel better.', icon: Sparkles, color: 'text-indigo-400' },
               { id: 'games', title: 'Games', desc: 'Fun interactive biofeedback stress busters.', icon: Gamepad2, color: 'text-emerald-400' },
               { id: 'inhaler', title: 'Inhaler Tracker', desc: `Track doses (${inhalerData.dosesToday}/${inhalerData.maxDoses} logged today).`, icon: CheckCircle2, color: 'text-teal-400' },
-              { id: 'health_tips', title: 'Health Tips', desc: 'Daily tips for airway health & nutrition.', icon: Droplet, color: 'text-blue-400' },
+              { id: 'reminders', title: 'Reminders', desc: 'Scheduled alerts for doses & medication.', icon: Clock, color: 'text-blue-400' },
               { id: 'ai_assistant', title: 'AI Assistant', desc: 'Ask anything. Get personalized guidance.', icon: Bot, color: 'text-purple-400' },
             ].map((item) => {
               const Icon = item.icon;
@@ -465,37 +459,7 @@ export default function ActionsScreen() {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* 6. HEALTH TIPS (Image 4 Screen 6)                                         */}
-      {/* ========================================================================= */}
-      {actionsSubView === 'health_tips' && (
-        <div className="space-y-4">
-          <div className="p-4 rounded-3xl bg-[#0e1628] border border-slate-800 flex items-center space-x-3.5">
-            <img src="/water_bg.jpg" alt="Stay Hydrated" className="w-16 h-16 rounded-2xl object-cover border border-cyan-500/30" />
-            <div>
-              <span className="text-[10px] font-mono text-cyan-400 font-bold uppercase block">LIFESTYLE TIP</span>
-              <h3 className="text-sm font-bold text-white">Stay Hydrated</h3>
-              <p className="text-[11px] text-slate-300 leading-snug">Helps in thinning bronchial mucus and keeps airway passages clear.</p>
-            </div>
-          </div>
 
-          <div className="space-y-2">
-            {[
-              { title: 'Foods for Lung Health', sub: 'Leafy greens, berries, walnuts & turmeric' },
-              { title: 'Avoid Airway Triggers', sub: 'Seal windows during rush hour smog peaks' },
-              { title: 'Daily Breathing Routine', sub: 'Practice pursed-lip breathing twice daily' }
-            ].map((tip, i) => (
-              <div key={i} className="p-3.5 rounded-2xl bg-[#0e1628] border border-slate-800 flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-bold text-white block">{tip.title}</span>
-                  <span className="text-[11px] text-slate-400">{tip.sub}</span>
-                </div>
-                <ChevronRight className="w-4 h-4 text-slate-500" />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* ========================================================================= */}
       {/* 7. REMINDERS (Image 4 Screen 9)                                           */}
