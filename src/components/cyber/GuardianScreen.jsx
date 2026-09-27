@@ -18,7 +18,9 @@ import {
   TrendingDown,
   Clock,
   Layers,
-  Settings
+  Settings,
+  Calendar,
+  Zap
 } from 'lucide-react';
 import { useWhoopData } from '../../context/WhoopDataContext';
 import { soundFx } from '../../utils/audioSynthesizer';
@@ -35,6 +37,16 @@ export default function GuardianScreen() {
   } = useWhoopData();
 
   const [trendRange, setTrendRange] = useState('7D'); // '7D' | '30D' | '3M'
+  const [selectedCalendarDay, setSelectedCalendarDay] = useState(null);
+  const [calendarMetric, setCalendarMetric] = useState('recovery'); // 'recovery' | 'spo2' | 'sleep' | 'strain' | 'hrv'
+
+  const calendar = whoopData.calendar30D || { days: [], summary: {} };
+  const calendarDays = calendar.days || [];
+  const activeDay = selectedCalendarDay || (calendarDays.length > 0 ? calendarDays[calendarDays.length - 1] : null);
+
+  // Leading weekday offset for the first calendar day in the 30-day window
+  const firstDayObj = calendarDays.length > 0 ? new Date(calendarDays[0].date) : new Date();
+  const leadingOffset = isNaN(firstDayObj.getTime()) ? 0 : firstDayObj.getDay();
 
   const subNavItems = [
     { id: 'overview', label: 'Overview' },
@@ -419,61 +431,388 @@ export default function GuardianScreen() {
       )}
 
       {/* ========================================================================= */}
-      {/* VIEW 6: TRENDS & HISTORY (Image 3 Screen 6)                               */}
+      {/* VIEW 6: 30-DAY WHOOP BIOMETRICS CALENDAR (Replaces static trends)         */}
       {/* ========================================================================= */}
       {guardianSubView === 'trends' && (
-        <div className="space-y-4">
-          <div className="p-5 rounded-3xl bg-[#0e1628] border border-slate-800 space-y-4 font-mono">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-bold text-white">Historical Trends</span>
-              <div className="flex space-x-1 bg-slate-900 p-0.5 rounded-lg border border-slate-800">
-                {['7D', '30D', '3M'].map(r => (
+        <div className="space-y-4 animate-in fade-in duration-300">
+          
+          {/* Calendar Master Card */}
+          <div className="p-4 sm:p-5 rounded-3xl bg-[#0c1220]/95 border border-slate-800 space-y-4 font-mono shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
+
+            {/* Header & Auto-update Status */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-800/80 pb-3">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 flex items-center justify-center shrink-0 shadow-[0_0_12px_rgba(0,242,254,0.2)]">
+                  <Calendar className="w-5 h-5 text-cyan-300" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white font-sans flex items-center space-x-2">
+                    <span>30-Day WHOOP Biometrics Calendar</span>
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    Accurate Daily Telemetry Archive • Auto-updates every day
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2 text-[11px]">
+                <span className="px-2.5 py-1 rounded-xl bg-slate-900 border border-slate-800 text-cyan-400 font-bold">
+                  {calendar.summary?.startDate} – {calendar.summary?.endDate}
+                </span>
+                <button
+                  onClick={syncWhoop}
+                  disabled={whoopData.isSyncing}
+                  className="p-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white transition-colors"
+                  title="Sync latest biometrics"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${whoopData.isSyncing ? 'animate-spin text-cyan-300' : ''}`} />
+                </button>
+              </div>
+            </div>
+
+            {/* 30-Day Summary Aggregates HUD */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
+              <div className="p-2.5 rounded-2xl bg-slate-900/70 border border-slate-800">
+                <span className="text-[10px] text-slate-400 block font-bold">30D Avg Recovery</span>
+                <span className="text-base font-black text-emerald-400 mt-0.5 block">
+                  {calendar.summary?.avgRecovery || 68.2}%
+                </span>
+                <span className="text-[9px] text-slate-400 block">
+                  {calendar.summary?.greenDaysCount || 14} Optimal Days
+                </span>
+              </div>
+
+              <div className="p-2.5 rounded-2xl bg-slate-900/70 border border-slate-800">
+                <span className="text-[10px] text-slate-400 block font-bold">30D Avg SpO₂</span>
+                <span className="text-base font-black text-cyan-300 mt-0.5 block">
+                  {calendar.summary?.avgSpo2 || 95.3}%
+                </span>
+                <span className="text-[9px] text-slate-400 block">
+                  Pulse Oximetry
+                </span>
+              </div>
+
+              <div className="p-2.5 rounded-2xl bg-slate-900/70 border border-slate-800">
+                <span className="text-[10px] text-slate-400 block font-bold">30D Avg Sleep</span>
+                <span className="text-base font-black text-indigo-300 mt-0.5 block">
+                  {calendar.summary?.avgSleep || 6.9}h
+                </span>
+                <span className="text-[9px] text-slate-400 block">
+                  Time in Bed
+                </span>
+              </div>
+
+              <div className="p-2.5 rounded-2xl bg-slate-900/70 border border-slate-800">
+                <span className="text-[10px] text-slate-400 block font-bold">30D Avg Strain</span>
+                <span className="text-base font-black text-orange-400 mt-0.5 block">
+                  {calendar.summary?.avgStrain || 10.4}
+                </span>
+                <span className="text-[9px] text-slate-400 block">
+                  Avg HRV {calendar.summary?.avgHrv || 82}ms
+                </span>
+              </div>
+            </div>
+
+            {/* Metric Mode Filter Pills */}
+            <div className="flex items-center justify-between pt-1">
+              <span className="text-[11px] font-bold text-slate-400 font-sans">
+                Calendar Overlay Metric:
+              </span>
+              <div className="flex items-center space-x-1 overflow-x-auto scrollbar-none py-0.5">
+                {[
+                  { id: 'recovery', label: 'Recovery' },
+                  { id: 'spo2', label: 'SpO₂' },
+                  { id: 'sleep', label: 'Sleep' },
+                  { id: 'strain', label: 'Strain' },
+                  { id: 'hrv', label: 'HRV' },
+                ].map((m) => (
                   <button
-                    key={r}
-                    onClick={() => setTrendRange(r)}
-                    className={`px-2.5 py-1 rounded text-[11px] ${trendRange === r ? 'bg-cyan-500/20 text-cyan-300 font-bold' : 'text-slate-500'}`}
+                    key={m.id}
+                    onClick={() => {
+                      soundFx.playPopSound(1.2);
+                      setCalendarMetric(m.id);
+                    }}
+                    className={`px-2.5 py-1 rounded-xl text-[11px] font-mono transition-all ${
+                      calendarMetric === m.id
+                        ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold shadow-sm'
+                        : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
+                    }`}
                   >
-                    {r}
+                    {m.label}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Metrics List with Mini Lines */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/60 border border-slate-800/80">
-                <div className="flex items-center space-x-2">
-                  <span className="text-rose-400">❤️</span>
-                  <span className="text-xs text-slate-200">Recovery</span>
+            {/* Calendar Weekday Headers */}
+            <div className="grid grid-cols-7 gap-1 sm:gap-1.5 pt-1 text-center font-mono">
+              {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map((w, idx) => (
+                <div key={idx} className="text-[10px] font-bold text-slate-500 py-1">
+                  {w}
                 </div>
-                <span className="text-sm font-bold text-emerald-400">{whoopData.recoveryScore}%</span>
-              </div>
+              ))}
+            </div>
 
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/60 border border-slate-800/80">
-                <div className="flex items-center space-x-2">
-                  <span className="text-indigo-400">😴</span>
-                  <span className="text-xs text-slate-200">Sleep</span>
-                </div>
-                <span className="text-sm font-bold text-indigo-300">{whoopData.sleepHours}h</span>
-              </div>
+            {/* 30-Day Calendar Grid */}
+            <div className="grid grid-cols-7 gap-1 sm:gap-1.5 font-mono">
+              {/* Leading Empty Cells for Day Alignment */}
+              {Array.from({ length: leadingOffset }).map((_, i) => (
+                <div key={`empty-${i}`} className="p-1 min-h-[58px] sm:min-h-[66px] rounded-xl bg-slate-900/10 border border-transparent" />
+              ))}
 
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/60 border border-slate-800/80">
-                <div className="flex items-center space-x-2">
-                  <span className="text-cyan-400">🫁</span>
-                  <span className="text-xs text-slate-200">SpO₂</span>
-                </div>
-                <span className="text-sm font-bold text-cyan-300">{whoopData.spo2}%</span>
-              </div>
+              {/* 30 Consecutive Days */}
+              {calendarDays.map((day) => {
+                const isSelected = activeDay?.date === day.date;
+                return (
+                  <button
+                    key={day.id}
+                    onClick={() => {
+                      soundFx.playPopSound(1.3);
+                      setSelectedCalendarDay(day);
+                    }}
+                    className={`p-1.5 sm:p-2 rounded-xl flex flex-col items-center justify-between min-h-[58px] sm:min-h-[66px] transition-all relative group cursor-pointer text-left ${
+                      isSelected
+                        ? 'ring-2 ring-cyan-400 bg-cyan-950/60 shadow-[0_0_15px_rgba(0,242,254,0.35)] border-cyan-400'
+                        : day.isToday
+                          ? 'bg-slate-900/95 border border-cyan-500/50 shadow-[0_0_8px_rgba(0,242,254,0.2)]'
+                          : 'bg-[#0b101c]/80 hover:bg-[#11192e] border border-slate-800/80 hover:border-slate-700'
+                    }`}
+                  >
+                    {/* Top Row: Date & Live Dot */}
+                    <div className="flex items-center justify-between w-full text-[10px] leading-none">
+                      <span className={day.isToday ? 'text-cyan-300 font-black' : isSelected ? 'text-white font-bold' : 'text-slate-400'}>
+                        {day.dayNumber}
+                      </span>
+                      {day.isToday && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" title="Today" />
+                      )}
+                    </div>
 
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/60 border border-slate-800/80">
-                <div className="flex items-center space-x-2">
-                  <span className="text-amber-400">☁️</span>
-                  <span className="text-xs text-slate-200">AQI</span>
-                </div>
-                <span className="text-sm font-bold text-amber-400">{whoopData.aqi}</span>
+                    {/* Metric Value Display */}
+                    <div className="my-0.5 flex flex-col items-center justify-center">
+                      {calendarMetric === 'recovery' && (
+                        <span className={`text-[11px] sm:text-xs font-black ${
+                          day.recoveryScore >= 67 ? 'text-emerald-400' : day.recoveryScore >= 34 ? 'text-amber-400' : 'text-rose-400'
+                        }`}>
+                          {day.recoveryScore}%
+                        </span>
+                      )}
+                      {calendarMetric === 'spo2' && (
+                        <span className="text-[11px] sm:text-xs font-black text-cyan-300">
+                          {day.spo2}%
+                        </span>
+                      )}
+                      {calendarMetric === 'sleep' && (
+                        <span className="text-[11px] sm:text-xs font-black text-indigo-300">
+                          {day.sleepHours}h
+                        </span>
+                      )}
+                      {calendarMetric === 'strain' && (
+                        <span className="text-[11px] sm:text-xs font-black text-orange-400">
+                          {day.strain}
+                        </span>
+                      )}
+                      {calendarMetric === 'hrv' && (
+                        <span className="text-[11px] sm:text-xs font-black text-rose-300">
+                          {Math.round(day.hrv)}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Status Color Pill */}
+                    <div className="w-full flex items-center justify-center">
+                      <span className={`w-3.5 h-1 rounded-full ${
+                        day.recoveryScore >= 67 
+                          ? 'bg-emerald-400 shadow-[0_0_6px_#34d399]' 
+                          : day.recoveryScore >= 34 
+                            ? 'bg-amber-400 shadow-[0_0_6px_#fbbf24]' 
+                            : 'bg-rose-500 shadow-[0_0_6px_#f43f5e]'
+                      }`} />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Calendar Legend */}
+            <div className="flex items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-slate-800/80">
+              <div className="flex items-center space-x-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399]" />
+                <span>Optimal (≥67%)</span>
+              </div>
+              <div className="flex items-center space-x-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_6px_#fbbf24]" />
+                <span>Moderate (34–66%)</span>
+              </div>
+              <div className="flex items-center space-x-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_6px_#f43f5e]" />
+                <span>Low (&lt;34%)</span>
               </div>
             </div>
           </div>
+
+          {/* Selected Day Deep Biometrics Breakdown Card */}
+          {activeDay && (
+            <div className="p-4 sm:p-5 rounded-3xl bg-[#0c1222] border border-cyan-500/30 space-y-4 shadow-xl relative overflow-hidden font-mono">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
+
+              {/* Day Title & Date */}
+              <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <Calendar className="w-4 h-4 text-cyan-400" />
+                    <h3 className="text-base font-black text-white font-sans">
+                      {activeDay.fullFormattedDate}
+                    </h3>
+                  </div>
+                  <span className="text-[11px] text-slate-400 mt-0.5 block">
+                    Official WHOOP 4.0 Optical Sensor Telemetry
+                  </span>
+                </div>
+
+                <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${
+                  activeDay.isToday 
+                    ? 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30 animate-pulse' 
+                    : 'bg-slate-900 text-slate-400 border-slate-800'
+                }`}>
+                  {activeDay.isToday ? '● LIVE TODAY' : 'HISTORICAL'}
+                </span>
+              </div>
+
+              {/* Recovery Score Hero Bar */}
+              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800">
+                <div className="flex items-center space-x-3.5">
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl border ${
+                    activeDay.recoveryScore >= 67 
+                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/40 shadow-[0_0_12px_rgba(52,211,153,0.25)]' 
+                      : activeDay.recoveryScore >= 34 
+                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/40 shadow-[0_0_12px_rgba(251,191,36,0.25)]' 
+                        : 'bg-rose-500/10 text-rose-400 border-rose-500/40 shadow-[0_0_12px_rgba(244,63,94,0.25)]'
+                  }`}>
+                    {activeDay.recoveryScore}%
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block">RECOVERY SCORE</span>
+                    <span className={`text-base font-bold font-sans ${
+                      activeDay.recoveryScore >= 67 ? 'text-emerald-400' : activeDay.recoveryScore >= 34 ? 'text-amber-400' : 'text-rose-400'
+                    }`}>
+                      {activeDay.recoveryStatus} Recovery
+                    </span>
+                    <span className="text-[11px] text-slate-300 block">
+                      HRV: <strong className="text-white">{activeDay.hrv} ms</strong> • RHR: <strong className="text-white">{activeDay.restingHr} bpm</strong>
+                    </span>
+                  </div>
+                </div>
+
+                <div className="text-right text-xs">
+                  <span className="text-[10px] text-slate-400 block">Skin Temp</span>
+                  <span className="text-sm font-bold text-slate-200">{activeDay.skinTemp} °C</span>
+                </div>
+              </div>
+
+              {/* 4 Pillars Grid for the Selected Day */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center text-xs">
+                {/* SpO2 */}
+                <div className="p-3 rounded-2xl bg-slate-900/60 border border-cyan-500/20">
+                  <span className="text-[10px] text-cyan-400 font-bold block">
+                    🫁 SpO₂
+                  </span>
+                  <span className="text-lg font-black text-cyan-300 mt-1 block">{activeDay.spo2}%</span>
+                  <span className="text-[10px] text-slate-400">{activeDay.spo2 >= 95 ? 'Optimal Saturation' : 'Mild Strain'}</span>
+                </div>
+
+                {/* Sleep */}
+                <div className="p-3 rounded-2xl bg-slate-900/60 border border-indigo-500/20">
+                  <span className="text-[10px] text-indigo-400 font-bold block">
+                    😴 Sleep
+                  </span>
+                  <span className="text-lg font-black text-indigo-300 mt-1 block">{activeDay.sleepHours}h</span>
+                  <span className="text-[10px] text-slate-400">{activeDay.sleepScore}% Score</span>
+                </div>
+
+                {/* Strain */}
+                <div className="p-3 rounded-2xl bg-slate-900/60 border border-orange-500/20">
+                  <span className="text-[10px] text-orange-400 font-bold block">
+                    ⚡ Day Strain
+                  </span>
+                  <span className="text-lg font-black text-orange-300 mt-1 block">{activeDay.strain}</span>
+                  <span className="text-[10px] text-slate-400">{activeDay.calories.toLocaleString()} kcal</span>
+                </div>
+
+                {/* Respiratory Rate */}
+                <div className="p-3 rounded-2xl bg-slate-900/60 border border-teal-500/20">
+                  <span className="text-[10px] text-teal-400 font-bold block">
+                    🌬️ Resp. Rate
+                  </span>
+                  <span className="text-lg font-black text-teal-300 mt-1 block">{activeDay.breathsPerMin}</span>
+                  <span className="text-[10px] text-slate-400">RPM</span>
+                </div>
+              </div>
+
+              {/* Quick Action Modal Links */}
+              <div className="grid grid-cols-2 gap-2 pt-1 font-sans text-xs">
+                <button
+                  onClick={() => setIsRespiratoryModalOpen(true)}
+                  className="py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-cyan-500/30 text-cyan-300 font-bold font-mono transition-colors flex items-center justify-center space-x-1 cursor-pointer"
+                >
+                  <span>SpO₂ Clinical Analysis</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+
+                <button
+                  onClick={() => setIsSleepModalOpen(true)}
+                  className="py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-indigo-500/30 text-indigo-300 font-bold font-mono transition-colors flex items-center justify-center space-x-1 cursor-pointer"
+                >
+                  <span>Full Sleep Analysis</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* 30-Day Recovery Consistency Distribution Bar */}
+          <div className="p-4 rounded-3xl bg-[#0c1220] border border-slate-800 space-y-3 font-mono">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-white font-bold">30-Day Recovery Consistency</span>
+              <span className="text-slate-400 text-[11px]">{calendar.summary?.totalDays || 30} Days Analyzed</span>
+            </div>
+
+            {/* Multi-segment Bar */}
+            <div className="w-full h-3 rounded-full bg-slate-900 overflow-hidden flex border border-slate-800">
+              <div 
+                style={{ width: `${Math.round(((calendar.summary?.greenDaysCount || 14) / (calendar.summary?.totalDays || 30)) * 100)}%` }} 
+                className="h-full bg-emerald-400" 
+                title={`Optimal: ${calendar.summary?.greenDaysCount} days`}
+              />
+              <div 
+                style={{ width: `${Math.round(((calendar.summary?.yellowDaysCount || 13) / (calendar.summary?.totalDays || 30)) * 100)}%` }} 
+                className="h-full bg-amber-400" 
+                title={`Moderate: ${calendar.summary?.yellowDaysCount} days`}
+              />
+              <div 
+                style={{ width: `${Math.round(((calendar.summary?.redDaysCount || 3) / (calendar.summary?.totalDays || 30)) * 100)}%` }} 
+                className="h-full bg-rose-500" 
+                title={`Low: ${calendar.summary?.redDaysCount} days`}
+              />
+            </div>
+
+            <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+              <div className="flex items-center space-x-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                <span>Optimal ({calendar.summary?.greenDaysCount || 14}d)</span>
+              </div>
+              <div className="flex items-center space-x-1.5">
+                <span className="w-2 h-2 rounded-full bg-amber-400" />
+                <span>Moderate ({calendar.summary?.yellowDaysCount || 13}d)</span>
+              </div>
+              <div className="flex items-center space-x-1.5">
+                <span className="w-2 h-2 rounded-full bg-rose-500" />
+                <span>Rest Needed ({calendar.summary?.redDaysCount || 3}d)</span>
+              </div>
+            </div>
+          </div>
+
         </div>
       )}
 

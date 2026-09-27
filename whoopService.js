@@ -327,10 +327,10 @@ export async function syncWhoopBiometrics(userId = 1, pool = null) {
   const [profileResult, recoveryResult, cycleResult, sleepResult, workoutResult] =
     await Promise.allSettled([
       _whoopGet(WHOOP_V2.PROFILE, token),                          // GET /v2/user/profile/basic
-      _fetchCollection(WHOOP_V2.RECOVERY, token, 25),             // GET /v2/recovery (25 days)
-      _fetchCollection(WHOOP_V2.CYCLE, token, 25),                // GET /v2/cycle (25 days)
-      _fetchCollection(WHOOP_V2.SLEEP, token, 25),                // GET /v2/activity/sleep (25 days)
-      _fetchCollection(WHOOP_V2.WORKOUT, token, 25),              // GET /v2/activity/workout (25 days)
+      _fetchCollection(WHOOP_V2.RECOVERY, token, 35),             // GET /v2/recovery (35 days)
+      _fetchCollection(WHOOP_V2.CYCLE, token, 35),                // GET /v2/cycle (35 days)
+      _fetchCollection(WHOOP_V2.SLEEP, token, 35),                // GET /v2/activity/sleep (35 days)
+      _fetchCollection(WHOOP_V2.WORKOUT, token, 35),              // GET /v2/activity/workout (35 days)
     ]);
 
   // ── Parse Profile ──────────────────────────────────────────────────────────
