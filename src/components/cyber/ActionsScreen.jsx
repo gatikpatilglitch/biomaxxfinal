@@ -9,6 +9,8 @@ import {
   RotateCcw, 
   ChevronRight, 
   Volume2, 
+  VolumeX,
+  Music,
   Send, 
   Bot, 
   Clock, 
@@ -45,8 +47,84 @@ export default function ActionsScreen() {
   const [phaseSecondsLeft, setPhaseSecondsLeft] = useState(4);
   const [cyclesCompleted, setCyclesCompleted] = useState(0);
 
-  // Meditation State
+  // Daily Calm Meditation Audio State (Deep Meditation by David Fesliyan)
+  const meditationAudioRef = useRef(null);
   const [isMeditationPlaying, setIsMeditationPlaying] = useState(false);
+  const [meditationElapsed, setMeditationElapsed] = useState(0); // 0 to 600s (10 mins)
+  const [isMeditationMuted, setIsMeditationMuted] = useState(false);
+
+  // 10-Minute Meditation Timer Loop
+  useEffect(() => {
+    let interval = null;
+    if (isMeditationPlaying) {
+      interval = setInterval(() => {
+        setMeditationElapsed((prev) => {
+          if (prev >= 600) {
+            if (meditationAudioRef.current) {
+              meditationAudioRef.current.pause();
+            }
+            setIsMeditationPlaying(false);
+            soundFx.playPopSound(1.8);
+            return 600;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isMeditationPlaying]);
+
+  const toggleMeditationAudio = () => {
+    if (!meditationAudioRef.current) return;
+    if (isMeditationPlaying) {
+      meditationAudioRef.current.pause();
+      setIsMeditationPlaying(false);
+      soundFx.playPopSound(0.85);
+    } else {
+      const playPromise = meditationAudioRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setIsMeditationPlaying(true);
+            soundFx.playPopSound(1.4);
+          })
+          .catch((err) => {
+            console.warn("Audio playback prevented or error:", err);
+            setIsMeditationPlaying(false);
+          });
+      }
+    }
+  };
+
+  const handleSeekMeditation = (e) => {
+    const newSecs = parseInt(e.target.value, 10);
+    setMeditationElapsed(newSecs);
+    if (meditationAudioRef.current && meditationAudioRef.current.duration) {
+      meditationAudioRef.current.currentTime = newSecs % meditationAudioRef.current.duration;
+    }
+  };
+
+  const resetMeditationAudio = () => {
+    if (meditationAudioRef.current) {
+      meditationAudioRef.current.currentTime = 0;
+    }
+    setMeditationElapsed(0);
+    soundFx.playPopSound(1.1);
+  };
+
+  const toggleMeditationMute = () => {
+    if (!meditationAudioRef.current) return;
+    const nextMute = !isMeditationMuted;
+    meditationAudioRef.current.muted = nextMute;
+    setIsMeditationMuted(nextMute);
+    soundFx.playPopSound(nextMute ? 0.9 : 1.2);
+  };
+
+  const formatMeditationTime = (secs) => {
+    const m = Math.floor(secs / 60);
+    const s = Math.floor(secs % 60);
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
 
 
   // App Help Guide Bot State
@@ -311,35 +389,120 @@ export default function ActionsScreen() {
       {/* ========================================================================= */}
       {actionsSubView === 'stress' && (
         <div className="space-y-4">
-          {/* Daily Calm Feature Card with Serene Lake Background */}
-          <div className="w-full rounded-3xl overflow-hidden border border-indigo-500/30 relative shadow-xl min-h-[170px] flex flex-col justify-between p-5 bg-[#0a1120]">
+          {/* Daily Calm Feature Card with Deep Meditation by David Fesliyan */}
+          <div className="w-full rounded-3xl overflow-hidden border border-indigo-500/30 relative shadow-2xl p-5 bg-[#090e1a] space-y-4">
+            
+            {/* Background lake art */}
             <div 
-              className="absolute inset-0 bg-cover bg-center pointer-events-none opacity-50"
-              style={{ backgroundImage: `url('/meditation_bg.jpg')` }}
+              className="absolute inset-0 bg-cover bg-center pointer-events-none opacity-40 transition-opacity duration-700"
+              style={{ 
+                backgroundImage: `url('/meditation_bg.jpg')`,
+                filter: isMeditationPlaying ? 'brightness(1.1)' : 'brightness(0.85)'
+              }}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#090E1A] via-transparent to-transparent pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#080d17] via-[#080d17]/60 to-transparent pointer-events-none" />
 
+            {/* Real HTML5 Audio Element for Deep Meditation by David Fesliyan */}
+            <audio
+              ref={meditationAudioRef}
+              src="/audio/deep_meditation_david_fesliyan.mp3"
+              loop
+              preload="auto"
+              onEnded={() => {
+                if (meditationElapsed < 600 && meditationAudioRef.current) {
+                  meditationAudioRef.current.play().catch(() => {});
+                }
+              }}
+            >
+              <source src="/audio/deep_meditation_david_fesliyan.mp3" type="audio/mpeg" />
+              <source src="https://www.fesliyanstudios.com/musicfiles/2019-04-06_-_Deep_Meditation_-_David_Fesliyan.mp3" type="audio/mpeg" />
+            </audio>
+
+            {/* Header info */}
             <div className="relative z-10 space-y-1">
-              <span className="text-[10px] font-mono text-indigo-300 font-bold uppercase tracking-widest">
-                GUIDED MEDITATION
-              </span>
-              <h3 className="text-lg font-black text-white">Daily Calm</h3>
-              <p className="text-xs font-mono text-slate-300">10 min • Calm lake soundscape & breathwork</p>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono text-cyan-300 font-bold uppercase tracking-widest flex items-center space-x-1.5">
+                  <Music className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>GUIDED MEDITATION</span>
+                </span>
+                <span className="text-[10px] font-mono text-indigo-300 font-bold px-2 py-0.5 rounded-full bg-indigo-950/70 border border-indigo-500/40">
+                  10 MIN SESSION
+                </span>
+              </div>
+              
+              <h3 className="text-lg font-black text-white flex items-center space-x-2">
+                <span>Daily Calm</span>
+                {isMeditationPlaying && (
+                  <span className="w-2 h-2 rounded-full bg-[#00F2FE] shadow-[0_0_8px_#00F2FE] animate-ping" />
+                )}
+              </h3>
+              
+              <p className="text-xs font-sans text-cyan-300 font-semibold flex items-center space-x-1.5">
+                <span>Deep Meditation</span>
+                <span className="text-slate-400 font-normal">— by David Fesliyan</span>
+              </p>
+              <p className="text-[11px] font-sans text-slate-300 leading-snug">
+                Soothing ambient soundtrack composed for deep relaxation, breathwork & vagal reset.
+              </p>
             </div>
 
-            <div className="relative z-10 pt-4 flex items-center space-x-3">
+            {/* Interactive Progress Scrubber & Live 10-Min Session Time Display */}
+            <div className="relative z-10 space-y-1.5 pt-1">
+              <input
+                type="range"
+                min="0"
+                max="600"
+                value={meditationElapsed}
+                onChange={handleSeekMeditation}
+                className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+              />
+              <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
+                <span className="text-cyan-300 font-bold">{formatMeditationTime(meditationElapsed)}</span>
+                <span className="text-[10px] text-slate-500 font-sans">
+                  {isMeditationPlaying ? 'Playing Ambient Audio' : 'Paused'}
+                </span>
+                <span className="text-slate-400 font-bold">10:00</span>
+              </div>
+            </div>
+
+            {/* Playback Action Controls */}
+            <div className="relative z-10 flex items-center justify-between pt-1">
+              <div className="flex items-center space-x-2.5">
+                <button
+                  onClick={toggleMeditationAudio}
+                  className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-indigo-500 via-teal-500 to-cyan-400 text-slate-950 font-bold font-mono text-xs shadow-[0_0_15px_rgba(0,242,254,0.3)] hover:opacity-95 active:scale-95 transition-all flex items-center space-x-2"
+                >
+                  {isMeditationPlaying ? (
+                    <>
+                      <Pause className="w-3.5 h-3.5 fill-slate-950" />
+                      <span>Pause Audio</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-3.5 h-3.5 fill-slate-950" />
+                      <span>Play 10-Min Meditation</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={resetMeditationAudio}
+                  className="p-2.5 rounded-2xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-white transition-colors"
+                  title="Rewind to beginning (00:00)"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
               <button
-                onClick={() => {
-                  const next = !isMeditationPlaying;
-                  setIsMeditationPlaying(next);
-                  soundFx.playPopSound(next ? 1.5 : 0.8);
-                }}
-                className="px-4 py-2 rounded-full bg-gradient-to-r from-indigo-500 to-cyan-500 text-slate-950 font-bold font-mono text-xs shadow-md flex items-center space-x-2"
+                onClick={toggleMeditationMute}
+                className="p-2.5 rounded-2xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-cyan-300 transition-colors"
+                title={isMeditationMuted ? "Unmute" : "Mute"}
               >
-                {isMeditationPlaying ? <Pause className="w-3.5 h-3.5 fill-slate-950" /> : <Play className="w-3.5 h-3.5 fill-slate-950" />}
-                <span>{isMeditationPlaying ? 'Pause Audio' : 'Play Guided Meditation'}</span>
+                {isMeditationMuted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4 text-cyan-400" />}
               </button>
             </div>
+
           </div>
 
           <div className="space-y-2">
