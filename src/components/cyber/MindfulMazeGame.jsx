@@ -4,21 +4,16 @@ import {
   RotateCcw, 
   Pause, 
   Play, 
-  CheckCircle2, 
   Sparkles, 
-  Heart, 
   ChevronUp, 
   ChevronDown, 
   ChevronLeft, 
   ChevronRight,
-  Smile,
-  Meh,
-  Frown
+  RefreshCw
 } from 'lucide-react';
 import { soundFx } from '../../utils/audioSynthesizer';
 
-// Predefined, verified, 100% solvable serene mazes
-// 0 = Walkable Path, 1 = Wall
+// Level metadata configuration
 const MAZE_LEVELS = [
   {
     level: 1,
@@ -26,15 +21,7 @@ const MAZE_LEVELS = [
     rows: 6,
     cols: 6,
     start: { r: 0, c: 0 },
-    end: { r: 5, c: 5 },
-    grid: [
-      [0, 0, 0, 1, 1, 1],
-      [1, 1, 0, 0, 0, 1],
-      [1, 0, 0, 1, 0, 1],
-      [1, 0, 1, 1, 0, 0],
-      [1, 0, 0, 0, 1, 0],
-      [1, 1, 1, 0, 0, 0]
-    ]
+    end: { r: 5, c: 5 }
   },
   {
     level: 2,
@@ -42,16 +29,7 @@ const MAZE_LEVELS = [
     rows: 7,
     cols: 7,
     start: { r: 0, c: 0 },
-    end: { r: 6, c: 6 },
-    grid: [
-      [0, 0, 0, 0, 1, 1, 1],
-      [1, 1, 1, 0, 0, 0, 1],
-      [1, 0, 0, 0, 1, 0, 1],
-      [1, 0, 1, 1, 1, 0, 0],
-      [1, 0, 0, 0, 0, 1, 0],
-      [1, 1, 1, 1, 0, 0, 0],
-      [1, 1, 1, 1, 1, 1, 0]
-    ]
+    end: { r: 6, c: 6 }
   },
   {
     level: 3,
@@ -59,23 +37,126 @@ const MAZE_LEVELS = [
     rows: 8,
     cols: 8,
     start: { r: 0, c: 0 },
-    end: { r: 7, c: 7 },
-    grid: [
-      [0, 0, 0, 1, 1, 1, 1, 1],
-      [1, 1, 0, 0, 0, 0, 1, 1],
-      [1, 0, 0, 1, 1, 0, 0, 1],
-      [1, 0, 1, 1, 0, 0, 0, 1],
-      [1, 0, 0, 0, 0, 1, 0, 0],
-      [1, 1, 1, 0, 1, 1, 1, 0],
-      [1, 0, 0, 0, 0, 0, 1, 0],
-      [1, 1, 1, 1, 1, 0, 0, 0]
-    ]
+    end: { r: 7, c: 7 }
   }
 ];
+
+/**
+ * Procedural Mindful Maze Generator
+ * Guarantees a 100% solvable, calming, winding path from (0,0) to (rows-1, cols-1)
+ * with organic branching every time it is called.
+ */
+function generateMindfulMaze(rows, cols) {
+  const grid = Array.from({ length: rows }, () => Array(cols).fill(1));
+  const visited = Array.from({ length: rows }, () => Array(cols).fill(false));
+  const target = { r: rows - 1, c: cols - 1 };
+  const path = [];
+
+  function findPath(r, c) {
+    visited[r][c] = true;
+    path.push({ r, c });
+    if (r === target.r && c === target.c) return true;
+
+    // Shuffle 4 cardinal directions
+    const dirs = [
+      { dr: -1, dc: 0 },
+      { dr: 1, dc: 0 },
+      { dr: 0, dc: -1 },
+      { dr: 0, dc: 1 }
+    ].sort(() => Math.random() - 0.5);
+
+    // Gently bias towards target while preserving organic wander
+    dirs.sort((a, b) => {
+      const distA = Math.hypot(target.r - (r + a.dr), target.c - (c + a.dc));
+      const distB = Math.hypot(target.r - (r + b.dr), target.c - (c + b.dc));
+      return (distA - distB) + (Math.random() * 2.2 - 1.1);
+    });
+
+    for (const { dr, dc } of dirs) {
+      const nr = r + dr;
+      const nc = c + dc;
+      if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && !visited[nr][nc]) {
+        if (findPath(nr, nc)) return true;
+      }
+    }
+    path.pop();
+    return false;
+  }
+
+  // Find guaranteed path
+  const success = findPath(0, 0);
+
+  // Carve primary walkable route (0 = walkable)
+  if (success && path.length > 0) {
+    for (const p of path) {
+      grid[p.r][p.c] = 0;
+    }
+  } else {
+    // Failsafe direct stair path if deep recursion hits edge
+    let cr = 0, cc = 0;
+    grid[0][0] = 0;
+    while (cr < target.r || cc < target.c) {
+      if (cr < target.r && (cc >= target.c || Math.random() < 0.5)) cr++;
+      else cc++;
+      grid[cr][cc] = 0;
+    }
+  }
+
+  // Carve gentle dead-end alcoves from the main path for mindful curiosity
+  for (const p of path) {
+    if (Math.random() < 0.42) {
+      const dirs = [
+        { dr: -1, dc: 0 },
+        { dr: 1, dc: 0 },
+        { dr: 0, dc: -1 },
+        { dr: 0, dc: 1 }
+      ].sort(() => Math.random() - 0.5);
+
+      for (const { dr, dc } of dirs) {
+        const nr = p.r + dr;
+        const nc = p.c + dc;
+        if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && grid[nr][nc] === 1) {
+          // Avoid creating large 2x2 open rooms
+          let neighborPaths = 0;
+          for (const d of dirs) {
+            const adjR = nr + d.dr;
+            const adjC = nc + d.dc;
+            if (adjR >= 0 && adjR < rows && adjC >= 0 && adjC < cols && grid[adjR][adjC] === 0) {
+              neighborPaths++;
+            }
+          }
+          if (neighborPaths <= 2) {
+            grid[nr][nc] = 0;
+            // Occasional 2nd step
+            if (Math.random() < 0.25) {
+              const nnr = nr + dr;
+              const nnc = nc + dc;
+              if (nnr >= 0 && nnr < rows && nnc >= 0 && nnc < cols && grid[nnr][nnc] === 1) {
+                grid[nnr][nnc] = 0;
+              }
+            }
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  // Ensure start and end are always walkable
+  grid[0][0] = 0;
+  grid[target.r][target.c] = 0;
+
+  return grid;
+}
 
 export default function MindfulMazeGame({ onBack }) {
   const [levelIdx, setLevelIdx] = useState(0);
   const currentMaze = MAZE_LEVELS[levelIdx];
+
+  // Procedural maze grid for current level (regenerates uniquely on every reset)
+  const [mazeGrid, setMazeGrid] = useState(() => 
+    generateMindfulMaze(currentMaze.rows, currentMaze.cols)
+  );
 
   // Player position in grid coordinates { r, c }
   const [playerPos, setPlayerPos] = useState(currentMaze.start);
@@ -84,6 +165,8 @@ export default function MindfulMazeGame({ onBack }) {
   const [isPaused, setIsPaused] = useState(false);
   const [feedback, setFeedback] = useState(null); // 'better' | 'same' | 'stressed'
   const [breathText, setBreathText] = useState('Inhale gently...');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [patternFlash, setPatternFlash] = useState(false);
   const mazeContainerRef = useRef(null);
 
   // Subtle breathing guide rhythm
@@ -94,21 +177,32 @@ export default function MindfulMazeGame({ onBack }) {
     return () => clearInterval(breathInterval);
   }, []);
 
-  // Reset state when switching levels
-  const resetLevel = useCallback((idx = levelIdx) => {
-    const targetMaze = MAZE_LEVELS[idx];
-    setPlayerPos(targetMaze.start);
-    setVisitedTrail([targetMaze.start]);
+  // Reset maze handler: Generates a brand new, unique solvable maze layout every time
+  const handleResetMaze = useCallback((targetIdx = levelIdx) => {
+    const targetLevel = MAZE_LEVELS[targetIdx];
+    setIsGenerating(true);
+    soundFx?.playPopSound?.(1.3);
+
+    // Procedurally generate a completely new pattern
+    const newGrid = generateMindfulMaze(targetLevel.rows, targetLevel.cols);
+    setMazeGrid(newGrid);
+    setPlayerPos(targetLevel.start);
+    setVisitedTrail([targetLevel.start]);
     setIsCompleted(false);
     setIsPaused(false);
     setFeedback(null);
+    setPatternFlash(true);
+
+    setTimeout(() => setIsGenerating(false), 350);
+    setTimeout(() => setPatternFlash(false), 2000);
   }, [levelIdx]);
 
   // Movement validator
   const canMoveTo = useCallback((r, c) => {
     if (r < 0 || r >= currentMaze.rows || c < 0 || c >= currentMaze.cols) return false;
-    return currentMaze.grid[r][c] === 0;
-  }, [currentMaze]);
+    if (!mazeGrid || !mazeGrid[r]) return false;
+    return mazeGrid[r][c] === 0;
+  }, [currentMaze, mazeGrid]);
 
   // Smooth step handler
   const movePlayer = useCallback((newR, newC) => {
@@ -118,7 +212,6 @@ export default function MindfulMazeGame({ onBack }) {
     soundFx?.playPopSound?.(1.4);
     setPlayerPos({ r: newR, c: newC });
     setVisitedTrail(prev => {
-      // Append only if not the exact same point
       const last = prev[prev.length - 1];
       if (last && last.r === newR && last.c === newC) return prev;
       return [...prev, { r: newR, c: newC }];
@@ -154,11 +247,14 @@ export default function MindfulMazeGame({ onBack }) {
       } else if (['ArrowRight', 'KeyD'].includes(e.code)) {
         e.preventDefault();
         moveRight();
+      } else if (['KeyR'].includes(e.code)) {
+        e.preventDefault();
+        handleResetMaze();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [moveUp, moveDown, moveLeft, moveRight]);
+  }, [moveUp, moveDown, moveLeft, moveRight, handleResetMaze]);
 
   // Touch/pointer drag gesture detection
   const handleTouchStartPos = useRef({ x: 0, y: 0 });
@@ -173,7 +269,7 @@ export default function MindfulMazeGame({ onBack }) {
     const touch = e.touches ? e.touches[0] : e;
     const dx = touch.clientX - handleTouchStartPos.current.x;
     const dy = touch.clientY - handleTouchStartPos.current.y;
-    const threshold = 24;
+    const threshold = 22;
 
     if (Math.abs(dx) > threshold || Math.abs(dy) > threshold) {
       if (Math.abs(dx) > Math.abs(dy)) {
@@ -187,18 +283,12 @@ export default function MindfulMazeGame({ onBack }) {
     }
   };
 
-  // Next level handler
+  // Next level handler: advances level and generates a new procedural layout
   const handleNextLevel = () => {
     soundFx?.playPopSound?.(1.3);
-    if (levelIdx < MAZE_LEVELS.length - 1) {
-      const nextIdx = levelIdx + 1;
-      setLevelIdx(nextIdx);
-      resetLevel(nextIdx);
-    } else {
-      // Loop or restart
-      resetLevel(0);
-      setLevelIdx(0);
-    }
+    const nextIdx = levelIdx < MAZE_LEVELS.length - 1 ? levelIdx + 1 : 0;
+    setLevelIdx(nextIdx);
+    handleResetMaze(nextIdx);
   };
 
   return (
@@ -213,7 +303,7 @@ export default function MindfulMazeGame({ onBack }) {
             soundFx?.playPopSound?.(1.1);
             onBack();
           }}
-          className="flex items-center space-x-1.5 text-xs text-slate-400 hover:text-cyan-300 transition-colors py-1 px-2.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700"
+          className="flex items-center space-x-1.5 text-xs text-slate-400 hover:text-cyan-300 transition-colors py-1.5 px-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Back</span>
@@ -228,15 +318,28 @@ export default function MindfulMazeGame({ onBack }) {
           </span>
         </div>
 
-        <button
-          onClick={() => {
-            soundFx?.playPopSound?.(1.2);
-            setIsPaused(p => !p);
-          }}
-          className="text-xs text-slate-400 hover:text-white py-1 px-2.5 rounded-xl bg-slate-900 border border-slate-800 transition-colors"
-        >
-          {isPaused ? <Play className="w-3.5 h-3.5 text-emerald-400" /> : <Pause className="w-3.5 h-3.5 text-slate-400" />}
-        </button>
+        {/* Top Control Action Buttons (Reset Pattern & Pause) */}
+        <div className="flex items-center space-x-1.5">
+          <button
+            onClick={() => handleResetMaze()}
+            className="flex items-center space-x-1 text-xs text-cyan-300 hover:text-white py-1.5 px-2.5 rounded-xl bg-slate-900 border border-cyan-500/40 hover:border-cyan-400 transition-all active:scale-95 shadow-[0_0_10px_rgba(0,242,254,0.1)]"
+            title="Reset maze with a new pattern (Key: R)"
+          >
+            <RotateCcw className={`w-3.5 h-3.5 ${isGenerating ? 'animate-spin text-cyan-400' : ''}`} />
+            <span className="text-[11px] font-sans font-semibold">Reset</span>
+          </button>
+
+          <button
+            onClick={() => {
+              soundFx?.playPopSound?.(1.2);
+              setIsPaused(p => !p);
+            }}
+            className="text-xs text-slate-400 hover:text-white py-1.5 px-2.5 rounded-xl bg-slate-900 border border-slate-800 transition-colors"
+            title={isPaused ? "Resume" : "Pause"}
+          >
+            {isPaused ? <Play className="w-3.5 h-3.5 text-emerald-400" /> : <Pause className="w-3.5 h-3.5 text-slate-400" />}
+          </button>
+        </div>
       </div>
 
       {/* ========================================================================= */}
@@ -262,6 +365,16 @@ export default function MindfulMazeGame({ onBack }) {
         </div>
       </div>
 
+      {/* Notice Banner: New Pattern Generated */}
+      {patternFlash && (
+        <div className="py-2 px-3 rounded-xl bg-cyan-500/15 border border-cyan-400/40 text-center animate-in fade-in slide-in-from-top-2 duration-300">
+          <span className="text-xs text-cyan-300 font-sans font-medium flex items-center justify-center space-x-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+            <span>New maze pattern generated. Find your path.</span>
+          </span>
+        </div>
+      )}
+
       {/* ========================================================================= */}
       {/* 3. CENTER MAZE PANEL                                                      */}
       {/* ========================================================================= */}
@@ -285,7 +398,7 @@ export default function MindfulMazeGame({ onBack }) {
             gridTemplateColumns: `repeat(${currentMaze.cols}, minmax(0, 1fr))`
           }}
         >
-          {currentMaze.grid.map((rowArr, r) =>
+          {mazeGrid.map((rowArr, r) =>
             rowArr.map((cell, c) => {
               const isWall = cell === 1;
               const isStart = r === currentMaze.start.r && c === currentMaze.start.c;
@@ -297,7 +410,6 @@ export default function MindfulMazeGame({ onBack }) {
                 <div
                   key={`${r}-${c}`}
                   onClick={() => {
-                    // Clicking adjacent cell moves player
                     const dr = Math.abs(playerPos.r - r);
                     const dc = Math.abs(playerPos.c - c);
                     if ((dr === 1 && dc === 0) || (dr === 0 && dc === 1)) {
@@ -399,6 +511,17 @@ export default function MindfulMazeGame({ onBack }) {
             <ChevronDown className="w-4 h-4" />
           </button>
         </div>
+
+        {/* Dedicated Prominent Reset Button in Game Card */}
+        <div className="flex items-center justify-center pt-2">
+          <button
+            onClick={() => handleResetMaze()}
+            className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-cyan-500/40 hover:border-cyan-400 text-cyan-300 text-xs font-mono transition-all active:scale-95 shadow-[0_0_15px_rgba(0,242,254,0.12)] group"
+          >
+            <RotateCcw className={`w-3.5 h-3.5 group-hover:rotate-180 transition-transform duration-500 ${isGenerating ? 'animate-spin' : ''}`} />
+            <span className="font-semibold">Reset Maze (New Pattern)</span>
+          </button>
+        </div>
       </div>
 
       {/* ========================================================================= */}
@@ -417,12 +540,12 @@ export default function MindfulMazeGame({ onBack }) {
         </span>
 
         <button
-          onClick={() => resetLevel()}
-          className="flex items-center space-x-1 text-slate-400 hover:text-white transition-colors"
-          title="Restart current maze"
+          onClick={() => handleResetMaze()}
+          className="flex items-center space-x-1.5 text-slate-300 hover:text-cyan-300 transition-colors py-1 px-2.5 rounded-lg hover:bg-slate-850"
+          title="Generate fresh maze layout"
         >
-          <RotateCcw className="w-3.5 h-3.5" />
-          <span className="text-[11px]">Reset</span>
+          <RotateCcw className={`w-3.5 h-3.5 text-cyan-400 ${isGenerating ? 'animate-spin' : ''}`} />
+          <span className="text-[11px] font-semibold">New Layout</span>
         </button>
       </div>
 
@@ -438,15 +561,24 @@ export default function MindfulMazeGame({ onBack }) {
           <p className="text-xs text-slate-300 font-sans leading-relaxed max-w-xs mx-auto">
             Rest here as long as you like. Relax your shoulders. Take one long breath before continuing.
           </p>
-          <button
-            onClick={() => {
-              soundFx?.playPopSound?.(1.2);
-              setIsPaused(false);
-            }}
-            className="w-full py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 text-slate-950 font-bold text-xs font-mono hover:opacity-90 transition-opacity"
-          >
-            Resume Journey
-          </button>
+          <div className="space-y-2 pt-1 font-sans">
+            <button
+              onClick={() => {
+                soundFx?.playPopSound?.(1.2);
+                setIsPaused(false);
+              }}
+              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 text-slate-950 font-bold text-xs font-mono hover:opacity-90 transition-opacity"
+            >
+              Resume Journey
+            </button>
+            <button
+              onClick={() => handleResetMaze()}
+              className="w-full py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-cyan-300 text-xs font-mono transition-colors flex items-center justify-center space-x-1.5"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Reset with New Pattern</span>
+            </button>
+          </div>
         </div>
       )}
 
@@ -518,19 +650,27 @@ export default function MindfulMazeGame({ onBack }) {
               </button>
             ) : (
               <button
-                onClick={() => resetLevel(0)}
+                onClick={() => handleResetMaze(0)}
                 className="w-full py-3 rounded-2xl bg-gradient-to-r from-teal-500 to-cyan-500 text-slate-950 font-bold text-xs font-mono shadow-[0_0_15px_rgba(0,242,254,0.3)] hover:opacity-95 transition-opacity"
               >
-                Play Again ✦
+                Play Again (New Pattern) ✦
               </button>
             )}
+
+            <button
+              onClick={() => handleResetMaze()}
+              className="w-full py-2.5 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-cyan-500/30 text-cyan-300 font-bold text-xs font-mono transition-colors flex items-center justify-center space-x-1.5"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Try Another Pattern</span>
+            </button>
 
             <button
               onClick={() => {
                 soundFx?.playPopSound?.(1.1);
                 onBack();
               }}
-              className="w-full py-2.5 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white font-bold text-xs font-mono transition-colors"
+              className="w-full py-2 rounded-2xl bg-transparent hover:bg-slate-900 border border-slate-800 text-slate-400 hover:text-white font-bold text-xs font-mono transition-colors"
             >
               Back to Actions
             </button>
