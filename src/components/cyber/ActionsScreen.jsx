@@ -337,7 +337,7 @@ export default function ActionsScreen() {
                 soundFx.playPopSound(1.2);
                 setActionsSubView(item.id);
               }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-mono transition-all cursor-pointer ${
+              className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-mono transition-all cursor-pointer ${
                 actionsSubView === item.id
                   ? 'bg-cyan-500/20 text-[#00F2FE] border border-cyan-500/40 font-bold shadow-[0_0_10px_rgba(0,242,254,0.25)]'
                   : 'text-slate-400 hover:text-slate-200'
@@ -356,7 +356,7 @@ export default function ActionsScreen() {
         <div className="space-y-3 font-sans">
           <div className="px-1">
             <h2 className="text-base font-extrabold text-white">Actions Toolkit</h2>
-            <p className="text-xs text-slate-400">Personalized tools to help you breathe better.</p>
+            <p className="text-sm text-slate-300">Personalized tools to help you breathe better.</p>
           </div>
 
           <div className="space-y-2.5">
@@ -376,20 +376,20 @@ export default function ActionsScreen() {
                     soundFx.playPopSound(1.2);
                     setActionsSubView(item.id);
                   }}
-                  className="p-3.5 rounded-2xl bg-[#0e1628]/95 hover:bg-[#131f38] border border-slate-800 hover:border-cyan-500/40 flex items-center justify-between cursor-pointer group transition-all"
+                  className="p-4 rounded-2xl bg-[#0e1628]/95 hover:bg-[#131f38] border border-slate-800 hover:border-cyan-500/40 flex items-center justify-between cursor-pointer group transition-all"
                 >
                   <div className="flex items-center space-x-3.5">
-                    <div className="w-10 h-10 rounded-2xl bg-slate-900 border border-slate-700/80 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <div className="w-11 h-11 rounded-2xl bg-slate-900 border border-slate-700/80 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                       <Icon className={`w-5 h-5 ${item.color}`} />
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-white group-hover:text-cyan-300 transition-colors">
+                      <h4 className="text-sm font-bold text-white group-hover:text-cyan-300 transition-colors">
                         {item.title}
                       </h4>
-                      <p className="text-[11px] text-slate-400">{item.desc}</p>
+                      <p className="text-xs sm:text-[13px] text-slate-300 mt-0.5">{item.desc}</p>
                     </div>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-cyan-400 group-hover:translate-x-1 transition-all" />
+                  <ChevronRight className="w-5 h-5 text-slate-500 group-hover:text-cyan-400 group-hover:translate-x-1 transition-all" />
                 </div>
               );
             })}
@@ -403,9 +403,9 @@ export default function ActionsScreen() {
       {actionsSubView === 'breathing' && (
         <div className="space-y-4">
           <div className="p-5 rounded-3xl bg-[#0e1628] border border-cyan-500/30 space-y-4 font-mono text-center relative overflow-hidden">
-            <div className="flex items-center justify-between text-xs text-slate-400">
-              <span className="font-bold text-white font-sans text-sm">4-7-8 Breathing</span>
-              <span>Calm • Focus • Relax</span>
+            <div className="flex items-center justify-between text-sm text-slate-300">
+              <span className="font-bold text-white font-sans text-base">4-7-8 Breathing</span>
+              <span className="text-xs sm:text-sm text-cyan-300/80">Calm • Focus • Relax</span>
             </div>
 
             {/* Interactive Animated Breathing Gauge */}
@@ -419,38 +419,38 @@ export default function ActionsScreen() {
                     : 'scale-95 border-emerald-400 bg-emerald-950/20'
                 }`}
               >
-                <span className="text-sm font-sans font-bold uppercase tracking-wider text-cyan-300">
+                <span className="text-base font-sans font-bold uppercase tracking-wider text-cyan-300">
                   {breathingActive ? breathPhase : 'Ready'}
                 </span>
                 <span className="text-4xl font-black text-white my-1">
                   {breathingActive ? phaseSecondsLeft : '4-7-8'}
                 </span>
-                <span className="text-[10px] text-slate-400">
-                  {breathingActive ? `${cyclesCompleted} cycles` : 'Tap Play'}
+                <span className="text-xs text-slate-300">
+                  {breathingActive ? `${cyclesCompleted} cycles completed` : 'Tap Play'}
                 </span>
               </div>
             </div>
 
             {/* Phase duration indicators */}
-            <div className="grid grid-cols-3 gap-2 text-center text-xs">
-              <div className={`p-2 rounded-xl border ${breathPhase === 'Inhale' && breathingActive ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 font-bold' : 'bg-slate-900 border-slate-800 text-slate-400'}`}>
-                <span className="block text-[10px]">4s</span>
-                <span>Inhale</span>
+            <div className="grid grid-cols-3 gap-2 text-center text-sm">
+              <div className={`p-2.5 rounded-xl border ${breathPhase === 'Inhale' && breathingActive ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 font-bold' : 'bg-slate-900 border-slate-800 text-slate-300'}`}>
+                <span className="block text-xs text-cyan-400 font-mono">4s</span>
+                <span className="font-semibold">Inhale</span>
               </div>
-              <div className={`p-2 rounded-xl border ${breathPhase === 'Hold' && breathingActive ? 'bg-indigo-500/20 border-indigo-400 text-indigo-300 font-bold' : 'bg-slate-900 border-slate-800 text-slate-400'}`}>
-                <span className="block text-[10px]">7s</span>
-                <span>Hold</span>
+              <div className={`p-2.5 rounded-xl border ${breathPhase === 'Hold' && breathingActive ? 'bg-indigo-500/20 border-indigo-400 text-indigo-300 font-bold' : 'bg-slate-900 border-slate-800 text-slate-300'}`}>
+                <span className="block text-xs text-indigo-400 font-mono">7s</span>
+                <span className="font-semibold">Hold</span>
               </div>
-              <div className={`p-2 rounded-xl border ${breathPhase === 'Exhale' && breathingActive ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 font-bold' : 'bg-slate-900 border-slate-800 text-slate-400'}`}>
-                <span className="block text-[10px]">8s</span>
-                <span>Exhale</span>
+              <div className={`p-2.5 rounded-xl border ${breathPhase === 'Exhale' && breathingActive ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 font-bold' : 'bg-slate-900 border-slate-800 text-slate-300'}`}>
+                <span className="block text-xs text-emerald-400 font-mono">8s</span>
+                <span className="font-semibold">Exhale</span>
               </div>
             </div>
 
             {/* Play/Pause Button */}
             <button
               onClick={toggleBreathing}
-              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-500 text-slate-950 font-bold text-xs shadow-md hover:brightness-110 flex items-center justify-center space-x-2"
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-500 text-slate-950 font-bold text-sm shadow-md hover:brightness-110 flex items-center justify-center space-x-2"
             >
               {breathingActive ? <Pause className="w-4 h-4 fill-slate-950" /> : <Play className="w-4 h-4 fill-slate-950" />}
               <span>{breathingActive ? 'Pause Session' : 'Start 4-7-8 Exercise'}</span>
@@ -459,7 +459,7 @@ export default function ActionsScreen() {
 
           {/* Other Breathing Exercises */}
           <div className="space-y-2">
-            <span className="text-xs font-mono text-slate-400 uppercase tracking-wider px-1">Other Exercises</span>
+            <span className="text-xs sm:text-sm font-mono text-slate-400 uppercase tracking-wider px-1">Other Exercises</span>
             {[
               { name: 'Diaphragmatic Breathing', sub: 'Improve lung capacity & oxygen intake' },
               { name: 'Box Breathing (4-4-4-4)', sub: 'Reduce autonomic anxiety & lower pulse' },
@@ -471,11 +471,11 @@ export default function ActionsScreen() {
                   soundFx.playPopSound(1.2);
                   toggleBreathing();
                 }}
-                className="p-3 rounded-2xl bg-[#0e1628] border border-slate-800 flex items-center justify-between cursor-pointer hover:border-cyan-500/30"
+                className="p-3.5 rounded-2xl bg-[#0e1628] border border-slate-800 flex items-center justify-between cursor-pointer hover:border-cyan-500/30"
               >
                 <div>
-                  <span className="text-xs font-bold text-white block">{ex.name}</span>
-                  <span className="text-[11px] text-slate-400">{ex.sub}</span>
+                  <span className="text-sm font-bold text-white block">{ex.name}</span>
+                  <span className="text-xs text-slate-300 mt-0.5 block">{ex.sub}</span>
                 </div>
                 <ChevronRight className="w-4 h-4 text-slate-500" />
               </div>
@@ -529,13 +529,13 @@ export default function ActionsScreen() {
             </audio>
 
             {/* Header info */}
-            <div className="relative z-10 space-y-1.5">
+            <div className="relative z-10 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono text-cyan-300 font-bold uppercase tracking-widest flex items-center space-x-1.5">
-                  <Trees className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="text-xs font-mono text-cyan-300 font-bold uppercase tracking-widest flex items-center space-x-1.5">
+                  <Trees className="w-4 h-4 text-emerald-400" />
                   <span>{activeTrack.badge}</span>
                 </span>
-                <span className="text-[10px] font-mono text-indigo-300 font-bold px-2 py-0.5 rounded-full bg-indigo-950/70 border border-indigo-500/40">
+                <span className="text-xs font-mono text-indigo-300 font-bold px-2.5 py-1 rounded-full bg-indigo-950/70 border border-indigo-500/40">
                   {activeTrack.durationLabel}
                 </span>
               </div>
@@ -544,7 +544,7 @@ export default function ActionsScreen() {
                 <h3 className="text-lg font-black text-white flex items-center space-x-2">
                   <span>Daily Calm</span>
                   {isMeditationPlaying && (
-                    <span className="w-2 h-2 rounded-full bg-[#00F2FE] shadow-[0_0_8px_#00F2FE] animate-ping" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#00F2FE] shadow-[0_0_8px_#00F2FE] animate-ping" />
                   )}
                 </h3>
 
@@ -565,29 +565,29 @@ export default function ActionsScreen() {
                 )}
               </div>
               
-              <p className="text-xs font-sans text-cyan-300 font-semibold flex items-center space-x-1.5">
+              <p className="text-sm font-sans text-cyan-300 font-semibold flex items-center space-x-2">
                 <span>{activeTrack.title}</span>
-                <span className="text-slate-400 font-normal">— by {activeTrack.artist}</span>
+                <span className="text-slate-300 font-normal">— by {activeTrack.artist}</span>
               </p>
-              <p className="text-[11px] font-sans text-slate-300 leading-snug">
+              <p className="text-xs sm:text-sm font-sans text-slate-200 leading-relaxed">
                 {activeTrack.desc}
               </p>
 
               {/* Quick Track Switcher */}
-              <div className="flex items-center space-x-2 pt-1">
+              <div className="flex items-center space-x-2 pt-1.5">
                 {MEDITATION_TRACKS.map((t) => {
                   const isSelected = selectedTrackId === t.id;
                   return (
                     <button
                       key={t.id}
                       onClick={() => selectTrack(t.id, true)}
-                      className={`px-2.5 py-1 rounded-xl text-[10px] font-mono font-bold transition-all flex items-center space-x-1.5 ${
+                      className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all flex items-center space-x-2 ${
                         isSelected 
                           ? 'bg-cyan-500/20 border border-cyan-400 text-cyan-300 shadow-[0_0_10px_rgba(0,242,254,0.2)]'
-                          : 'bg-slate-900/80 border border-slate-700/60 text-slate-400 hover:text-slate-200'
+                          : 'bg-slate-900/80 border border-slate-700/60 text-slate-300 hover:text-white'
                       }`}
                     >
-                      {t.id === 'nature' ? <Leaf className="w-3 h-3 text-emerald-400" /> : <Sparkles className="w-3 h-3 text-cyan-400" />}
+                      {t.id === 'nature' ? <Leaf className="w-3.5 h-3.5 text-emerald-400" /> : <Sparkles className="w-3.5 h-3.5 text-cyan-400" />}
                       <span>{t.title}</span>
                       {isSelected && isMeditationPlaying && (
                         <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse ml-0.5" />
@@ -606,14 +606,14 @@ export default function ActionsScreen() {
                 max="600"
                 value={meditationElapsed}
                 onChange={handleSeekMeditation}
-                className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+                className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
               />
-              <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
+              <div className="flex items-center justify-between text-xs sm:text-sm font-mono text-slate-300">
                 <span className="text-cyan-300 font-bold">{formatMeditationTime(meditationElapsed)}</span>
-                <span className="text-[10px] text-slate-400 font-sans">
+                <span className="text-xs text-slate-300 font-sans">
                   {isMeditationPlaying ? `Playing: ${activeTrack.title}` : 'Paused (10 Min Session)'}
                 </span>
-                <span className="text-slate-400 font-bold">10:00</span>
+                <span className="text-slate-300 font-bold">10:00</span>
               </div>
             </div>
 
@@ -622,16 +622,16 @@ export default function ActionsScreen() {
               <div className="flex items-center space-x-2.5">
                 <button
                   onClick={toggleMeditationAudio}
-                  className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-400 text-slate-950 font-bold font-mono text-xs shadow-[0_0_15px_rgba(0,242,254,0.3)] hover:opacity-95 active:scale-95 transition-all flex items-center space-x-2"
+                  className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-400 text-slate-950 font-bold font-mono text-sm shadow-[0_0_15px_rgba(0,242,254,0.3)] hover:opacity-95 active:scale-95 transition-all flex items-center space-x-2"
                 >
                   {isMeditationPlaying ? (
                     <>
-                      <Pause className="w-3.5 h-3.5 fill-slate-950" />
+                      <Pause className="w-4 h-4 fill-slate-950" />
                       <span>Pause Audio</span>
                     </>
                   ) : (
                     <>
-                      <Play className="w-3.5 h-3.5 fill-slate-950" />
+                      <Play className="w-4 h-4 fill-slate-950" />
                       <span>Play 10-Min Meditation</span>
                     </>
                   )}
@@ -700,24 +700,24 @@ export default function ActionsScreen() {
                   }`}
                 >
                   <div className="flex items-center space-x-3">
-                    <div className={`p-2 rounded-xl ${item.active ? 'bg-cyan-500/20 text-cyan-300' : 'bg-slate-900 text-slate-400'}`}>
+                    <div className={`p-2.5 rounded-xl ${item.active ? 'bg-cyan-500/20 text-cyan-300' : 'bg-slate-900 text-slate-400'}`}>
                       <ItemIcon className="w-4 h-4" />
                     </div>
                     <div>
                       <div className="flex items-center space-x-2">
-                        <span className={`text-xs font-bold block ${item.active ? 'text-cyan-300' : 'text-white'}`}>{item.title}</span>
+                        <span className={`text-sm font-bold block ${item.active ? 'text-cyan-300' : 'text-white'}`}>{item.title}</span>
                         {item.active && (
-                          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/30 animate-pulse">
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/30 animate-pulse font-bold">
                             PLAYING NOW
                           </span>
                         )}
                       </div>
-                      <span className="text-[11px] text-slate-400">{item.sub}</span>
+                      <span className="text-xs text-slate-300 mt-0.5 block">{item.sub}</span>
                     </div>
                   </div>
 
                   {item.id === 'nature' ? (
-                    <div className="p-2 rounded-xl bg-slate-900 border border-slate-700/60 text-cyan-400 hover:text-white">
+                    <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-700/60 text-cyan-400 hover:text-white">
                       {item.active ? <Pause className="w-4 h-4 fill-cyan-400" /> : <Play className="w-4 h-4 fill-cyan-400" />}
                     </div>
                   ) : (
@@ -746,8 +746,8 @@ export default function ActionsScreen() {
           ) : (
             <div className="space-y-3">
               <div className="px-1 flex items-center justify-between">
-                <span className="text-xs font-mono uppercase text-slate-400 font-bold">Mindfulness & Calming Games</span>
-                <span className="text-[10px] font-mono text-cyan-400/80">Low-pressure • Focus & Relax</span>
+                <span className="text-xs sm:text-sm font-mono uppercase text-slate-300 font-bold">Mindfulness & Calming Games</span>
+                <span className="text-xs font-mono text-cyan-400 font-medium">Low-pressure • Focus & Relax</span>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -777,9 +777,9 @@ export default function ActionsScreen() {
                     } hover:border-cyan-400 text-center space-y-2 cursor-pointer transition-all hover:scale-[1.02]`}
                   >
                     <div className="text-3xl">{game.icon}</div>
-                    <div className="font-bold text-xs text-white">{game.name}</div>
-                    <div className="text-[10px] text-slate-400">{game.sub}</div>
-                    <span className="text-[9px] font-mono text-cyan-400 block pt-1 font-semibold">
+                    <div className="font-bold text-sm text-white">{game.name}</div>
+                    <div className="text-xs text-slate-300">{game.sub}</div>
+                    <span className="text-xs font-mono text-cyan-400 block pt-1 font-semibold">
                       {game.actionText}
                     </span>
                   </div>
@@ -796,20 +796,20 @@ export default function ActionsScreen() {
       {actionsSubView === 'inhaler' && (
         <div className="space-y-4 font-mono">
           <div className="p-5 rounded-3xl bg-[#0e1628] border border-cyan-500/30 space-y-3 text-center">
-            <span className="text-xs text-slate-400 uppercase tracking-wider block">Today's Inhaler Doses</span>
+            <span className="text-xs sm:text-sm text-slate-400 uppercase tracking-wider block font-semibold">Today's Inhaler Doses</span>
             
             <div className="w-24 h-24 mx-auto rounded-full border-4 border-cyan-500/40 border-t-[#00F2FE] flex flex-col items-center justify-center">
-              <span className="text-3xl font-black text-white">{inhalerData.dosesToday} <span className="text-sm font-normal text-slate-400">/ {inhalerData.maxDoses}</span></span>
+              <span className="text-3xl font-black text-white">{inhalerData.dosesToday} <span className="text-base font-normal text-slate-400">/ {inhalerData.maxDoses}</span></span>
             </div>
 
-            <div className="text-xs text-slate-300">
+            <div className="text-sm font-medium text-slate-200">
               {inhalerData.maxDoses - inhalerData.dosesToday} doses remaining for today
             </div>
 
             <button
               onClick={logInhalerDose}
               disabled={inhalerData.dosesToday >= inhalerData.maxDoses}
-              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-500 text-slate-950 font-bold text-xs shadow-md disabled:opacity-50"
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-500 text-slate-950 font-bold text-sm shadow-md disabled:opacity-50"
             >
               + Log Dose Now
             </button>
@@ -817,16 +817,16 @@ export default function ActionsScreen() {
 
           {/* Schedule list */}
           <div className="space-y-2">
-            <span className="text-xs text-slate-400 uppercase tracking-wider px-1 block">Scheduled Doses</span>
+            <span className="text-xs sm:text-sm text-slate-400 uppercase tracking-wider px-1 block font-semibold">Scheduled Doses</span>
             {inhalerData.schedule.map((item) => (
               <div 
                 key={item.id}
                 onClick={() => toggleMedication(item.id)}
-                className="p-3.5 rounded-2xl bg-[#0e1628] border border-slate-800 flex items-center justify-between cursor-pointer"
+                className="p-3.5 rounded-2xl bg-[#0e1628] border border-slate-800 flex items-center justify-between cursor-pointer hover:border-cyan-500/30 transition-colors"
               >
                 <div>
-                  <span className="text-xs font-bold text-white block">{item.name} ({item.time})</span>
-                  <span className="text-[11px] text-slate-400">{item.med}</span>
+                  <span className="text-sm font-bold text-white block">{item.name} ({item.time})</span>
+                  <span className="text-xs text-slate-300 mt-0.5 block">{item.med}</span>
                 </div>
                 <div className={`w-6 h-6 rounded-lg border flex items-center justify-center ${item.taken ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : 'border-slate-700'}`}>
                   {item.taken && <CheckCircle2 className="w-4 h-4" />}
@@ -852,7 +852,7 @@ export default function ActionsScreen() {
             <div className="flex items-center justify-between border-b border-slate-800 pb-2.5 relative z-10">
               <div className="flex items-center space-x-2">
                 <Bell className="w-4 h-4 text-cyan-400" />
-                <span className="text-xs font-bold text-white uppercase tracking-wider">Dual Sleep & Wake Alarms</span>
+                <span className="text-sm font-bold text-white uppercase tracking-wider">Dual Sleep & Wake Alarms</span>
               </div>
               <button
                 onClick={() => {
@@ -860,7 +860,7 @@ export default function ActionsScreen() {
                   setActiveTab('guardian');
                   setGuardianSubView('sleep');
                 }}
-                className="text-[10px] text-cyan-300 hover:text-white underline cursor-pointer flex items-center space-x-1"
+                className="text-xs text-cyan-300 hover:text-white underline cursor-pointer flex items-center space-x-1"
               >
                 <span>Full Sleep Hub →</span>
               </button>
@@ -870,17 +870,17 @@ export default function ActionsScreen() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 relative z-10">
               
               {/* Bedtime Alarm */}
-              <div className={`p-3.5 rounded-2xl border transition-all ${
+              <div className={`p-4 rounded-2xl border transition-all ${
                 alarmSettings.bedtimeEnabled 
                   ? 'bg-[#0e1628] border-indigo-500/50 shadow-md' 
                   : 'bg-[#0a0f1d] border-slate-800/80 opacity-70'
               }`}>
                 <div className="flex items-center justify-between pb-2">
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2.5">
                     <Moon className="w-4 h-4 text-indigo-400" />
                     <div>
-                      <span className="text-xs font-bold text-white block">Bedtime Alarm</span>
-                      <span className="text-[10px] text-indigo-300">Routine Reminder</span>
+                      <span className="text-sm font-bold text-white block">Bedtime Alarm</span>
+                      <span className="text-xs text-indigo-300">Routine Reminder</span>
                     </div>
                   </div>
 
@@ -901,33 +901,33 @@ export default function ActionsScreen() {
                     type="time"
                     value={alarmSettings.bedtimeTime}
                     onChange={(e) => updateAlarmTime('bedtime', e.target.value)}
-                    className="bg-slate-900 border border-slate-700 rounded-xl px-2 py-1 text-xs font-bold text-white focus:outline-none focus:border-indigo-400"
+                    className="bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-sm font-bold text-white focus:outline-none focus:border-indigo-400"
                   />
                   <button
                     onClick={() => {
                       soundFx.playZenChime();
                       soundFx.playPopSound(1.2);
                     }}
-                    className="px-2 py-1 rounded-lg bg-slate-900 border border-slate-800 text-[10px] text-slate-300 hover:text-white flex items-center space-x-1"
+                    className="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs font-semibold text-slate-300 hover:text-white flex items-center space-x-1"
                   >
-                    <Volume2 className="w-3 h-3 text-indigo-400" />
+                    <Volume2 className="w-3.5 h-3.5 text-indigo-400" />
                     <span>Test</span>
                   </button>
                 </div>
               </div>
 
               {/* Wake-Up Alarm */}
-              <div className={`p-3.5 rounded-2xl border transition-all ${
+              <div className={`p-4 rounded-2xl border transition-all ${
                 alarmSettings.wakeEnabled 
                   ? 'bg-[#0e1628] border-cyan-400/50 shadow-md' 
                   : 'bg-[#0a0f1d] border-slate-800/80 opacity-70'
               }`}>
                 <div className="flex items-center justify-between pb-2">
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2.5">
                     <Sun className="w-4 h-4 text-cyan-400" />
                     <div>
-                      <span className="text-xs font-bold text-white block">Wake-Up Alarm</span>
-                      <span className="text-[10px] text-cyan-300">Overnight Analysis</span>
+                      <span className="text-sm font-bold text-white block">Wake-Up Alarm</span>
+                      <span className="text-xs text-cyan-300">Overnight Analysis</span>
                     </div>
                   </div>
 
@@ -948,25 +948,25 @@ export default function ActionsScreen() {
                     type="time"
                     value={alarmSettings.wakeTime}
                     onChange={(e) => updateAlarmTime('wake', e.target.value)}
-                    className="bg-slate-900 border border-slate-700 rounded-xl px-2 py-1 text-xs font-bold text-white focus:outline-none focus:border-cyan-400"
+                    className="bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-sm font-bold text-white focus:outline-none focus:border-cyan-400"
                   />
-                  <div className="flex items-center space-x-1">
+                  <div className="flex items-center space-x-1.5">
                     <button
                       onClick={() => {
                         soundFx.startAlarmLoop('wakeup');
                         setTimeout(() => soundFx.stopAlarmLoop(), 2000);
                       }}
-                      className="px-2 py-1 rounded-lg bg-slate-900 border border-slate-800 text-[10px] text-slate-300 hover:text-white flex items-center space-x-1"
+                      className="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs font-semibold text-slate-300 hover:text-white flex items-center space-x-1"
                     >
-                      <Volume2 className="w-3 h-3 text-cyan-400" />
+                      <Volume2 className="w-3.5 h-3.5 text-cyan-400" />
                       <span>Test</span>
                     </button>
                     <button
                       onClick={() => triggerAlarm('wakeup')}
-                      className="px-2 py-1 rounded-lg bg-cyan-950/80 border border-cyan-500/50 text-[10px] text-cyan-300 font-bold hover:brightness-110 flex items-center space-x-1"
+                      className="px-2.5 py-1.5 rounded-lg bg-cyan-950/80 border border-cyan-500/50 text-xs text-cyan-300 font-bold hover:brightness-110 flex items-center space-x-1"
                       title="Test morning wake-up ringing overlay & report modal"
                     >
-                      <Bell className="w-3 h-3 text-cyan-400" />
+                      <Bell className="w-3.5 h-3.5 text-cyan-400" />
                       <span>Ring</span>
                     </button>
                   </div>
@@ -978,15 +978,15 @@ export default function ActionsScreen() {
 
           {/* General Medication & Health Reminders List */}
           <div className="space-y-2">
-            <span className="text-xs text-slate-400 uppercase tracking-wider px-1 block">Scheduled Medication & Health Alerts</span>
+            <span className="text-xs sm:text-sm text-slate-400 uppercase tracking-wider px-1 block font-semibold">Scheduled Medication & Health Alerts</span>
             {reminders.filter(r => r.category !== 'alarm').map((r) => (
               <div 
                 key={r.id}
                 className="p-3.5 rounded-2xl bg-[#0e1628] border border-slate-800 flex items-center justify-between hover:border-slate-700 transition-colors"
               >
                 <div>
-                  <span className="text-xs font-bold text-white block">{r.title}</span>
-                  <span className="text-[11px] text-slate-400">{r.time}</span>
+                  <span className="text-sm font-bold text-white block">{r.title}</span>
+                  <span className="text-xs text-slate-300 mt-0.5 block">{r.time}</span>
                 </div>
                 <button
                   onClick={() => toggleReminder(r.id)}
@@ -1008,13 +1008,13 @@ export default function ActionsScreen() {
         <div className="space-y-3 font-sans">
           <div className="px-1 flex items-center justify-between">
             <div>
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center space-x-1.5">
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center space-x-1.5">
                 <HelpCircle className="w-4 h-4 text-cyan-400" />
                 <span>App Guide & Help Bot</span>
               </h3>
-              <p className="text-[11px] text-slate-400">Ask how to navigate and use BioMaxxx features</p>
+              <p className="text-xs text-slate-300 mt-0.5">Ask how to navigate and use BioMaxxx features</p>
             </div>
-            <span className="text-[10px] font-mono text-cyan-400 font-bold px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-500/40">
+            <span className="text-xs font-mono text-cyan-400 font-bold px-2.5 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-500/40">
               Online
             </span>
           </div>
@@ -1024,7 +1024,7 @@ export default function ActionsScreen() {
             <div className="space-y-2.5 max-h-[260px] overflow-y-auto pr-1">
               {messages.map((m, idx) => (
                 <div key={idx} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`p-3 rounded-2xl text-xs max-w-[85%] leading-relaxed ${
+                  <div className={`p-3.5 rounded-2xl text-sm max-w-[85%] leading-relaxed ${
                     m.sender === 'user'
                       ? 'bg-cyan-500/20 text-cyan-200 border border-cyan-500/40'
                       : 'bg-slate-900 text-slate-200 border border-slate-800'
@@ -1038,8 +1038,8 @@ export default function ActionsScreen() {
             </div>
 
             {/* Quick Prompt Chips for New Users */}
-            <div className="space-y-1.5 pt-2 border-t border-slate-800 font-mono text-[10px]">
-              <span className="text-[10px] text-slate-500 block uppercase">Guide Topics:</span>
+            <div className="space-y-1.5 pt-2 border-t border-slate-800 font-mono text-xs">
+              <span className="text-xs text-slate-400 block uppercase">Guide Topics:</span>
               <div className="flex flex-wrap gap-1.5">
                 {[
                   '🏠 How to use Home screen?',
@@ -1052,7 +1052,7 @@ export default function ActionsScreen() {
                   <button
                     key={i}
                     onClick={() => handleSendMessage(chip)}
-                    className="px-2.5 py-1 rounded-full bg-slate-900 border border-slate-700/80 hover:border-cyan-400 text-slate-300 hover:text-cyan-300 transition-colors"
+                    className="px-3 py-1.5 rounded-full bg-slate-900 border border-slate-700/80 hover:border-cyan-400 text-xs text-slate-200 hover:text-cyan-300 transition-colors"
                   >
                     {chip}
                   </button>
@@ -1068,11 +1068,11 @@ export default function ActionsScreen() {
                 onChange={(e) => setChatInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                 placeholder="Ask how to use any feature..."
-                className="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-xs text-slate-200 focus:outline-none focus:border-cyan-400"
+                className="flex-1 px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-slate-200 focus:outline-none focus:border-cyan-400"
               />
               <button
                 onClick={() => handleSendMessage()}
-                className="p-2.5 rounded-xl bg-cyan-500 text-slate-950 font-bold hover:brightness-110 active:scale-95 transition-all"
+                className="p-3 rounded-xl bg-cyan-500 text-slate-950 font-bold hover:brightness-110 active:scale-95 transition-all"
                 title="Send question"
               >
                 <Send className="w-4 h-4" />
