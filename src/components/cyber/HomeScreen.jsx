@@ -13,7 +13,8 @@ import {
   Navigation,
   Heart,
   CheckCircle2,
-  Smile
+  Smile,
+  Gamepad2
 } from 'lucide-react';
 import { useWhoopData } from '../../context/WhoopDataContext';
 import { soundFx } from '../../utils/audioSynthesizer';
@@ -56,7 +57,7 @@ export default function HomeScreen() {
     } else if (action === 'insights') {
       setActiveTab('guardian');
       setGuardianSubView('trends');
-    } else if (action === 'eye') {
+    } else if (action === 'games' || action === 'eye') {
       setActiveTab('actions');
       setActionsSubView('games');
     }
@@ -371,16 +372,16 @@ export default function HomeScreen() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-          {/* Action 1: Eye Scan */}
+          {/* Action 1: Games */}
           <div 
-            onClick={() => handleQuickAction('eye')}
+            onClick={() => handleQuickAction('games')}
             className="p-3.5 rounded-2xl bg-[#0e1628]/90 hover:bg-[#131f38] border border-slate-800/80 hover:border-cyan-500/40 transition-all cursor-pointer flex flex-col items-center justify-center text-center space-y-1.5 shadow-sm group"
           >
             <div className="w-10 h-10 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 group-hover:scale-105 transition-transform">
-              <Eye className="w-5 h-5 text-cyan-400" />
+              <Gamepad2 className="w-5 h-5 text-cyan-400" />
             </div>
-            <div className="font-bold text-xs text-white">Eye Scan</div>
-            <div className="text-[10px] text-slate-400">Check eye strain</div>
+            <div className="font-bold text-xs text-white">Games</div>
+            <div className="text-[10px] text-slate-400">Stress busters</div>
           </div>
 
           {/* Action 2: Stress Relief */}
