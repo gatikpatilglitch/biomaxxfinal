@@ -23,10 +23,12 @@ import {
 } from 'recharts';
 import { CORRELATION_DATA_14DAYS } from '../utils/healthCalculations';
 import { soundFx } from '../utils/audioSynthesizer';
+import RootCauseEngineCard from './RootCauseEngineCard';
 
 export default function CorrelationAnalytics() {
   const [metricView, setMetricView] = useState('spo2'); // spo2, puffs
   const [downloaded, setDownloaded] = useState(false);
+  const [activeAnalysisView, setActiveAnalysisView] = useState('root_cause'); // 'root_cause' | 'longitudinal'
 
   const handleDownloadReport = () => {
     soundFx.playPopSound(1.5);
@@ -42,23 +44,57 @@ export default function CorrelationAnalytics() {
         <div>
           <h2 className="text-base font-bold text-slate-100 flex items-center space-x-2">
             <BarChart2 className="w-5 h-5 text-emerald-400" />
-            <span>Correlation Analytics ("The Why" Feature)</span>
+            <span>Correlation & Diagnostic Analytics</span>
           </h2>
           <p className="text-xs text-slate-400">
-            Cross-referencing high AQI exposure days against blood oxygen saturation (SpO₂) and pulmonary symptom flare-ups.
+            "The Why" Engine: Causal biometric root-cause diagnostics & atmospheric cross-correlation.
           </p>
         </div>
 
-        <button
-          onClick={handleDownloadReport}
-          className="self-start sm:self-auto text-xs font-mono px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/20 transition-all flex items-center space-x-1.5"
-        >
-          {downloaded ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <Download className="w-3.5 h-3.5" />}
-          <span>{downloaded ? 'PDF Exported!' : 'Export Clinical Summary'}</span>
-        </button>
+        <div className="flex items-center space-x-2">
+          {/* View Toggle */}
+          <div className="flex rounded-xl bg-slate-950 p-1 border border-slate-800 text-xs font-mono">
+            <button
+              onClick={() => { setActiveAnalysisView('root_cause'); soundFx.playPopSound(1.1); }}
+              className={`px-3 py-1 rounded-lg transition-all flex items-center space-x-1.5 ${
+                activeAnalysisView === 'root_cause' ? 'bg-emerald-500/20 text-emerald-400 font-bold' : 'text-slate-400'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Root-Cause</span>
+            </button>
+            <button
+              onClick={() => { setActiveAnalysisView('longitudinal'); soundFx.playPopSound(1.1); }}
+              className={`px-3 py-1 rounded-lg transition-all flex items-center space-x-1.5 ${
+                activeAnalysisView === 'longitudinal' ? 'bg-cyan-500/20 text-cyan-400 font-bold' : 'text-slate-400'
+              }`}
+            >
+              <Activity className="w-3.5 h-3.5" />
+              <span>14-Day Mapping</span>
+            </button>
+          </div>
+
+          <button
+            onClick={handleDownloadReport}
+            className="self-start sm:self-auto text-xs font-mono px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/20 transition-all flex items-center space-x-1.5"
+          >
+            {downloaded ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <Download className="w-3.5 h-3.5" />}
+            <span>{downloaded ? 'Exported!' : 'Export PDF'}</span>
+          </button>
+        </div>
       </div>
 
-      {/* Clinical Evidence Box */}
+      {/* View: Root-Cause Engine */}
+      {activeAnalysisView === 'root_cause' && (
+        <div className="animate-in fade-in duration-300">
+          <RootCauseEngineCard />
+        </div>
+      )}
+
+      {/* View: Longitudinal Mapping & Evidence */}
+      {activeAnalysisView === 'longitudinal' && (
+        <div className="space-y-4 animate-in fade-in duration-300">
+          {/* Clinical Evidence Box */}
       <div className="glass-card-emerald rounded-2xl p-4 border border-emerald-500/40 space-y-2">
         <div className="flex items-center space-x-2 text-xs font-bold text-emerald-400 font-mono">
           <Sparkles className="w-4 h-4" />
@@ -205,7 +241,9 @@ export default function CorrelationAnalytics() {
         </div>
 
       </div>
-
     </div>
+  )}
+
+</div>
   );
 }

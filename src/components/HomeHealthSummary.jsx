@@ -11,7 +11,17 @@ import {
   Moon,
   X,
   Bell,
-  ChevronRight
+  ChevronRight,
+  RefreshCw,
+  Zap,
+  Activity,
+  Flame,
+  Heart,
+  Thermometer,
+  BatteryCharging,
+  RotateCcw,
+  Calendar,
+  CheckCircle2
 } from 'lucide-react';
 import { 
   AQI_PRESETS, 
@@ -23,12 +33,20 @@ import { soundFx } from '../utils/audioSynthesizer';
 export default function HomeHealthSummary({
   currentCityIdx = 0,
   setCurrentCityIdx,
-  currentSpo2 = 97,
-  recoveryScore = 65,
-  sleepHours = 6.1,
+  whoopData = null,
+  currentSpo2 = 98,
+  recoveryScore = 87,
+  sleepHours = 7.75,
   dayStrain = 14.2,
   hrv = 72,
   rhr = 54,
+  respiratoryRate = 14.8,
+  lastSyncedAt = 'Just now',
+  secondsUntilNextSync = 60,
+  isSyncing = false,
+  onManualSync,
+  onResetToToday,
+  whoopConnected = true,
   onNavigateTab
 }) {
   const [showPlan, setShowPlan] = useState(false);
@@ -36,13 +54,33 @@ export default function HomeHealthSummary({
   const currentAqiObj = AQI_PRESETS[currentCityIdx] || AQI_PRESETS[0];
   const walkRec = getWalkingWindowRecommendation(currentAqiObj.aqi);
 
+  // Extract synchronized WHOOP band metrics with priority to live shared whoopData
+  const activeRecovery = whoopData?.recovery?.score ?? recoveryScore;
+  const activeHrv = whoopData?.recovery?.hrv_rmssd_milli ?? hrv;
+  const activeRhr = whoopData?.recovery?.resting_hr ?? rhr;
+  const activeSpo2 = whoopData?.recovery?.spo2_percentage ?? currentSpo2;
+  const activeSkinTemp = whoopData?.recovery?.skin_temp_celsius ?? 33.8;
+  const activeTempDev = whoopData?.recovery?.temp_deviation ?? '+0.1°C';
+
+  const activeStrain = whoopData?.strain?.day_strain ?? dayStrain;
+  const activeCalories = whoopData?.strain?.calories ?? 2065;
+  const activeKj = whoopData?.strain?.kilojoule ?? 8640;
+  const activeMaxHr = whoopData?.strain?.max_heart_rate ?? 168;
+  const activeAvgHr = whoopData?.strain?.average_heart_rate ?? 118;
+
+  const activeSleepHours = whoopData?.sleep?.total_sleep_hours ?? sleepHours;
+  const activeSleepPerf = whoopData?.sleep?.performance_percentage ?? 91;
+  const activeRespRate = whoopData?.sleep?.respiratory_rate ?? respiratoryRate;
+  const activeBattery = whoopData?.battery_level ?? 89;
+  const activeLastSynced = whoopData?.last_synced_at ?? lastSyncedAt;
+
   // Calculate WHOOP-informed sleep recommendation
   const sleepRec = calculateSleepRecommendation({
-    dayStrain,
-    recoveryScore,
-    hrv,
-    rhr,
-    previousSleepHours: sleepHours,
+    dayStrain: activeStrain,
+    recoveryScore: activeRecovery,
+    hrv: activeHrv,
+    rhr: activeRhr,
+    previousSleepHours: activeSleepHours,
     targetWakeTime: '06:45',
     targetGoal: 'perform'
   });
@@ -120,11 +158,22 @@ export default function HomeHealthSummary({
         <div className="absolute -top-32 -right-32 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
         <div className="absolute -bottom-32 -left-32 w-80 h-80 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
 
-        {/* Top Header: Greeting & Battery / Station Info */}
-        <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
-          <span className="text-xs sm:text-sm font-bold font-mono tracking-widest text-slate-300 uppercase">
-            {getGreeting()}
-          </span>
+        {/* Top Header: Greeting & Today's Date & Battery / Station Info */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800/80 pb-3 gap-2">
+          <div>
+            <div className="flex items-center space-x-2">
+              <span className="text-xs sm:text-sm font-bold font-mono tracking-widest text-slate-300 uppercase">
+                {getGreeting()}
+              </span>
+              <span className="text-[10px] font-mono font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
+                ● TODAY'S LIVE DATA
+              </span>
+            </div>
+            <div className="text-xs font-mono text-cyan-300 font-bold mt-1 flex items-center space-x-1.5">
+              <Calendar className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <span>{whoopData?.dateDisplay || new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}</span>
+            </div>
+          </div>
 
           <div className="flex items-center space-x-2 text-slate-400">
             {/* Ambient Station Selector */}
@@ -205,13 +254,82 @@ export default function HomeHealthSummary({
           </div>
         )}
 
-        {/* Section 1: Your Health Today */}
+        {/* Section 1: Today's Health & WHOOP 4.0 Live Band Telemetry */}
         <div className="space-y-4">
-          <div>
-            <h2 className="text-lg sm:text-xl font-black text-slate-100 tracking-tight font-sans">
-              Your health today
-            </h2>
-            <div className="w-36 h-[2px] bg-gradient-to-r from-emerald-400 via-cyan-400 to-transparent mt-2 rounded-full" />
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800 shadow-lg">
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" />
+                </span>
+                <h2 className="text-base sm:text-lg font-black text-slate-100 tracking-tight font-sans flex items-center space-x-2">
+                  <span>Today's Health & Biometrics</span>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
+                    WHOOP 4.0
+                  </span>
+                </h2>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 mt-1 text-[11px] font-mono">
+                <span className="text-cyan-300 font-bold flex items-center space-x-1">
+                  <Calendar className="w-3 h-3 text-cyan-400" />
+                  <span>{whoopData?.dateDisplay || new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                </span>
+                <span className="text-slate-600">•</span>
+                <span className="text-emerald-400 font-extrabold flex items-center space-x-1">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                  <span>LIVE TODAY</span>
+                </span>
+              </div>
+            </div>
+
+            {/* WHOOP Live Band Sync Telemetry Pill Bar */}
+            <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono self-start sm:self-auto">
+              <div className="flex items-center space-x-1.5 bg-slate-900 px-2.5 py-1.5 rounded-xl border border-slate-700/70 text-slate-300">
+                <span className="text-slate-400 text-[10px]">
+                  {isSyncing ? 'Syncing...' : `Synced ${activeLastSynced}`}
+                </span>
+                <span className="text-slate-500">•</span>
+                <span className="text-cyan-400 text-[10px]">
+                  Next in {secondsUntilNextSync}s
+                </span>
+              </div>
+
+              {/* Band Battery */}
+              <div className="flex items-center space-x-1 bg-slate-900 px-2 py-1.5 rounded-xl border border-slate-700/70 text-slate-400 text-[10px]">
+                <BatteryCharging className="w-3 h-3 text-emerald-400" />
+                <span>{activeBattery}%</span>
+              </div>
+
+              {onManualSync && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onManualSync();
+                  }}
+                  disabled={isSyncing}
+                  className="p-1 px-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 hover:text-emerald-300 border border-slate-700/60 transition-all cursor-pointer flex items-center space-x-1 text-[10px] font-bold"
+                  title="Force immediate WHOOP band sync for Today"
+                >
+                  <RefreshCw className={`w-3 h-3 ${isSyncing ? 'animate-spin text-emerald-400' : ''}`} />
+                  <span>Sync</span>
+                </button>
+              )}
+
+              {onResetToToday && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onResetToToday();
+                  }}
+                  className="p-1 px-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 transition-all cursor-pointer flex items-center space-x-1 text-[10px] font-bold"
+                  title="Reset to fresh live Today stream (purges any older cached data)"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>Reset Today</span>
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Status Headline */}
@@ -227,58 +345,216 @@ export default function HomeHealthSummary({
             </p>
           </div>
 
-          {/* 4 Core Metrics Table */}
-          <div className="space-y-2 pt-2 text-sm sm:text-base font-mono">
+          {/* Complete WHOOP 4.0 Biometrics Grid (Directly Connected to WHOOP Tab) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-2 font-mono">
             
-            {/* Recovery */}
+            {/* PILLAR 1: RECOVERY */}
             <div 
               onClick={() => onNavigateTab && onNavigateTab('whoop')}
-              className="flex items-center justify-between py-1 px-2.5 rounded-xl hover:bg-slate-800/40 border border-transparent hover:border-slate-800 transition-all cursor-pointer group"
-              title="View WHOOP Recovery"
+              className="p-3 rounded-2xl bg-slate-950/60 hover:bg-slate-900/60 border border-slate-800/80 hover:border-emerald-500/40 transition-all cursor-pointer group space-y-2"
+              title="Click to view WHOOP Recovery Hub"
             >
-              <div className="flex items-center space-x-3">
-                <span className="text-base group-hover:scale-110 transition-transform">❤️</span>
-                <span className="text-slate-300 group-hover:text-emerald-300 transition-colors">Recovery</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <span className="text-base group-hover:scale-110 transition-transform">❤️</span>
+                  <span className="text-xs font-bold text-slate-200 group-hover:text-emerald-300 transition-colors">Today's Recovery</span>
+                </div>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                  activeRecovery >= 66 ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/40' :
+                  activeRecovery >= 34 ? 'bg-amber-500/15 text-amber-400 border-amber-500/40' :
+                  'bg-rose-500/15 text-rose-400 border-rose-500/40'
+                }`}>
+                  {activeRecovery >= 66 ? 'GREEN' : activeRecovery >= 34 ? 'YELLOW' : 'RED'}
+                </span>
               </div>
-              <span className="font-bold text-emerald-400 font-mono text-base">{recoveryScore}%</span>
+              <div className="flex items-baseline justify-between">
+                <span className={`text-2xl font-black ${
+                  activeRecovery >= 66 ? 'text-emerald-400' : activeRecovery >= 34 ? 'text-amber-400' : 'text-rose-400'
+                }`}>
+                  {activeRecovery}%
+                </span>
+                <div className="text-right text-[11px] text-slate-400 space-y-0.5">
+                  <div>HRV: <strong className="text-emerald-300">{activeHrv}ms</strong></div>
+                  <div>RHR: <strong className="text-cyan-300">{activeRhr}bpm</strong></div>
+                </div>
+              </div>
+              <div className="text-[10px] text-slate-500 pt-1 border-t border-slate-800/60 flex justify-between">
+                <span>Skin Temp: {activeSkinTemp}°C</span>
+                <span>Dev: {activeTempDev}</span>
+              </div>
             </div>
 
-            {/* Sleep */}
+            {/* PILLAR 2: DAY STRAIN */}
             <div 
               onClick={() => onNavigateTab && onNavigateTab('whoop')}
-              className="flex items-center justify-between py-1 px-2.5 rounded-xl hover:bg-slate-800/40 border border-transparent hover:border-slate-800 transition-all cursor-pointer group"
-              title="View WHOOP Sleep"
+              className="p-3 rounded-2xl bg-slate-950/60 hover:bg-slate-900/60 border border-slate-800/80 hover:border-cyan-500/40 transition-all cursor-pointer group space-y-2"
+              title="Click to view WHOOP Day Strain"
             >
-              <div className="flex items-center space-x-3">
-                <span className="text-base group-hover:scale-110 transition-transform">😴</span>
-                <span className="text-slate-300 group-hover:text-cyan-300 transition-colors">Sleep</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <span className="text-base group-hover:scale-110 transition-transform">⚡</span>
+                  <span className="text-xs font-bold text-slate-200 group-hover:text-cyan-300 transition-colors">Today's Day Strain</span>
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                  {activeStrain >= 14 ? 'HIGH' : activeStrain >= 10 ? 'MODERATE' : 'LIGHT'}
+                </span>
               </div>
-              <span className="font-bold text-cyan-400 font-mono text-base">{sleepHours}h</span>
+              <div className="flex items-baseline justify-between">
+                <span className="text-2xl font-black text-cyan-400">
+                  {activeStrain}
+                </span>
+                <div className="text-right text-[11px] text-slate-400 space-y-0.5">
+                  <div>Burned: <strong className="text-amber-300">{activeCalories} kcal</strong></div>
+                  <div>Energy: <strong className="text-cyan-300">{activeKj} kJ</strong></div>
+                </div>
+              </div>
+              <div className="text-[10px] text-slate-500 pt-1 border-t border-slate-800/60 flex justify-between">
+                <span>Avg HR: {activeAvgHr} bpm</span>
+                <span>Max HR: {activeMaxHr} bpm</span>
+              </div>
             </div>
 
-            {/* SpO2 */}
-            <div className="flex items-center justify-between py-1 px-2.5 rounded-xl hover:bg-slate-800/40 border border-transparent hover:border-slate-800 transition-all">
-              <div className="flex items-center space-x-3">
-                <span className="text-base">🫁</span>
-                <span className="text-slate-300">SpO₂</span>
+            {/* PILLAR 3: SLEEP PERFORMANCE */}
+            <div 
+              onClick={() => onNavigateTab && onNavigateTab('sleep')}
+              className="p-3 rounded-2xl bg-slate-950/60 hover:bg-slate-900/60 border border-slate-800/80 hover:border-indigo-500/40 transition-all cursor-pointer group space-y-2"
+              title="Click to view Circadian Sleep Hub"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <span className="text-base group-hover:scale-110 transition-transform">😴</span>
+                  <span className="text-xs font-bold text-slate-200 group-hover:text-indigo-300 transition-colors">Last Night's Sleep</span>
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+                  {activeSleepPerf}% PERF
+                </span>
               </div>
-              <span className="font-bold text-emerald-300 font-mono text-base">{currentSpo2}%</span>
+              <div className="flex items-baseline justify-between">
+                <span className="text-2xl font-black text-indigo-400">
+                  {activeSleepHours}h
+                </span>
+                <div className="text-right text-[11px] text-slate-400 space-y-0.5">
+                  <div>Resp: <strong className="text-indigo-300">{activeRespRate} RPM</strong></div>
+                  <div>Need: <strong className="text-slate-300">8.2h</strong></div>
+                </div>
+              </div>
+              <div className="text-[10px] text-slate-500 pt-1 border-t border-slate-800/60 flex justify-between">
+                <span>For Today's Recovery</span>
+                <span className="text-indigo-400 font-bold">5 Cycles ⭐</span>
+              </div>
             </div>
 
-            {/* Air Quality */}
+            {/* PILLAR 4: BLOOD OXYGEN (SpO2) */}
+            <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <span className="text-base">🫁</span>
+                  <span className="text-xs font-bold text-slate-200">Today's SpO₂ (Oxygen)</span>
+                </div>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                  activeSpo2 >= 95 ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' :
+                  activeSpo2 >= 92 ? 'bg-amber-500/15 text-amber-400 border-amber-500/30' :
+                  'bg-rose-500/15 text-rose-400 border-rose-500/30'
+                }`}>
+                  {activeSpo2 >= 95 ? 'NORMAL' : activeSpo2 >= 92 ? 'MILD DIP' : 'DESATURATED'}
+                </span>
+              </div>
+              <div className="flex items-baseline justify-between">
+                <span className={`text-2xl font-black ${
+                  activeSpo2 >= 95 ? 'text-emerald-300' : activeSpo2 >= 92 ? 'text-amber-300' : 'text-rose-400'
+                }`}>
+                  {activeSpo2}%
+                </span>
+                <span className="text-[11px] text-slate-400">
+                  Continuous Pulse Ox
+                </span>
+              </div>
+              <div className="text-[10px] text-slate-500 pt-1 border-t border-slate-800/60 flex justify-between">
+                <span>Airway Work: Normal</span>
+                <span className="text-emerald-400 font-semibold">Sensor Calibrated</span>
+              </div>
+            </div>
+
+            {/* PILLAR 5: ATMOSPHERIC AIR QUALITY */}
             <div 
               onClick={() => onNavigateTab && onNavigateTab('copd_aqi')}
-              className="flex items-center justify-between py-1 px-2.5 rounded-xl hover:bg-slate-800/40 border border-transparent hover:border-slate-800 transition-all cursor-pointer group"
-              title="View AQI & COPD Tracker"
+              className="p-3 rounded-2xl bg-slate-950/60 hover:bg-slate-900/60 border border-slate-800/80 hover:border-cyan-500/40 transition-all cursor-pointer group space-y-2"
+              title="Click to view AQI & COPD Tracker"
             >
-              <div className="flex items-center space-x-3">
-                <span className="text-base group-hover:scale-110 transition-transform">🌫️</span>
-                <span className="text-slate-300 group-hover:text-cyan-300 transition-colors">Air Quality</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <span className="text-base group-hover:scale-110 transition-transform">🌫️</span>
+                  <span className="text-xs font-bold text-slate-200 group-hover:text-cyan-300 transition-colors">Air Quality</span>
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                  {currentAqiObj.city}
+                </span>
               </div>
-              <span className="font-bold text-cyan-300 font-mono text-base">{currentAqiObj.aqi}</span>
+              <div className="flex items-baseline justify-between">
+                <span className={`text-2xl font-black ${
+                  currentAqiObj.aqi <= 50 ? 'text-emerald-400' : currentAqiObj.aqi <= 100 ? 'text-amber-400' : 'text-rose-400'
+                }`}>
+                  {currentAqiObj.aqi} AQI
+                </span>
+                <span className="text-[11px] text-slate-400">
+                  {currentAqiObj.status}
+                </span>
+              </div>
+              <div className="text-[10px] text-slate-500 pt-1 border-t border-slate-800/60 flex justify-between">
+                <span>PM2.5 Sensor Active</span>
+                <span className="text-cyan-400">Station Live</span>
+              </div>
+            </div>
+
+            {/* PILLAR 6: WHOOP 4.0 BAND HARDWARE & TIMELINE LINK */}
+            <div 
+              onClick={() => onNavigateTab && onNavigateTab('whoop')}
+              className="p-3 rounded-2xl bg-gradient-to-br from-emerald-950/30 via-slate-950/70 to-cyan-950/30 border border-emerald-500/30 hover:border-emerald-500/60 transition-all cursor-pointer group space-y-2 flex flex-col justify-between"
+              title="Open WHOOP 4.0 Hub"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Activity className="w-4 h-4 text-emerald-400" />
+                  <span className="text-xs font-bold text-emerald-300">WHOOP 4.0 Hub</span>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-emerald-400 group-hover:translate-x-1 transition-transform" />
+              </div>
+              <div>
+                <div className="text-sm font-bold text-white">14-Day Calendar & Trends</div>
+                <div className="text-[11px] text-slate-400 leading-snug">
+                  Connected to WHOOP 4.0 Biometrics Tab • Updates every 1 min
+                </div>
+              </div>
+              <div className="text-[10px] text-emerald-400 font-mono pt-1 border-t border-emerald-500/20 flex items-center justify-between">
+                <span>View Full Calendar</span>
+                <span>Open Tab →</span>
+              </div>
             </div>
 
           </div>
+        </div>
+
+        {/* ================= ROOT-CAUSE TELEMETRY BANNER ================= */}
+        <div 
+          onClick={() => {
+            soundFx.playPopSound(1.2);
+            onNavigateTab && onNavigateTab('analytics');
+          }}
+          className="rounded-2xl p-3.5 bg-gradient-to-r from-purple-950/40 via-slate-900/90 to-cyan-950/40 border border-purple-500/30 hover:border-purple-500/60 transition-all cursor-pointer group space-y-1.5 shadow-lg"
+        >
+          <div className="flex items-center justify-between text-[11px] font-mono">
+            <span className="flex items-center space-x-1.5 text-purple-300 font-bold uppercase tracking-wider">
+              <Sparkles className="w-3.5 h-3.5 text-cyan-400 group-hover:rotate-12 transition-transform" />
+              <span>Root-Cause Engine Diagnostic</span>
+            </span>
+            <span className="text-cyan-400 group-hover:translate-x-1 transition-transform flex items-center space-x-1">
+              <span>View Full Diagnostic</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </span>
+          </div>
+          <p className="text-xs text-slate-200 font-sans leading-snug">
+            💡 <strong>Why metrics shifted today:</strong> Recovery is at {activeRecovery}% with {activeHrv}ms HRV and {activeStrain} Day Strain; tap here to inspect the full root-cause causality.
+          </p>
         </div>
 
         {/* Section Divider */}

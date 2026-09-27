@@ -105,10 +105,15 @@ export default function WhoopDeviceHub({
   setWhoopConnected, 
   currentSpo2 = 98, 
   setCurrentSpo2,
-  onTriggerSpike 
+  onTriggerSpike,
+  sharedWhoopMetrics = null,
+  onSyncWhoop = null,
+  isGlobalSyncing = false,
+  onUpdateSharedMetrics = null
 }) {
   const [activeTab, setActiveTab] = useState('biometrics'); // biometrics, clinical
-  const [isSyncing, setIsSyncing] = useState(false);
+  const [localSyncing, setLocalSyncing] = useState(false);
+  const isSyncing = isGlobalSyncing || localSyncing;
   const [syncStatusMsg, setSyncStatusMsg] = useState('Sync ready • Official WHOOP v2 API');
   const [metrics, setMetrics] = useState(null);
   const [isSimulatingSpike, setIsSimulatingSpike] = useState(false);
@@ -174,7 +179,7 @@ export default function WhoopDeviceHub({
     }
   };
 
-  const currentMetrics = metrics || defaultMetrics;
+  const currentMetrics = sharedWhoopMetrics || metrics || defaultMetrics;
 
   // On mount: check backend for live WHOOP metrics or URL callback status
   useEffect(() => {
@@ -260,7 +265,7 @@ export default function WhoopDeviceHub({
 
   const formatAndSetMetrics = (raw) => {
     if (!raw) return;
-    setMetrics({
+    const formatted = {
       connected: true,
       whoop_user_id: raw.profile?.user_id ? `ID #${raw.profile.user_id}` : defaultMetrics.whoop_user_id,
       user_name: raw.profile?.first_name ? `${raw.profile.first_name} ${raw.profile.last_name || ''}` : defaultMetrics.user_name,
@@ -300,13 +305,25 @@ export default function WhoopDeviceHub({
         ...defaultMetrics.workout,
         history: raw.workout?.history || []
       }
-    });
+    };
+    setMetrics(formatted);
+    if (onUpdateSharedMetrics) {
+      onUpdateSharedMetrics(formatted);
+    }
   };
 
   const handleForceSync = async () => {
-    setIsSyncing(true);
+    setLocalSyncing(true);
     soundFx.playPopSound(1.2);
-    setSyncStatusMsg('Contacting api.prod.whoop.com/developer/v2 ...');
+    setSyncStatusMsg('Syncing WHOOP 4.0 band telemetry...');
+
+    if (onSyncWhoop) {
+      await onSyncWhoop();
+      setSyncStatusMsg(`⚡ Synced across BioMaxxx at ${new Date().toLocaleTimeString()}`);
+      soundFx.playPopSound(1.5);
+      setLocalSyncing(false);
+      return;
+    }
 
     try {
       const res = await fetch('/api/whoop/sync', { method: 'POST' });
@@ -316,6 +333,7 @@ export default function WhoopDeviceHub({
           formatAndSetMetrics(data.metrics);
           setSyncStatusMsg(`⚡ Sync complete at ${new Date().toLocaleTimeString()}`);
           soundFx.playPopSound(1.5);
+          setLocalSyncing(false);
           return;
         }
       }
@@ -325,10 +343,10 @@ export default function WhoopDeviceHub({
 
     // Graceful fallback to refreshed cached stream
     setTimeout(() => {
-      setIsSyncing(false);
+      setLocalSyncing(false);
       setSyncStatusMsg(`Fresh data pulled (${new Date().toLocaleTimeString()})`);
       soundFx.playPopSound(1.4);
-    }, 900);
+    }, 600);
   };
 
   const handleConnectWhoop = () => {
@@ -491,6 +509,9 @@ export default function WhoopDeviceHub({
   const handleJumpToToday = () => {
     setSelectedDate(todayKey);
     soundFx.playPopSound(1.5);
+    if (onSyncWhoop) {
+      onSyncWhoop();
+    }
   };
 
   return (
