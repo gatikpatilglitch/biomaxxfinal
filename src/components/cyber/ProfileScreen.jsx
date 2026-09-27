@@ -18,10 +18,25 @@ import {
   Flame,
   Activity,
   Moon,
-  Wind
+  Wind,
+  Utensils,
+  Calendar,
+  TrendingDown,
+  TrendingUp,
+  Info,
+  Check,
+  Zap,
+  Target
 } from 'lucide-react';
 import { useWhoopData } from '../../context/WhoopDataContext';
 import { soundFx } from '../../utils/audioSynthesizer';
+import { 
+  calculateCalorieTargets, 
+  DAILY_NUTRITION_PLANS, 
+  ACTIVITY_MULTIPLIERS, 
+  getBMICategory,
+  calculateBMI 
+} from '../../utils/healthCalculations';
 
 export default function ProfileScreen() {
   const { 
@@ -35,15 +50,71 @@ export default function ProfileScreen() {
     setGuardianSubView
   } = useWhoopData();
 
-  const [fitnessTab, setFitnessTab] = useState('stats'); // 'stats' | 'goals' | 'nutrition'
+  const [fitnessTab, setFitnessTab] = useState('nutrition'); // 'stats' | 'goals' | 'nutrition'
+  const [nutritionGoal, setNutritionGoal] = useState('loss'); // 'loss' | 'maintain' | 'gain'
+  const [selectedDay, setSelectedDay] = useState(() => new Date().getDay()); // 0-6 (Sun-Sat)
+  const [dietType, setDietType] = useState('veg'); // 'veg' | 'nonVeg'
   const [editingPersonal, setEditingPersonal] = useState(false);
   const [formData, setFormData] = useState({
-    name: userData.name,
-    age: userData.age,
-    gender: userData.gender,
-    height: userData.height,
-    weight: userData.weight
+    name: userData.name || 'Aditi',
+    age: userData.age || 19,
+    gender: userData.gender || 'Female',
+    height: userData.height || 165,
+    weight: userData.weight || 58,
+    activityLevel: userData.activityLevel || 'moderate',
+    bloodGroup: userData.bloodGroup || 'B+',
+    emergencyDoctor: userData.emergencyDoctor || '+91 98765 43210',
+    emergencyFamily: userData.emergencyFamily || '+91 87654 32109'
   });
+
+  // Calculate dynamic BMI and healthy weight range for current user
+  const currentHeightM = (Number(userData.height) || 165) / 100;
+  const currentWeightKg = Number(userData.weight) || 58;
+  const currentBMI = calculateBMI(currentWeightKg, Number(userData.height) || 165);
+  const currentBMICat = getBMICategory(currentBMI);
+  const minHealthyWeight = (18.5 * currentHeightM * currentHeightM).toFixed(1);
+  const maxHealthyWeight = (24.9 * currentHeightM * currentHeightM).toFixed(1);
+
+  // Live BMI calculation during edit
+  const editHeightM = (Number(formData.height) || 165) / 100;
+  const editWeightKg = Number(formData.weight) || 58;
+  const editBMI = calculateBMI(editWeightKg, Number(formData.height) || 165);
+  const editBMICat = getBMICategory(editBMI);
+
+  // Calorie targets for weight loss and gain (Mifflin-St Jeor + TDEE)
+  const calorieTargets = calculateCalorieTargets(
+    currentWeightKg, 
+    Number(userData.height) || 165, 
+    Number(userData.age) || 19, 
+    userData.gender || 'female', 
+    userData.activityLevel || 'moderate'
+  );
+
+  // Selected Day Nutrition Plan (changes every day)
+  const dayPlan = DAILY_NUTRITION_PLANS[selectedDay] || DAILY_NUTRITION_PLANS[0];
+  const activeMealPlan = dayPlan[dietType] || dayPlan.veg;
+  const dayMeals = [
+    { key: 'breakfast', label: 'Breakfast', time: '08:00 AM', data: activeMealPlan.breakfast, icon: '🌅' },
+    { key: 'lunch', label: 'Lunch', time: '01:00 PM', data: activeMealPlan.lunch, icon: '☀️' },
+    { key: 'snack', label: 'Mid-Day Snack', time: '04:30 PM', data: activeMealPlan.snack, icon: '⚡' },
+    { key: 'dinner', label: 'Dinner', time: '07:30 PM', data: activeMealPlan.dinner, icon: '🌙' },
+  ];
+
+  const totalDayCalories = dayMeals.reduce((sum, m) => sum + (m.data?.kcal || 0), 0);
+  const totalDayProtein = dayMeals.reduce((sum, m) => sum + (m.data?.p || 0), 0);
+  const totalDayCarbs = dayMeals.reduce((sum, m) => sum + (m.data?.c || 0), 0);
+  const totalDayFats = dayMeals.reduce((sum, m) => sum + (m.data?.f || 0), 0);
+
+  const daysOfWeek = [
+    { index: 0, short: 'Sun', name: 'Sunday' },
+    { index: 1, short: 'Mon', name: 'Monday' },
+    { index: 2, short: 'Tue', name: 'Tuesday' },
+    { index: 3, short: 'Wed', name: 'Wednesday' },
+    { index: 4, short: 'Thu', name: 'Thursday' },
+    { index: 5, short: 'Fri', name: 'Friday' },
+    { index: 6, short: 'Sat', name: 'Saturday' },
+  ];
+  const todayDayIndex = new Date().getDay();
 
   // Privacy toggles
   const [privacyToggles, setPrivacyToggles] = useState({
@@ -64,6 +135,22 @@ export default function ProfileScreen() {
     { id: 'settings', label: 'Settings' },
     { id: 'help', label: 'Help' },
   ];
+
+  const handleStartEdit = () => {
+    soundFx.playPopSound(1.1);
+    setFormData({
+      name: userData.name || 'Aditi',
+      age: userData.age || 19,
+      gender: userData.gender || 'Female',
+      height: userData.height || 165,
+      weight: userData.weight || 58,
+      activityLevel: userData.activityLevel || 'moderate',
+      bloodGroup: userData.bloodGroup || 'B+',
+      emergencyDoctor: userData.emergencyDoctor || '+91 98765 43210',
+      emergencyFamily: userData.emergencyFamily || '+91 87654 32109'
+    });
+    setEditingPersonal(true);
+  };
 
   const handleSavePersonal = (e) => {
     e.preventDefault();
@@ -111,8 +198,12 @@ export default function ProfileScreen() {
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-black text-white font-sans">{userData.name}</h3>
                   <button 
-                    onClick={() => setYouSubView('personal')}
-                    className="p-1 text-slate-400 hover:text-cyan-300"
+                    onClick={() => {
+                      soundFx.playPopSound(1.1);
+                      setYouSubView('personal');
+                    }}
+                    className="p-1.5 text-slate-400 hover:text-cyan-300 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+                    title="Edit Personal Information"
                   >
                     <Edit3 className="w-4 h-4" />
                   </button>
@@ -120,7 +211,7 @@ export default function ProfileScreen() {
                 <div className="flex items-center space-x-2 text-xs text-slate-400 font-mono mt-0.5">
                   <span>{userData.gender} • {userData.age} yrs</span>
                   <span>•</span>
-                  <span className="text-cyan-400 font-bold">{userData.category}</span>
+                  <span className="text-cyan-400 font-bold">BMI {userData.bmi} ({userData.bmiStatus || 'Healthy'})</span>
                 </div>
               </div>
             </div>
@@ -174,8 +265,8 @@ export default function ProfileScreen() {
           {/* Navigation Links */}
           <div className="space-y-2">
             {[
-              { id: 'personal', title: 'Personal Information', sub: 'Basic details & body measurements' },
-              { id: 'fitness', title: 'Health & Fitness', sub: 'BMI, body stats, and goals' },
+              { id: 'personal', title: 'Personal Information', sub: 'Edit measurements, BMI & clinical emergency' },
+              { id: 'fitness', title: 'Health & Fitness', sub: 'Nutrition meal planner, weight loss/gain calories & BMI' },
               { id: 'medications', title: 'Medications & Inhaler', sub: 'Track doses, reminders and plan' },
               { id: 'achievements', title: 'Achievements', sub: 'Badges and wellness milestones' },
               { id: 'emergency', title: 'Emergency Info', sub: 'Emergency contacts and medical profile' },
@@ -201,79 +292,243 @@ export default function ProfileScreen() {
       )}
 
       {/* ========================================================================= */}
-      {/* 2. PERSONAL INFORMATION (Image 2 Screen 2)                                */}
+      {/* 2. PERSONAL INFORMATION (Edit & Dynamic BMI, Category Removed)            */}
       {/* ========================================================================= */}
       {youSubView === 'personal' && (
         <div className="space-y-4">
+          
+          {/* Dynamic BMI Analytics Card */}
+          <div className={`p-4 rounded-3xl bg-gradient-to-br from-slate-900 via-[#0e1628] to-slate-900 border ${currentBMICat.border} space-y-3`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shadow-[0_0_10px_rgba(0,242,254,0.15)]">
+                  <Scale className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 font-mono uppercase tracking-wider block">Real-Time Metric</span>
+                  <h4 className="text-sm font-bold text-white font-sans">Body Mass Index (BMI)</h4>
+                </div>
+              </div>
+              <span className={`text-xs px-2.5 py-1 rounded-full font-bold font-mono ${currentBMICat.badge}`}>
+                {currentBMICat.category}
+              </span>
+            </div>
+
+            <div className="flex items-baseline justify-between pt-1">
+              <div className="flex items-baseline space-x-2">
+                <span className="text-3xl font-black text-white font-mono tracking-tight">{currentBMI}</span>
+                <span className="text-xs text-slate-400 font-mono">kg/m²</span>
+              </div>
+              <div className="text-right">
+                <span className="text-[10px] text-slate-400 block font-mono">Healthy Weight Range</span>
+                <span className="text-xs font-bold text-emerald-400 font-mono">{minHealthyWeight} – {maxHealthyWeight} kg</span>
+              </div>
+            </div>
+
+            {/* 4-Zone BMI Visual Spectrum Meter */}
+            <div className="space-y-1.5 pt-1">
+              <div className="grid grid-cols-4 gap-1 h-2 rounded-full overflow-hidden bg-slate-800">
+                <div className={`h-full transition-all ${currentBMI < 18.5 ? 'bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.8)]' : 'bg-sky-950/60'}`} title="Underweight (<18.5)" />
+                <div className={`h-full transition-all ${currentBMI >= 18.5 && currentBMI < 24.9 ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-emerald-950/60'}`} title="Normal (18.5-24.9)" />
+                <div className={`h-full transition-all ${currentBMI >= 24.9 && currentBMI < 30 ? 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]' : 'bg-amber-950/60'}`} title="Overweight (25-29.9)" />
+                <div className={`h-full transition-all ${currentBMI >= 30 ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]' : 'bg-rose-950/60'}`} title="Obese (≥30)" />
+              </div>
+              <div className="flex justify-between text-[9px] text-slate-400 font-mono">
+                <span>Under (&lt;18.5)</span>
+                <span className="text-emerald-400 font-semibold">Normal (18.5–24.9)</span>
+                <span>Over (25–29.9)</span>
+                <span>Obese (≥30)</span>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-slate-300 leading-relaxed font-sans bg-slate-950/50 p-2.5 rounded-xl border border-slate-800/80">
+              {currentBMICat.description}
+            </p>
+          </div>
+
+          {/* Personal Information Card */}
           <div className="p-5 rounded-3xl bg-[#0e1628] border border-slate-800 space-y-3 font-mono">
-            <h3 className="text-sm font-bold text-white font-sans">Personal Information</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-white font-sans">Personal Information</h3>
+              {!editingPersonal && (
+                <button
+                  onClick={handleStartEdit}
+                  className="px-2.5 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs flex items-center space-x-1.5 hover:bg-cyan-500/20 cursor-pointer"
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                  <span>Edit</span>
+                </button>
+              )}
+            </div>
 
             {!editingPersonal ? (
-              <div className="space-y-2.5 text-xs">
+              <div className="space-y-2 text-xs">
                 {[
                   { label: 'Name', val: userData.name },
                   { label: 'Age', val: `${userData.age} years` },
                   { label: 'Gender', val: userData.gender },
-                  { label: 'Category', val: userData.category },
                   { label: 'Height', val: `${userData.height} cm` },
-                  { label: 'Weight', val: `${userData.weight} kg` }
+                  { label: 'Weight', val: `${userData.weight} kg` },
+                  { label: 'Activity Level', val: ACTIVITY_MULTIPLIERS[userData.activityLevel]?.label?.split('(')[0] || 'Moderately Active' },
+                  { label: 'Blood Group', val: userData.bloodGroup },
+                  { label: 'Doctor Contact', val: userData.emergencyDoctor },
+                  { label: 'Family ICE', val: userData.emergencyFamily }
                 ].map((row, i) => (
-                  <div key={i} className="flex items-center justify-between p-2 rounded-xl bg-slate-900 border border-slate-800/80">
+                  <div key={i} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900 border border-slate-800/80">
                     <span className="text-slate-400">{row.label}</span>
                     <span className="text-white font-bold">{row.val}</span>
                   </div>
                 ))}
 
                 <button
-                  onClick={() => setEditingPersonal(true)}
-                  className="w-full mt-3 py-2.5 rounded-xl bg-cyan-500 text-slate-950 font-bold font-mono text-xs hover:brightness-110"
+                  onClick={handleStartEdit}
+                  className="w-full mt-3 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-400 text-slate-950 font-bold font-mono text-xs hover:brightness-110 shadow-[0_0_15px_rgba(0,242,254,0.25)] flex items-center justify-center space-x-2 cursor-pointer transition-all"
                 >
-                  Edit Information
+                  <Edit3 className="w-4 h-4" />
+                  <span>Edit Personal Information</span>
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleSavePersonal} className="space-y-2.5 text-xs">
+              <form onSubmit={handleSavePersonal} className="space-y-3 text-xs">
+                
+                {/* Live Preview BMI Badge while typing */}
+                <div className="p-3 rounded-2xl bg-cyan-950/30 border border-cyan-500/40 flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Scale className="w-4 h-4 text-cyan-400" />
+                    <span className="text-slate-300">Live Calculated BMI:</span>
+                  </div>
+                  <div className="flex items-center space-x-2 font-mono">
+                    <span className="text-sm font-black text-cyan-300">{editBMI}</span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${editBMICat.badge}`}>{editBMICat.category}</span>
+                  </div>
+                </div>
+
                 <div>
-                  <label className="text-slate-400 block mb-1">Name</label>
+                  <label className="text-slate-400 block mb-1">Full Name</label>
                   <input
                     type="text"
+                    required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full p-2 bg-slate-950 border border-slate-700 rounded-xl text-white"
+                    className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white focus:border-cyan-400 outline-none"
+                    placeholder="e.g. Aditi"
                   />
                 </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-slate-400 block mb-1">Age (Years)</label>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      max="120"
+                      value={formData.age}
+                      onChange={(e) => setFormData({ ...formData, age: Number(e.target.value) })}
+                      className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white focus:border-cyan-400 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-slate-400 block mb-1">Gender</label>
+                    <select
+                      value={formData.gender}
+                      onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                      className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white focus:border-cyan-400 outline-none"
+                    >
+                      <option value="Female">Female</option>
+                      <option value="Male">Male</option>
+                      <option value="Non-binary">Non-binary</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="text-slate-400 block mb-1">Height (cm)</label>
                     <input
                       type="number"
+                      required
+                      min="50"
+                      max="250"
                       value={formData.height}
                       onChange={(e) => setFormData({ ...formData, height: Number(e.target.value) })}
-                      className="w-full p-2 bg-slate-950 border border-slate-700 rounded-xl text-white"
+                      className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white focus:border-cyan-400 outline-none"
                     />
                   </div>
                   <div>
                     <label className="text-slate-400 block mb-1">Weight (kg)</label>
                     <input
                       type="number"
+                      required
+                      min="20"
+                      max="300"
+                      step="0.1"
                       value={formData.weight}
                       onChange={(e) => setFormData({ ...formData, weight: Number(e.target.value) })}
-                      className="w-full p-2 bg-slate-950 border border-slate-700 rounded-xl text-white"
+                      className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white focus:border-cyan-400 outline-none"
                     />
                   </div>
                 </div>
 
-                <div className="flex space-x-2 pt-2">
+                <div>
+                  <label className="text-slate-400 block mb-1">Daily Activity Level</label>
+                  <select
+                    value={formData.activityLevel}
+                    onChange={(e) => setFormData({ ...formData, activityLevel: e.target.value })}
+                    className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white focus:border-cyan-400 outline-none"
+                  >
+                    {Object.entries(ACTIVITY_MULTIPLIERS).map(([key, item]) => (
+                      <option key={key} value={key}>{item.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="col-span-1">
+                    <label className="text-slate-400 block mb-1">Blood Group</label>
+                    <select
+                      value={formData.bloodGroup}
+                      onChange={(e) => setFormData({ ...formData, bloodGroup: e.target.value })}
+                      className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white focus:border-cyan-400 outline-none"
+                    >
+                      {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(bg => (
+                        <option key={bg} value={bg}>{bg}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="col-span-2">
+                    <label className="text-slate-400 block mb-1">Doctor ICE Phone</label>
+                    <input
+                      type="text"
+                      value={formData.emergencyDoctor}
+                      onChange={(e) => setFormData({ ...formData, emergencyDoctor: e.target.value })}
+                      className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white focus:border-cyan-400 outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-slate-400 block mb-1">Family ICE Phone</label>
+                  <input
+                    type="text"
+                    value={formData.emergencyFamily}
+                    onChange={(e) => setFormData({ ...formData, emergencyFamily: e.target.value })}
+                    className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white focus:border-cyan-400 outline-none"
+                  />
+                </div>
+
+                <div className="flex space-x-2 pt-3">
                   <button
                     type="button"
                     onClick={() => setEditingPersonal(false)}
-                    className="flex-1 py-2 bg-slate-900 border border-slate-700 rounded-xl text-slate-300"
+                    className="flex-1 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-slate-300 font-bold hover:bg-slate-800 transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 py-2 bg-cyan-500 text-slate-950 font-bold rounded-xl"
+                    className="flex-1 py-2.5 bg-gradient-to-r from-cyan-500 to-teal-400 text-slate-950 font-bold rounded-xl hover:brightness-110 shadow-[0_0_15px_rgba(0,242,254,0.25)] cursor-pointer transition-all"
                   >
                     Save Changes
                   </button>
@@ -285,51 +540,427 @@ export default function ProfileScreen() {
       )}
 
       {/* ========================================================================= */}
-      {/* 3. HEALTH & FITNESS (Image 2 Screen 3)                                    */}
+      {/* 3. HEALTH & FITNESS (Calorie Targets + Daily Rotating Veg/Non-Veg)        */}
       {/* ========================================================================= */}
       {youSubView === 'fitness' && (
         <div className="space-y-4 font-mono">
-          <div className="flex space-x-1 bg-[#0c1220] p-1 rounded-xl border border-slate-800 text-xs">
-            {['stats', 'goals', 'nutrition'].map(tab => (
+          
+          {/* Subtabs: Stats | Goals | Nutrition */}
+          <div className="flex space-x-1 bg-[#0c1220] p-1 rounded-2xl border border-slate-800 text-xs">
+            {[
+              { id: 'nutrition', label: '🥗 Nutrition & Calories' },
+              { id: 'stats', label: '⚖️ Body Stats' },
+              { id: 'goals', label: '🎯 Targets' },
+            ].map(tab => (
               <button
-                key={tab}
-                onClick={() => setFitnessTab(tab)}
-                className={`flex-1 py-1.5 rounded-lg capitalize transition-colors ${fitnessTab === tab ? 'bg-cyan-500/20 text-[#00F2FE] font-bold border border-cyan-500/40' : 'text-slate-400'}`}
+                key={tab.id}
+                onClick={() => {
+                  soundFx.playPopSound(1.15);
+                  setFitnessTab(tab.id);
+                }}
+                className={`flex-1 py-2 rounded-xl text-center transition-all cursor-pointer ${
+                  fitnessTab === tab.id 
+                    ? 'bg-cyan-500/20 text-[#00F2FE] font-bold border border-cyan-500/40 shadow-[0_0_10px_rgba(0,242,254,0.2)]' 
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
               >
-                {tab === 'stats' ? 'Body Stats' : tab}
+                {tab.label}
               </button>
             ))}
           </div>
 
-          {/* BMI Gauge Hero */}
-          <div className="p-5 rounded-3xl bg-[#0e1628] border border-cyan-500/30 text-center space-y-2">
-            <span className="text-xs text-slate-400 uppercase tracking-wider block">Body Mass Index</span>
-            <div className="w-24 h-24 mx-auto rounded-full border-4 border-emerald-500/40 border-t-emerald-400 flex flex-col items-center justify-center">
-              <span className="text-2xl font-black text-white">{userData.bmi}</span>
-              <span className="text-[10px] text-emerald-400 font-bold">{userData.bmiStatus}</span>
-            </div>
-            <p className="text-[11px] text-slate-300">Target healthy range: 18.5 – 24.9</p>
-          </div>
+          {/* ------------------------------------------------------------- */}
+          {/* A. NUTRITION & CALORIE TARGETS                                */}
+          {/* ------------------------------------------------------------- */}
+          {fitnessTab === 'nutrition' && (
+            <div className="space-y-4">
+              
+              {/* Metabolic Calorie Target Engine Header */}
+              <div className="p-4 rounded-3xl bg-[#0e1628] border border-cyan-500/30 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+                      <Flame className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-mono uppercase tracking-wider block">Mifflin-St Jeor Engine</span>
+                      <h4 className="text-sm font-bold text-white font-sans">Total Caloric Targets</h4>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[9px] text-slate-400 block">Baseline TDEE</span>
+                    <span className="text-xs font-bold text-cyan-300">{calorieTargets.tdee} kcal/d</span>
+                  </div>
+                </div>
 
-          {/* Body Composition Grid */}
-          <div className="grid grid-cols-2 gap-2 text-center text-xs">
-            <div className="p-3 rounded-2xl bg-slate-900 border border-slate-800">
-              <span className="text-[10px] text-slate-400 block">Height</span>
-              <span className="font-bold text-white text-base">{userData.height} cm</span>
+                <div className="grid grid-cols-2 gap-2 text-[11px] pt-1 border-t border-slate-800/80">
+                  <div className="p-2 rounded-xl bg-slate-900/60 border border-slate-800 flex justify-between">
+                    <span className="text-slate-400">BMR (Resting):</span>
+                    <span className="text-white font-bold">{calorieTargets.bmr} kcal</span>
+                  </div>
+                  <div className="p-2 rounded-xl bg-slate-900/60 border border-slate-800 flex justify-between">
+                    <span className="text-slate-400">Activity Multiplier:</span>
+                    <span className="text-cyan-300 font-bold">{ACTIVITY_MULTIPLIERS[userData.activityLevel]?.value || 1.55}x</span>
+                  </div>
+                </div>
+
+                {/* 3 Interactive Goal Switchers: Loss vs Maintain vs Gain */}
+                <div className="space-y-2 pt-1">
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-bold">
+                    Select Caloric Target (Weight Loss vs Weight Gain):
+                  </span>
+                  
+                  <div className="grid grid-cols-3 gap-2">
+                    {/* Weight Loss Option */}
+                    <div 
+                      onClick={() => {
+                        soundFx.playPopSound(1.2);
+                        setNutritionGoal('loss');
+                      }}
+                      className={`p-3 rounded-2xl border cursor-pointer transition-all ${
+                        nutritionGoal === 'loss'
+                          ? 'bg-amber-500/15 border-amber-400/60 shadow-[0_0_12px_rgba(245,158,11,0.25)]'
+                          : 'bg-slate-900/80 border-slate-800 hover:border-slate-700'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-1 text-amber-400 mb-1">
+                        <TrendingDown className="w-3.5 h-3.5" />
+                        <span className="text-[10px] font-bold uppercase">Weight Loss</span>
+                      </div>
+                      <div className="text-base font-black text-white">{calorieTargets.loss.calories}</div>
+                      <div className="text-[9px] text-amber-300 font-semibold">{calorieTargets.loss.pace}</div>
+                      <div className="text-[9px] text-slate-400 mt-1">Deficit: -500 kcal</div>
+                    </div>
+
+                    {/* Maintain Option */}
+                    <div 
+                      onClick={() => {
+                        soundFx.playPopSound(1.2);
+                        setNutritionGoal('maintain');
+                      }}
+                      className={`p-3 rounded-2xl border cursor-pointer transition-all ${
+                        nutritionGoal === 'maintain'
+                          ? 'bg-emerald-500/15 border-emerald-400/60 shadow-[0_0_12px_rgba(52,211,153,0.25)]'
+                          : 'bg-slate-900/80 border-slate-800 hover:border-slate-700'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-1 text-emerald-400 mb-1">
+                        <Activity className="w-3.5 h-3.5" />
+                        <span className="text-[10px] font-bold uppercase">Maintain</span>
+                      </div>
+                      <div className="text-base font-black text-white">{calorieTargets.maintain.calories}</div>
+                      <div className="text-[9px] text-emerald-300 font-semibold">Equilibrium</div>
+                      <div className="text-[9px] text-slate-400 mt-1">TDEE Balance</div>
+                    </div>
+
+                    {/* Weight Gain Option */}
+                    <div 
+                      onClick={() => {
+                        soundFx.playPopSound(1.2);
+                        setNutritionGoal('gain');
+                      }}
+                      className={`p-3 rounded-2xl border cursor-pointer transition-all ${
+                        nutritionGoal === 'gain'
+                          ? 'bg-indigo-500/20 border-indigo-400/60 shadow-[0_0_12px_rgba(129,140,248,0.25)]'
+                          : 'bg-slate-900/80 border-slate-800 hover:border-slate-700'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-1 text-indigo-400 mb-1">
+                        <TrendingUp className="w-3.5 h-3.5" />
+                        <span className="text-[10px] font-bold uppercase">Weight Gain</span>
+                      </div>
+                      <div className="text-base font-black text-white">{calorieTargets.gain.calories}</div>
+                      <div className="text-[9px] text-indigo-300 font-semibold">{calorieTargets.gain.pace}</div>
+                      <div className="text-[9px] text-slate-400 mt-1">Surplus: +450 kcal</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Macro Target Breakdown for Selected Goal */}
+                {(() => {
+                  const activeTarget = calorieTargets[nutritionGoal];
+                  return (
+                    <div className="p-3 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-300 font-bold">
+                          Daily Target: <strong className="text-cyan-300">{activeTarget.calories} kcal</strong>
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-sans italic">{activeTarget.description}</span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-center text-[10px]">
+                        <div className="p-2 rounded-xl bg-slate-900 border border-slate-800">
+                          <span className="text-slate-400 block">Protein</span>
+                          <span className="text-xs font-black text-rose-300">{activeTarget.macros.protein}g</span>
+                          <span className="text-[9px] text-slate-500 block">30% kcal</span>
+                        </div>
+                        <div className="p-2 rounded-xl bg-slate-900 border border-slate-800">
+                          <span className="text-slate-400 block">Carbohydrates</span>
+                          <span className="text-xs font-black text-cyan-300">{activeTarget.macros.carbs}g</span>
+                          <span className="text-[9px] text-slate-500 block">40% kcal</span>
+                        </div>
+                        <div className="p-2 rounded-xl bg-slate-900 border border-slate-800">
+                          <span className="text-slate-400 block">Healthy Fats</span>
+                          <span className="text-xs font-black text-amber-300">{activeTarget.macros.fats}g</span>
+                          <span className="text-[9px] text-slate-500 block">30% kcal</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* ------------------------------------------------------------- */}
+              {/* B. DAILY ROTATING MEAL PLAN (Changes Every Day)               */}
+              {/* ------------------------------------------------------------- */}
+              <div className="p-4 rounded-3xl bg-[#0e1628] border border-slate-800 space-y-3.5">
+                
+                {/* Header & Day of Week Bar */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                      <Utensils className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase tracking-wider block">7-Day Rotating Menu</span>
+                      <h4 className="text-sm font-bold text-white font-sans">Daily Nutrition Plan</h4>
+                    </div>
+                  </div>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold">
+                    Updates Daily
+                  </span>
+                </div>
+
+                {/* Day of Week Selector Bar (Sun - Sat) */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-[10px] text-slate-400 px-1">
+                    <span>Select Day:</span>
+                    <button 
+                      onClick={() => setSelectedDay(todayDayIndex)}
+                      className="text-cyan-400 hover:underline cursor-pointer flex items-center space-x-1"
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      <span>Jump to Today</span>
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-7 gap-1">
+                    {daysOfWeek.map(d => {
+                      const isSelected = selectedDay === d.index;
+                      const isToday = todayDayIndex === d.index;
+                      return (
+                        <button
+                          key={d.index}
+                          onClick={() => {
+                            soundFx.playPopSound(1.2);
+                            setSelectedDay(d.index);
+                          }}
+                          className={`py-2 rounded-xl text-center transition-all cursor-pointer relative ${
+                            isSelected
+                              ? 'bg-cyan-500 text-slate-950 font-bold shadow-[0_0_12px_rgba(0,242,254,0.3)]'
+                              : 'bg-slate-900 text-slate-300 border border-slate-800 hover:border-slate-700'
+                          }`}
+                        >
+                          <span className="text-xs block">{d.short}</span>
+                          {isToday && (
+                            <span className={`text-[8px] font-black uppercase px-1 rounded-sm block mx-auto mt-0.5 ${
+                              isSelected ? 'bg-slate-950 text-cyan-300' : 'bg-cyan-500/30 text-cyan-300'
+                            }`}>
+                              Today
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Day Theme & Lung Tip Banner */}
+                <div className="p-3 rounded-2xl bg-gradient-to-r from-teal-950/40 via-cyan-950/30 to-slate-900 border border-teal-500/30 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-teal-300">{dayPlan.dayName}: {dayPlan.theme}</span>
+                    <Wind className="w-4 h-4 text-cyan-400" />
+                  </div>
+                  <p className="text-[11px] text-slate-300 font-sans leading-relaxed">
+                    <strong className="text-cyan-300">Respiratory Clinical Pearl:</strong> {dayPlan.lungTip}
+                  </p>
+                </div>
+
+                {/* Veg vs Non-Veg Toggle Switch */}
+                <div className="space-y-1.5">
+                  <div className="flex p-1 bg-slate-950 rounded-2xl border border-slate-800">
+                    <button
+                      onClick={() => {
+                        soundFx.playPopSound(1.15);
+                        setDietType('veg');
+                      }}
+                      className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
+                        dietType === 'veg'
+                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-[0_0_10px_rgba(52,211,153,0.25)]'
+                          : 'text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      <span>🥗</span>
+                      <span>Vegetarian Menu</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        soundFx.playPopSound(1.15);
+                        setDietType('nonVeg');
+                      }}
+                      className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
+                        dietType === 'nonVeg'
+                          ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-[0_0_10px_rgba(245,158,11,0.25)]'
+                          : 'text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      <span>🍗</span>
+                      <span>Non-Vegetarian Menu</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* 4-Meal Breakdown for Selected Day */}
+                <div className="space-y-2.5 pt-1">
+                  {dayMeals.map(meal => (
+                    <div 
+                      key={meal.key} 
+                      className="p-3 rounded-2xl bg-slate-900 border border-slate-800/90 space-y-2 hover:border-cyan-500/30 transition-all"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-base">{meal.icon}</span>
+                          <div>
+                            <span className="text-[10px] text-slate-400 block">{meal.label} • {meal.time}</span>
+                            <h5 className="text-xs font-bold text-white font-sans">{meal.data.title}</h5>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xs font-black text-cyan-300 block">{meal.data.kcal} kcal</span>
+                          <span className="text-[9px] text-slate-400">P:{meal.data.p}g C:{meal.data.c}g F:{meal.data.f}g</span>
+                        </div>
+                      </div>
+
+                      <div className="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/60">
+                        <ul className="space-y-1 text-[11px] text-slate-300 font-sans">
+                          {meal.data.items.map((item, idx) => (
+                            <li key={idx} className="flex items-start space-x-1.5">
+                              <span className="text-cyan-400 mt-0.5">•</span>
+                              <span className="leading-snug">{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Day Total Summary */}
+                <div className="p-3 rounded-2xl bg-slate-900/90 border border-slate-800 flex items-center justify-between text-xs">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">{dayPlan.dayName} Total Planned</span>
+                    <span className="text-sm font-black text-white">{totalDayCalories} kcal</span>
+                  </div>
+                  <div className="text-right text-[10px] text-slate-300 font-mono">
+                    <span className="text-rose-400 font-bold">{totalDayProtein}g P</span> • 
+                    <span className="text-cyan-300 font-bold"> {totalDayCarbs}g C</span> • 
+                    <span className="text-amber-300 font-bold"> {totalDayFats}g F</span>
+                    <span className="block text-[9px] text-emerald-400 mt-0.5">
+                      ✓ Target Aligned ({nutritionGoal === 'loss' ? 'Deficit' : nutritionGoal === 'gain' ? 'Surplus' : 'Balanced'})
+                    </span>
+                  </div>
+                </div>
+
+              </div>
             </div>
-            <div className="p-3 rounded-2xl bg-slate-900 border border-slate-800">
-              <span className="text-[10px] text-slate-400 block">Weight</span>
-              <span className="font-bold text-white text-base">{userData.weight} kg</span>
+          )}
+
+          {/* ------------------------------------------------------------- */}
+          {/* B. BODY STATS SUBTAB                                          */}
+          {/* ------------------------------------------------------------- */}
+          {fitnessTab === 'stats' && (
+            <div className="space-y-4">
+              {/* BMI Gauge Hero */}
+              <div className="p-5 rounded-3xl bg-[#0e1628] border border-cyan-500/30 text-center space-y-2">
+                <span className="text-xs text-slate-400 uppercase tracking-wider block">Body Mass Index</span>
+                <div className="w-24 h-24 mx-auto rounded-full border-4 border-emerald-500/40 border-t-emerald-400 flex flex-col items-center justify-center">
+                  <span className="text-2xl font-black text-white">{currentBMI}</span>
+                  <span className="text-[10px] text-emerald-400 font-bold">{currentBMICat.category}</span>
+                </div>
+                <p className="text-[11px] text-slate-300">Healthy range for {userData.height}cm: <strong className="text-emerald-400">{minHealthyWeight} – {maxHealthyWeight} kg</strong></p>
+              </div>
+
+              {/* Body Composition Grid */}
+              <div className="grid grid-cols-2 gap-2 text-center text-xs">
+                <div className="p-3 rounded-2xl bg-slate-900 border border-slate-800">
+                  <span className="text-[10px] text-slate-400 block">Height</span>
+                  <span className="font-bold text-white text-base">{userData.height} cm</span>
+                </div>
+                <div className="p-3 rounded-2xl bg-slate-900 border border-slate-800">
+                  <span className="text-[10px] text-slate-400 block">Weight</span>
+                  <span className="font-bold text-white text-base">{userData.weight} kg</span>
+                </div>
+                <div className="p-3 rounded-2xl bg-slate-900 border border-slate-800">
+                  <span className="text-[10px] text-slate-400 block">Body Fat</span>
+                  <span className="font-bold text-cyan-300 text-base">{userData.bodyFat}%</span>
+                </div>
+                <div className="p-3 rounded-2xl bg-slate-900 border border-slate-800">
+                  <span className="text-[10px] text-slate-400 block">Muscle Mass</span>
+                  <span className="font-bold text-emerald-300 text-base">{userData.muscleMass} kg</span>
+                </div>
+              </div>
             </div>
-            <div className="p-3 rounded-2xl bg-slate-900 border border-slate-800">
-              <span className="text-[10px] text-slate-400 block">Body Fat</span>
-              <span className="font-bold text-cyan-300 text-base">{userData.bodyFat}%</span>
+          )}
+
+          {/* ------------------------------------------------------------- */}
+          {/* C. TARGETS & GOALS SUBTAB                                     */}
+          {/* ------------------------------------------------------------- */}
+          {fitnessTab === 'goals' && (
+            <div className="space-y-4">
+              <div className="p-4 rounded-3xl bg-[#0e1628] border border-slate-800 space-y-3">
+                <div className="flex items-center space-x-2 text-cyan-400 font-bold text-xs uppercase">
+                  <Target className="w-4 h-4" />
+                  <span>Cardiopulmonary Health Goals</span>
+                </div>
+                <div className="space-y-2 text-xs">
+                  <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex justify-between items-center">
+                    <div>
+                      <span className="text-white font-bold block">Target Weight</span>
+                      <span className="text-[10px] text-slate-400">Optimal respiratory load</span>
+                    </div>
+                    <span className="text-emerald-400 font-bold">{minHealthyWeight} – {maxHealthyWeight} kg</span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex justify-between items-center">
+                    <div>
+                      <span className="text-white font-bold block">Daily Steps (AQI Safe)</span>
+                      <span className="text-[10px] text-slate-400">Indoor/outdoor paced walking</span>
+                    </div>
+                    <span className="text-cyan-300 font-bold">8,000 steps</span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex justify-between items-center">
+                    <div>
+                      <span className="text-white font-bold block">Night Recovery Sleep</span>
+                      <span className="text-[10px] text-slate-400">Slow-wave alveolar repair</span>
+                    </div>
+                    <span className="text-indigo-400 font-bold">7.5 – 8.0 hrs</span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex justify-between items-center">
+                    <div>
+                      <span className="text-white font-bold block">Caloric Deficit for Fat Loss</span>
+                      <span className="text-[10px] text-slate-400">Mifflin-St Jeor recommendation</span>
+                    </div>
+                    <span className="text-amber-400 font-bold">{calorieTargets.loss.calories} kcal/d</span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex justify-between items-center">
+                    <div>
+                      <span className="text-white font-bold block">Caloric Surplus for Muscle Gain</span>
+                      <span className="text-[10px] text-slate-400">Hypertrophy & chest wall density</span>
+                    </div>
+                    <span className="text-indigo-400 font-bold">{calorieTargets.gain.calories} kcal/d</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="p-3 rounded-2xl bg-slate-900 border border-slate-800">
-              <span className="text-[10px] text-slate-400 block">Muscle Mass</span>
-              <span className="font-bold text-emerald-300 text-base">{userData.muscleMass} kg</span>
-            </div>
-          </div>
+          )}
+
         </div>
       )}
 

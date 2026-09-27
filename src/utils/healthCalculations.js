@@ -564,3 +564,197 @@ export function calculateSleepRecommendation({
     }
   };
 }
+
+export function calculateCalorieTargets(weightKg, heightCm, age, gender = 'female', activityKey = 'moderate') {
+  const w = Number(weightKg) || 58;
+  const h = Number(heightCm) || 165;
+  const a = Number(age) || 19;
+  const g = String(gender).toLowerCase();
+
+  const heightM = h / 100;
+  const bmi = parseFloat((w / (heightM * heightM)).toFixed(1));
+  const minHealthyWeight = parseFloat((18.5 * heightM * heightM).toFixed(1));
+  const maxHealthyWeight = parseFloat((24.9 * heightM * heightM).toFixed(1));
+
+  // Mifflin-St Jeor BMR
+  let bmr = (10 * w) + (6.25 * h) - (5 * a);
+  bmr = g === 'female' ? Math.round(bmr - 161) : Math.round(bmr + 5);
+
+  const mult = (ACTIVITY_MULTIPLIERS[activityKey] || ACTIVITY_MULTIPLIERS.moderate).value;
+  const tdee = Math.round(bmr * mult);
+
+  // Weight Loss: -500 kcal/day (safe sustainable 0.5kg/week fat loss)
+  const lossCalories = Math.max(1200, tdee - 500);
+  const lossMacros = {
+    protein: Math.round((lossCalories * 0.30) / 4),
+    carbs: Math.round((lossCalories * 0.40) / 4),
+    fats: Math.round((lossCalories * 0.30) / 9)
+  };
+
+  // Maintenance: TDEE
+  const maintainCalories = tdee;
+  const maintainMacros = {
+    protein: Math.round((maintainCalories * 0.25) / 4),
+    carbs: Math.round((maintainCalories * 0.45) / 4),
+    fats: Math.round((maintainCalories * 0.30) / 9)
+  };
+
+  // Weight Gain: +450 kcal/day (clean lean muscle & tissue surplus 0.4kg/week)
+  const gainCalories = tdee + 450;
+  const gainMacros = {
+    protein: Math.round((gainCalories * 0.25) / 4),
+    carbs: Math.round((gainCalories * 0.50) / 4),
+    fats: Math.round((gainCalories * 0.25) / 9)
+  };
+
+  return {
+    bmi,
+    bmr,
+    tdee,
+    healthyWeightRange: `${minHealthyWeight} – ${maxHealthyWeight} kg`,
+    loss: {
+      calories: lossCalories,
+      deficit: 500,
+      pace: '-0.5 kg/week',
+      description: 'Sustainable cardiopulmonary deficit reducing mechanical load on lungs.',
+      macros: lossMacros
+    },
+    maintain: {
+      calories: maintainCalories,
+      deficit: 0,
+      pace: '0.0 kg/week',
+      description: 'Energy equilibrium maintaining current metabolic and functional balance.',
+      macros: maintainMacros
+    },
+    gain: {
+      calories: gainCalories,
+      surplus: 450,
+      pace: '+0.4 kg/week',
+      description: 'Nutrient-dense clean surplus rebuilding skeletal muscle & bone density.',
+      macros: gainMacros
+    }
+  };
+}
+
+export const DAILY_NUTRITION_PLANS = {
+  0: {
+    dayName: 'Sunday',
+    theme: 'Restorative Antioxidant & Cellular Rejuvenation',
+    lungTip: 'Turmeric and dark berries provide bioflavonoids that protect pulmonary endothelial lining.',
+    veg: {
+      breakfast: { title: 'Golden Turmeric Oatmeal with Chia & Walnuts', items: ['Rolled oats simmered with almond milk & organic turmeric', '1 tbsp chia seeds & crushed walnuts (Omega-3 ALA)', '1 sliced banana with Ceylon cinnamon'], kcal: 390, p: 14, c: 56, f: 14 },
+      lunch: { title: 'Paneer & Quinoa Buddha Bowl with Steamed Greens', items: ['Grilled low-fat paneer or firm organic tofu (160g)', 'Cooked tri-color quinoa (1 cup) with steamed broccoli & kale', 'Tahini lemon garlic dressing (healthy fats)'], kcal: 520, p: 28, c: 48, f: 22 },
+      snack: { title: 'Berry Antioxidant Smoothie with Roasted Makhana', items: ['Wild blueberries, baby spinach & soy milk smoothie', '1 bowl roasted foxnuts (makhana) seasoned with rock salt'], kcal: 210, p: 8, c: 32, f: 5 },
+      dinner: { title: 'Moong Dal Khichdi with Steamed Spinach & Cumin', items: ['Light yellow moong dal & brown rice khichdi with roasted cumin', 'Cucumber mint raita with roasted flax seeds', 'Warm ginger water for bronchial soothing'], kcal: 420, p: 18, c: 62, f: 10 }
+    },
+    nonVeg: {
+      breakfast: { title: 'Avocado & Herb Poached Eggs on Sourdough', items: ['2 whole poached organic eggs + 2 egg whites', '1 slice toasted sprouted sourdough with mashed avocado', 'Grilled tomato slices with freshly cracked black pepper'], kcal: 410, p: 26, c: 28, f: 20 },
+      lunch: { title: 'Herb Grilled Salmon with Quinoa & Asparagus', items: ['Wild Atlantic salmon fillet (180g, rich in EPA/DHA Omega-3)', '1 cup cooked tri-color quinoa', 'Steamed asparagus with lemon extra virgin olive oil'], kcal: 560, p: 42, c: 38, f: 24 },
+      snack: { title: 'Boiled Egg Whites with Raw Almonds', items: ['3 boiled egg whites seasoned with pink salt', '15 raw Californian almonds (Vitamin E & Magnesium)'], kcal: 190, p: 16, c: 6, f: 12 },
+      dinner: { title: 'Lemon Herb Baked Chicken with Sweet Potato Mash', items: ['Skinless chicken breast (160g) baked with rosemary & thyme', 'Half baked sweet potato with steamed greens', 'Warm bone broth for lung airway comfort'], kcal: 450, p: 40, c: 36, f: 12 }
+    }
+  },
+  1: {
+    dayName: 'Monday',
+    theme: 'Anti-Inflammatory & Bronchial Detox Day',
+    lungTip: 'Curcumin and dark leafy greens inhibit inflammatory cytokines in bronchial passageways.',
+    veg: {
+      breakfast: { title: 'Sprouted Moong & Vegetable Cheela with Mint Chutney', items: ['2 sprouted green gram savory pancakes with grated carrots', 'Fresh mint & coriander anti-inflammatory chutney', 'Green tea with a squeeze of fresh lemon'], kcal: 360, p: 18, c: 48, f: 10 },
+      lunch: { title: 'Brown Rice with Palak Paneer & Fresh Beet Salad', items: ['Homemade palak paneer (pureed spinach with cottage cheese 150g)', '1 cup brown basmati rice', 'Cucumber, tomato & beet salad with flaxseed oil drizzle'], kcal: 510, p: 26, c: 54, f: 20 },
+      snack: { title: 'Crisp Apple Slices with Natural Peanut Butter', items: ['1 medium crisp apple sliced (high in quercetin)', '1.5 tbsp unsweetened peanut butter', 'Warm cinnamon water infusion'], kcal: 220, p: 7, c: 28, f: 11 },
+      dinner: { title: 'Tofu & Mixed Veggie Soba Noodle Stir-Fry', items: ['Tofu cubes (140g) wok-tossed with bell peppers & broccoli', 'Buckwheat soba noodles (half cup)', 'Light ginger sesame glaze'], kcal: 430, p: 22, c: 50, f: 14 }
+    },
+    nonVeg: {
+      breakfast: { title: 'Spinach & Mushroom 3-Egg White Omelette', items: ['3 egg whites + 1 whole egg folded with baby spinach', '1 slice whole wheat seeded toast', 'Antioxidant white tea or black coffee'], kcal: 370, p: 28, c: 24, f: 15 },
+      lunch: { title: 'Mediterranean Chicken Souvlaki with Brown Rice Bowl', items: ['Grilled chicken breast (170g) with oregano & garlic', 'Brown rice with roasted zucchini & cherry tomatoes', '2 tbsp light Greek yogurt tzatziki'], kcal: 530, p: 46, c: 46, f: 14 },
+      snack: { title: 'Greek Yogurt with Crushed Pistachios & Honey', items: ['1 cup plain low-fat Greek yogurt (probiotic gut-lung axis)', '10 crushed roasted pistachios', 'Half tsp raw wildflower honey'], kcal: 180, p: 17, c: 14, f: 6 },
+      dinner: { title: 'Steamed White Fish with Turmeric & Roasted Cauliflower', items: ['White fish fillet / Tilapia (180g) with lemon garlic glaze', 'Roasted cauliflower & green peas mash', 'Clear vegetable broth'], kcal: 410, p: 42, c: 28, f: 11 }
+    }
+  },
+  2: {
+    dayName: 'Tuesday',
+    theme: 'Metabolic Pace & Respiratory Endurance Day',
+    lungTip: 'Magnesium-rich pumpkin seeds and leafy greens relax bronchial smooth muscle fibers.',
+    veg: {
+      breakfast: { title: 'Besan & Flaxseed Toast with Sautéed Mushrooms', items: ['Gram flour (besan) toast seasoned with ajwain & turmeric', 'Sautéed button mushrooms & bell peppers with olive oil', 'Fresh amla (Indian gooseberry) antioxidant shot'], kcal: 380, p: 16, c: 52, f: 12 },
+      lunch: { title: 'Rajma (Red Kidney Beans) with Brown Rice & Kachumber', items: ['Traditional spiced rajma bean curry (1.5 cups, Iron & Fiber)', '1 cup steamed brown basmati rice', 'Fresh kachumber salad (cucumber, onion, tomato, lemon)'], kcal: 530, p: 22, c: 74, f: 11 },
+      snack: { title: 'Roasted Pumpkin & Sunflower Seeds with Green Tea', items: ['2 tbsp mixed roasted pumpkin & sunflower seeds (Zinc & Mg)', '1 sliced juicy pear', 'Jasmine green tea'], kcal: 200, p: 8, c: 22, f: 10 },
+      dinner: { title: 'Methi (Fenugreek) Paneer Bhurji with Multigrain Phulka', items: ['Crumbled paneer cooked with fresh fenugreek leaves (140g)', '1 multigrain phulka roti with a drop of A2 ghee', 'Clear tomato basil soup'], kcal: 440, p: 24, c: 42, f: 18 }
+    },
+    nonVeg: {
+      breakfast: { title: 'Scrambled Eggs with Smoked Salmon & Arugula', items: ['2 scrambled organic eggs with 40g wild smoked salmon', 'Handful of peppery baby arugula with lemon', '1 slice toasted dark rye bread'], kcal: 420, p: 32, c: 22, f: 22 },
+      lunch: { title: 'Grilled Turkey Breast with Sweet Potato & Green Beans', items: ['Lean turkey breast cutlet (170g)', 'Roasted sweet potato wedges (120g)', 'Steamed green beans with toasted sesame seeds'], kcal: 510, p: 45, c: 42, f: 12 },
+      snack: { title: 'Tuna Salad on Cucumber Slices', items: ['Chunk light tuna in spring water (80g) with light yogurt', 'Thick crisp cucumber rounds as crackers'], kcal: 160, p: 22, c: 4, f: 4 },
+      dinner: { title: 'Rosemary Garlic Chicken with Quinoa & Steamed Broccoli', items: ['Chicken breast (170g) seared in extra virgin olive oil', 'Half cup cooked quinoa', 'Steamed broccoli florets with squeeze of lime'], kcal: 460, p: 44, c: 34, f: 14 }
+    }
+  },
+  3: {
+    dayName: 'Wednesday',
+    theme: 'Deep Vagal Tone & Micronutrient Replenishment',
+    lungTip: 'Zinc and Vitamin D support alveolar macrophage immune defense against airborne allergens.',
+    veg: {
+      breakfast: { title: 'Overnight Chia Pudding with Almond Butter & Berries', items: ['Chia seeds soaked in unsweetened oat milk', '1 tbsp organic almond butter', 'Handful of fresh strawberries & raspberries'], kcal: 370, p: 12, c: 38, f: 19 },
+      lunch: { title: 'Spiced Chickpea (Chole) Bowl with Millet & Mint', items: ['Chickpea curry cooked with ginger & tomatoes (1.5 cups)', 'Cooked foxtail millet (1 cup)', 'Sprouted beetroot & pomegranate salad'], kcal: 520, p: 21, c: 72, f: 12 },
+      snack: { title: 'Walnut & Fig Energy Mix with Chamomile Tea', items: ['4 soaked walnuts (high in plant Omega-3 ALA)', '2 dried black mission figs (rich in Calcium & Iron)', 'Chamomile herbal infusion'], kcal: 210, p: 5, c: 28, f: 11 },
+      dinner: { title: 'Hearty Lentil Vegetable Stew with Baked Sourdough', items: ['Yellow & brown lentil soup with celery, carrots & spinach', 'Lightly roasted sourdough croutons with garlic herb spray'], kcal: 410, p: 20, c: 58, f: 9 }
+    },
+    nonVeg: {
+      breakfast: { title: 'Boiled Egg Whites & Chicken Sausage Plate', items: ['4 boiled egg whites + 1 whole egg', '2 lean chicken breakfast sausages (low sodium)', 'Steamed spinach and grilled button mushrooms'], kcal: 390, p: 34, c: 10, f: 18 },
+      lunch: { title: 'Pan-Seared White Fish with Mashed Green Peas & Rice', items: ['Seared Basa or Cod fillet (190g) with garlic paprika crust', 'Green pea and mint mash with olive oil', '1 cup steamed basmati rice'], kcal: 540, p: 44, c: 52, f: 13 },
+      snack: { title: 'Hard Boiled Egg with Roasted Makhana', items: ['1 hard boiled egg sprinkled with black pepper', '1 bowl roasted lotus seeds'], kcal: 180, p: 11, c: 18, f: 6 },
+      dinner: { title: 'Slow-Cooked Chicken & Vegetable Stew', items: ['Chicken tenderloins (170g) braised with leeks, carrots & thyme', 'Small roasted baby potato', 'Herbal tulsi tea for bronchial relaxation'], kcal: 430, p: 42, c: 32, f: 11 }
+    }
+  },
+  4: {
+    dayName: 'Thursday',
+    theme: 'Cellular Energy & Anti-Fatigue Vitality',
+    lungTip: 'Iron from finger millet and lentils optimizes red blood cell oxygen-carrying capacity.',
+    veg: {
+      breakfast: { title: 'Ragi (Finger Millet) Dosa with Coconut Mint Chutney', items: ['2 crisp ragi dosas (rich in Iron & Calcium for COPD)', 'Coconut mint coriander chutney (1.5 tbsp)', 'Warm spiced jeera water'], kcal: 360, p: 11, c: 54, f: 12 },
+      lunch: { title: 'Tofu Tikka Masala with Jeera Brown Rice', items: ['Marinated grilled tofu cubes (160g) in light tomato gravy', '1 cup jeera brown basmati rice', 'Raw radish and carrot batons with lemon'], kcal: 500, p: 26, c: 52, f: 18 },
+      snack: { title: 'Roasted Chana (Chickpeas) with Lime & Cucumber Sticks', items: ['1 cup roasted unsalted Bengal gram (high plant protein)', 'Fresh cucumber slices with lemon juice & rock salt'], kcal: 200, p: 12, c: 26, f: 4 },
+      dinner: { title: 'Vegetable Dalia (Broken Wheat) with Low-Fat Curd', items: ['Savory broken wheat porridge loaded with peas, carrots & beans', 'Half cup homemade low-fat curd (probiotics for gut-lung axis)'], kcal: 420, p: 16, c: 64, f: 8 }
+    },
+    nonVeg: {
+      breakfast: { title: 'Egg & Chicken Breast Scramble on Rye Toast', items: ['2 whole eggs scrambled with 60g shredded chicken breast', '1 slice toasted seeded rye bread', 'Sliced avocado (30g)'], kcal: 420, p: 35, c: 20, f: 21 },
+      lunch: { title: 'Grilled Salmon Bowl with Edamame & Brown Rice', items: ['Atlantic salmon fillet (170g)', 'Half cup steamed shelled edamame beans', '1 cup brown rice with light tamari soy reduction'], kcal: 580, p: 46, c: 45, f: 22 },
+      snack: { title: 'Smoked Chicken Breast Slices with Apple Batons', items: ['60g sliced lean deli chicken breast', 'Half a green Granny Smith apple'], kcal: 150, p: 18, c: 12, f: 3 },
+      dinner: { title: 'Baked Lemon Pepper Chicken with Steamed Zucchini', items: ['Chicken breast (170g) with freshly ground black pepper & lemon', 'Steamed zucchini noodles with garlic herb olive oil', 'Warm bone broth infusion'], kcal: 420, p: 42, c: 16, f: 14 }
+    }
+  },
+  5: {
+    dayName: 'Friday',
+    theme: 'Cardiopulmonary Strength & Nitric Oxide Boost',
+    lungTip: 'Beetroot nitrates increase blood flow and gas exchange efficiency across lung capillaries.',
+    veg: {
+      breakfast: { title: 'Beetroot & Sprout Paratha with Mint Curd', items: ['1 multigrain flatbread stuffed with grated beetroot & paneer', '2 tbsp homemade low-fat curd with roasted cumin', 'Hot ginger lemon tea'], kcal: 380, p: 16, c: 50, f: 13 },
+      lunch: { title: 'Black Bean & Corn Burrito Bowl with Guacamole', items: ['Spiced black beans (1 cup) & sweet corn', 'Brown rice (1 cup) with shredded romaine lettuce & salsa', 'Fresh guacamole (2 tbsp)'], kcal: 530, p: 20, c: 70, f: 16 },
+      snack: { title: 'Pistachios & Dark Chocolate Square', items: ['20 roasted in-shell pistachios', '1 square 85% dark chocolate (flavonoids for vascular tone)'], kcal: 190, p: 6, c: 15, f: 13 },
+      dinner: { title: 'Soya Chunk & Vegetable Curry with Multigrain Phulka', items: ['Nutritious high-protein soya chunks curry (50g dry wt, 26g protein)', '1 multigrain phulka', 'Cucumber mint raita'], kcal: 440, p: 30, c: 48, f: 10 }
+    },
+    nonVeg: {
+      breakfast: { title: 'Fluffy 4-Egg White Frittata with Feta & Bell Peppers', items: ['4 egg whites + 1 whole egg baked with colored bell peppers & onion', '20g crumbled Greek feta cheese', 'Slice of whole grain toast'], kcal: 380, p: 30, c: 22, f: 16 },
+      lunch: { title: 'Tandoori Spiced Chicken Breast with Quinoa Pilaf', items: ['Yogurt marinated tandoori chicken breast (180g)', 'Tri-color quinoa pilaf with fresh coriander', 'Mixed greens with lemon mustard dressing'], kcal: 540, p: 48, c: 42, f: 15 },
+      snack: { title: 'Greek Yogurt with Blueberries & Chia Seeds', items: ['1 cup unsweetened Greek yogurt', 'Handful of fresh blueberries', 'Half tsp chia seeds'], kcal: 170, p: 16, c: 16, f: 4 },
+      dinner: { title: 'Grilled Basa Fish with Sautéed Green Asparagus & Garlic Rice', items: ['White fish fillet (180g) with garlic lemon herb rub', 'Half cup steamed basmati rice with toasted pine nuts', 'Sautéed asparagus'], kcal: 440, p: 40, c: 36, f: 12 }
+    }
+  },
+  6: {
+    dayName: 'Saturday',
+    theme: 'Weekend Muscle Recovery & Lung Capacity Day',
+    lungTip: 'Adequate protein prevents respiratory sarcopenia, preserving diaphragm muscle stamina.',
+    veg: {
+      breakfast: { title: 'Avocado, Tomato & Cottage Cheese Multi-Grain Toast', items: ['2 slices whole grain sourdough with mashed avocado & lemon', 'Crumbled low-fat paneer (80g) with black pepper', 'Fresh pink grapefruit slices'], kcal: 410, p: 20, c: 42, f: 18 },
+      lunch: { title: 'Dal Makhani (Light Olive Oil Prep) with Jeera Rice', items: ['Urad dal & kidney beans simmered with tomatoes & cumin (1.5 cups)', '1 cup steamed jeera rice', 'Beetroot & onion salad with lemon'], kcal: 540, p: 22, c: 74, f: 14 },
+      snack: { title: 'Trail Mix (Walnuts, Almonds, Berries & Sunflower Seeds)', items: ['Handful of raw unsalted nuts and dried berries', 'Warm lemon ginger tea'], kcal: 210, p: 7, c: 18, f: 14 },
+      dinner: { title: 'Stuffed Bell Peppers with Paneer, Corn & Peas', items: ['2 large roasted bell peppers stuffed with paneer, peas & herbs', 'Mixed green salad with extra virgin olive oil drizzle'], kcal: 420, p: 22, c: 38, f: 18 }
+    },
+    nonVeg: {
+      breakfast: { title: 'Classic Weekend Egg, Mushroom & Turkey Bacon Scramble', items: ['2 whole organic eggs + 2 egg whites', '2 strips lean turkey bacon', 'Sautéed button mushrooms with herbs and whole grain toast'], kcal: 430, p: 36, c: 22, f: 20 },
+      lunch: { title: 'Grilled Herb Chicken with Roasted Potatoes & Carrots', items: ['Chicken breast (180g) marinated with thyme & garlic', 'Half cup roasted rosemary baby potatoes', 'Steamed glazed carrots with parsley'], kcal: 550, p: 48, c: 44, f: 15 },
+      snack: { title: 'Hard Boiled Eggs with Spicy Paprika & Celery Batons', items: ['2 hard boiled eggs cut in half with smoked sea salt & paprika', 'Crunchy celery sticks with hummus'], kcal: 190, p: 14, c: 8, f: 11 },
+      dinner: { title: 'Pan-Roasted Salmon Fillet with Warm Lentil Salad', items: ['Salmon fillet (180g) with crisp skin', 'Warm brown lentil salad with cherry tomatoes, basil & lemon', 'Steamed kale chips'], kcal: 480, p: 44, c: 28, f: 21 }
+    }
+  }
+};
+

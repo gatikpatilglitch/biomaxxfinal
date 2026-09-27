@@ -654,25 +654,31 @@ export function WhoopDataProvider({ children }) {
     ]
   });
 
-  // User Profile Data (Aditi)
-  const [userData, setUserData] = useState({
-    name: 'Aditi',
-    age: 19,
-    gender: 'Female',
-    category: 'General',
-    height: 165,
-    weight: 58,
-    bmi: 21.3,
-    bmiStatus: 'Healthy',
-    bodyFat: 24,
-    muscleMass: 32,
-    fitnessGoal: 'Maintain healthy weight and improve endurance',
-    bloodGroup: 'B+',
-    allergies: 'None',
-    chronicCondition: 'COPD',
-    inhalerType: 'Salbutamol',
-    emergencyDoctor: '+91 98765 43210',
-    emergencyFamily: '+91 87654 32109'
+  // User Profile Data (Aditi) without category, with activityLevel & localStorage sync
+  const [userData, setUserData] = useState(() => {
+    try {
+      const saved = localStorage.getItem('biomaxxx_user_data_v2');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return {
+      name: 'Aditi',
+      age: 19,
+      gender: 'Female',
+      height: 165,
+      weight: 58,
+      activityLevel: 'moderate',
+      bmi: 21.3,
+      bmiStatus: 'Healthy',
+      bodyFat: 24,
+      muscleMass: 32,
+      fitnessGoal: 'Maintain healthy weight and improve endurance',
+      bloodGroup: 'B+',
+      allergies: 'None',
+      chronicCondition: 'COPD',
+      inhalerType: 'Salbutamol',
+      emergencyDoctor: '+91 98765 43210',
+      emergencyFamily: '+91 87654 32109'
+    };
   });
 
   // Notifications & Alerts
@@ -971,16 +977,19 @@ export function WhoopDataProvider({ children }) {
     soundFx?.playPopSound?.(1.3);
   }, []);
 
-  // Update user profile info
+  // Update user profile info & persist
   const updateUserData = useCallback((updated) => {
     setUserData(prev => {
       const next = { ...prev, ...updated };
       if (next.height && next.weight) {
-        const heightM = next.height / 100;
-        const bmiVal = parseFloat((next.weight / (heightM * heightM)).toFixed(1));
+        const heightM = Number(next.height) / 100;
+        const bmiVal = parseFloat((Number(next.weight) / (heightM * heightM)).toFixed(1));
         next.bmi = bmiVal;
         next.bmiStatus = bmiVal < 18.5 ? 'Underweight' : bmiVal < 25 ? 'Healthy' : bmiVal < 30 ? 'Overweight' : 'Obese';
       }
+      try {
+        localStorage.setItem('biomaxxx_user_data_v2', JSON.stringify(next));
+      } catch (e) {}
       return next;
     });
     soundFx?.playPopSound?.(1.3);
