@@ -44,12 +44,12 @@ export default function RespiratoryDetailsModal() {
         <div className="p-4 rounded-2xl bg-slate-950/80 border border-cyan-500/30 flex items-center justify-between">
           <div>
             <span className="text-[10px] font-mono text-slate-400 uppercase block">CURRENT DIAGNOSIS</span>
-            <span className="text-xl font-black text-emerald-400 flex items-center space-x-2 mt-0.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping inline-block" />
-              <span>LOW RISK • STABLE</span>
+            <span className={`text-xl font-black flex items-center space-x-2 mt-0.5 ${whoopData.respiratoryStatus === 'LOW RISK' ? 'text-emerald-400' : 'text-amber-400'}`}>
+              <span className={`w-2.5 h-2.5 rounded-full ${whoopData.respiratoryStatus === 'LOW RISK' ? 'bg-emerald-400' : 'bg-amber-400'} animate-ping inline-block`} />
+              <span>{whoopData.respiratoryStatus} • STABLE</span>
             </span>
             <p className="text-xs text-slate-300 mt-1">
-              Oxygen saturation is optimal at 98%. No abnormal bronchial restriction detected.
+              Oxygen saturation is verified at {whoopData.spo2}% with respiratory rate of {whoopData.breathsPerMin} breaths/min. No abnormal bronchial restriction detected.
             </p>
           </div>
         </div>
@@ -69,7 +69,7 @@ export default function RespiratoryDetailsModal() {
           <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
             <span className="text-[10px] text-slate-400 block">Ambient AQI</span>
             <span className="text-lg font-bold text-amber-300">{whoopData.aqi}</span>
-            <span className="text-[9px] text-amber-400 block mt-0.5">Moderate Air</span>
+            <span className="text-[9px] text-amber-400 block mt-0.5">{whoopData.aqiStatus} Air</span>
           </div>
         </div>
 
@@ -80,7 +80,7 @@ export default function RespiratoryDetailsModal() {
             <span>COPD Guardian Protocol</span>
           </div>
           <p className="text-slate-300 leading-relaxed text-[11px]">
-            Your SpO2 levels are steady. Ambient air AQI is 68. Keep rescue inhaler in your day bag when heading outdoors between 12 PM - 4 PM when ground-level ozone peaks.
+            Your SpO2 level is steady at {whoopData.spo2}%. Ambient air AQI is {whoopData.aqi}. Keep rescue inhaler in your day bag when heading outdoors between 12 PM - 4 PM when ground-level ozone peaks.
           </p>
         </div>
 

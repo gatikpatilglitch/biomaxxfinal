@@ -134,7 +134,7 @@ export default function ProfileScreen() {
             <div className="grid grid-cols-4 gap-2 pt-2 border-t border-slate-800/80 text-center font-mono">
               <div className="p-2 rounded-xl bg-slate-900/60 border border-slate-800">
                 <span className="text-[10px] text-slate-400 block">Recovery</span>
-                <span className="text-sm font-black text-emerald-400">{whoopData.recoveryScore}%</span>
+                <span className={`text-sm font-black ${whoopData.recoveryScore >= 67 ? 'text-emerald-400' : whoopData.recoveryScore >= 34 ? 'text-amber-400' : 'text-rose-400'}`}>{whoopData.recoveryScore}%</span>
               </div>
               <div className="p-2 rounded-xl bg-slate-900/60 border border-slate-800">
                 <span className="text-[10px] text-slate-400 block">Sleep</span>

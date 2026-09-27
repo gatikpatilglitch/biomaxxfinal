@@ -72,28 +72,28 @@ export default function SleepDetailsModal() {
 
           {/* Color bar */}
           <div className="w-full h-3 rounded-full bg-slate-800 overflow-hidden flex">
-            <div style={{ width: '20%' }} className="bg-indigo-600 h-full" title="Deep 20%" />
-            <div style={{ width: '22%' }} className="bg-purple-500 h-full" title="REM 22%" />
-            <div style={{ width: '50%' }} className="bg-cyan-500 h-full" title="Light 50%" />
-            <div style={{ width: '8%' }} className="bg-slate-500 h-full" title="Awake 8%" />
+            <div style={{ width: `${whoopData.sleepStages?.deepPct ?? 42}%` }} className="bg-indigo-600 h-full" title={`Deep ${whoopData.sleepStages?.deepPct ?? 42}%`} />
+            <div style={{ width: `${whoopData.sleepStages?.remPct ?? 20}%` }} className="bg-purple-500 h-full" title={`REM ${whoopData.sleepStages?.remPct ?? 20}%`} />
+            <div style={{ width: `${whoopData.sleepStages?.lightPct ?? 28}%` }} className="bg-cyan-500 h-full" title={`Light ${whoopData.sleepStages?.lightPct ?? 28}%`} />
+            <div style={{ width: `${whoopData.sleepStages?.awakePct ?? 10}%` }} className="bg-slate-500 h-full" title={`Awake ${whoopData.sleepStages?.awakePct ?? 10}%`} />
           </div>
 
           <div className="grid grid-cols-4 gap-2 text-center text-[10px]">
             <div className="p-1.5 rounded-lg bg-indigo-950/50 border border-indigo-800/40">
               <span className="block text-indigo-300 font-bold">Deep</span>
-              <span className="text-slate-300">20% (1.2h)</span>
+              <span className="text-slate-300">{whoopData.sleepStages?.deepPct ?? 42}% ({whoopData.sleepStages?.deepHours ?? 2.3}h)</span>
             </div>
             <div className="p-1.5 rounded-lg bg-purple-950/50 border border-purple-800/40">
               <span className="block text-purple-300 font-bold">REM</span>
-              <span className="text-slate-300">22% (1.3h)</span>
+              <span className="text-slate-300">{whoopData.sleepStages?.remPct ?? 20}% ({whoopData.sleepStages?.remHours ?? 1.1}h)</span>
             </div>
             <div className="p-1.5 rounded-lg bg-cyan-950/50 border border-cyan-800/40">
               <span className="block text-cyan-300 font-bold">Light</span>
-              <span className="text-slate-300">50% (3.1h)</span>
+              <span className="text-slate-300">{whoopData.sleepStages?.lightPct ?? 28}% ({whoopData.sleepStages?.lightHours ?? 1.5}h)</span>
             </div>
             <div className="p-1.5 rounded-lg bg-slate-900 border border-slate-700">
               <span className="block text-slate-400 font-bold">Awake</span>
-              <span className="text-slate-300">8% (0.5h)</span>
+              <span className="text-slate-300">{whoopData.sleepStages?.awakePct ?? 10}% ({whoopData.sleepStages?.awakeHours ?? 0.5}h)</span>
             </div>
           </div>
         </div>
@@ -105,7 +105,7 @@ export default function SleepDetailsModal() {
             <span>Airway & Recovery Impact</span>
           </div>
           <p className="text-slate-300 text-[11px]">
-            Repaying your 41m sleep debt tonight resets bronchial inflammation and boosts recovery toward 85%+. Ensure bedroom humidity is kept at 45–55% for smooth airway passage.
+            Repaying your {whoopData.sleepDebtMinutes}m sleep debt tonight resets bronchial inflammation and boosts recovery toward optimal margins. Ensure bedroom humidity is kept at 45–55% for smooth airway passage.
           </p>
         </div>
 

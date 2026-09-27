@@ -110,21 +110,21 @@ export default function GuardianScreen() {
                 className="p-2 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-emerald-500/40 cursor-pointer transition-colors"
               >
                 <span className="text-[10px] text-slate-400 block">Respiratory</span>
-                <span className="text-emerald-400 font-bold">Low Risk</span>
+                <span className={`font-bold ${whoopData.respiratoryStatus === 'LOW RISK' ? 'text-emerald-400' : 'text-amber-400'}`}>{whoopData.respiratoryStatus}</span>
               </div>
               <div 
                 onClick={() => setGuardianSubView('wearable')}
                 className="p-2 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-amber-500/40 cursor-pointer transition-colors"
               >
                 <span className="text-[10px] text-slate-400 block">Recovery</span>
-                <span className="text-amber-400 font-bold">Moderate</span>
+                <span className={`font-bold ${whoopData.recoveryScore >= 67 ? 'text-emerald-400' : whoopData.recoveryScore >= 34 ? 'text-amber-400' : 'text-rose-400'}`}>{whoopData.recoveryStatus}</span>
               </div>
               <div 
                 onClick={() => setGuardianSubView('environment')}
                 className="p-2 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-amber-500/40 cursor-pointer transition-colors"
               >
                 <span className="text-[10px] text-slate-400 block">Environment</span>
-                <span className="text-amber-400 font-bold">Moderate</span>
+                <span className="text-amber-400 font-bold">{whoopData.aqiStatus}</span>
               </div>
             </div>
           </div>
@@ -146,7 +146,7 @@ export default function GuardianScreen() {
               </div>
               <div className="p-3 rounded-2xl bg-[#0e1628]/90 border border-slate-800">
                 <span className="text-xs text-rose-400 block">❤️ Recovery</span>
-                <span className="text-xl font-black text-emerald-400">{whoopData.recoveryScore}%</span>
+                <span className={`text-xl font-black ${whoopData.recoveryScore >= 67 ? 'text-emerald-400' : whoopData.recoveryScore >= 34 ? 'text-amber-400' : 'text-rose-400'}`}>{whoopData.recoveryScore}%</span>
               </div>
             </div>
           </div>
@@ -320,7 +320,7 @@ export default function GuardianScreen() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 font-mono text-center">
             <div className="p-3.5 rounded-2xl bg-[#0e1628] border border-slate-800">
               <span className="text-[10px] text-slate-400 block uppercase">Recovery</span>
-              <span className="text-2xl font-black text-emerald-400">{whoopData.recoveryScore}%</span>
+              <span className={`text-2xl font-black ${whoopData.recoveryScore >= 67 ? 'text-emerald-400' : whoopData.recoveryScore >= 34 ? 'text-amber-400' : 'text-rose-400'}`}>{whoopData.recoveryScore}%</span>
               <span className="text-[10px] text-slate-400 block mt-0.5">{whoopData.recoveryStatus}</span>
             </div>
             <div className="p-3.5 rounded-2xl bg-[#0e1628] border border-slate-800">
@@ -331,7 +331,7 @@ export default function GuardianScreen() {
             <div className="p-3.5 rounded-2xl bg-[#0e1628] border border-slate-800">
               <span className="text-[10px] text-slate-400 block uppercase">Strain</span>
               <span className="text-2xl font-black text-cyan-400">{whoopData.dayStrain}</span>
-              <span className="text-[10px] text-slate-400 block mt-0.5">High Target</span>
+              <span className="text-[10px] text-slate-400 block mt-0.5">{whoopData.dayStrain >= 14 ? 'High Target' : 'Active Target'}</span>
             </div>
             <div className="p-3.5 rounded-2xl bg-[#0e1628] border border-slate-800">
               <span className="text-[10px] text-slate-400 block uppercase">HRV</span>
@@ -356,6 +356,17 @@ export default function GuardianScreen() {
                 <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500 animate-pulse" />
                 <span>Avg {whoopData.restingHr} bpm</span>
               </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800/80 text-xs">
+              <div className="p-2 rounded-xl bg-slate-900/60 border border-slate-800 flex justify-between">
+                <span className="text-slate-400">Calories</span>
+                <span className="font-bold text-amber-300">{whoopData.calories.toLocaleString()} kcal</span>
+              </div>
+              <div className="p-2 rounded-xl bg-slate-900/60 border border-slate-800 flex justify-between">
+                <span className="text-slate-400">Energy (kJ)</span>
+                <span className="font-bold text-cyan-300">{whoopData.kilojoule?.toLocaleString() || '3,780'} kJ</span>
+              </div>
             </div>
           </div>
         </div>

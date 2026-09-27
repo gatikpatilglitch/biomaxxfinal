@@ -122,7 +122,7 @@ export default function HomeScreen() {
                 className="stroke-[#00F2FE] drop-shadow-[0_0_8px_rgba(0,242,254,0.8)]"
                 strokeWidth="5.5"
                 strokeDasharray="207"
-                strokeDashoffset="55"
+                strokeDashoffset={Math.round(207 * (1 - (Math.min(100, Math.max(0, whoopData.spo2)) / 100)))}
                 strokeLinecap="round"
                 fill="transparent"
               />
@@ -150,14 +150,14 @@ export default function HomeScreen() {
             </div>
 
             <div className="flex items-center space-x-2 mt-1">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] animate-pulse" />
-              <span className="text-lg font-black text-emerald-400 font-sans tracking-tight">
+              <span className={`w-2.5 h-2.5 rounded-full ${whoopData.respiratoryStatus === 'LOW RISK' ? 'bg-emerald-400 shadow-[0_0_8px_#34d399]' : 'bg-amber-400 shadow-[0_0_8px_#fbbf24]'} animate-pulse`} />
+              <span className={`text-lg font-black font-sans tracking-tight ${whoopData.respiratoryStatus === 'LOW RISK' ? 'text-emerald-400' : 'text-amber-400'}`}>
                 {whoopData.respiratoryStatus}
               </span>
             </div>
 
             <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-              Your respiratory strain is currently low. You're good to go!
+              Your respiratory strain is {whoopData.respiratoryStrain?.toLowerCase() || 'low'} at {whoopData.breathsPerMin} breaths/min with {whoopData.spo2}% SpO₂.
             </p>
           </div>
         </div>
@@ -247,10 +247,10 @@ export default function HomeScreen() {
                   cx="28"
                   cy="28"
                   r="23"
-                  className="stroke-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]"
+                  className={whoopData.recoveryScore >= 67 ? "stroke-emerald-400 drop-shadow-[0_0_6px_rgba(52,211,153,0.6)]" : whoopData.recoveryScore >= 34 ? "stroke-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]" : "stroke-rose-400 drop-shadow-[0_0_6px_rgba(244,63,94,0.6)]"}
                   strokeWidth="4"
                   strokeDasharray="144"
-                  strokeDashoffset="50"
+                  strokeDashoffset={Math.round(144 * (1 - (Math.min(100, Math.max(0, whoopData.recoveryScore)) / 100)))}
                   strokeLinecap="round"
                   fill="transparent"
                 />
@@ -260,7 +260,7 @@ export default function HomeScreen() {
               </div>
             </div>
             <span className="text-[10px] text-slate-400 uppercase mt-1 block">Recovery</span>
-            <span className="text-[10px] text-amber-400 font-bold">{whoopData.recoveryStatus}</span>
+            <span className={`text-[10px] font-bold ${whoopData.recoveryScore >= 67 ? 'text-emerald-400' : whoopData.recoveryScore >= 34 ? 'text-amber-400' : 'text-rose-400'}`}>{whoopData.recoveryStatus}</span>
           </div>
 
           {/* Metric 2: Sleep */}
