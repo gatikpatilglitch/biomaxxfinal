@@ -23,6 +23,7 @@ import { soundFx } from '../../utils/audioSynthesizer';
 import MindfulMazeGame from './MindfulMazeGame';
 import ColorCalmGame from './ColorCalmGame';
 import BreatheAndPlayGame from './BreatheAndPlayGame';
+import ZenPatternsGame from './ZenPatternsGame';
 
 export default function ActionsScreen() {
   const { 
@@ -358,7 +359,7 @@ export default function ActionsScreen() {
       )}
 
       {/* ========================================================================= */}
-      {/* 4. GAMES (Mindful Maze, Color Calm, Breathe & Play)                       */}
+      {/* 4. GAMES (Mindful Maze, Color Calm, Zen Patterns, Breathe & Play)         */}
       {/* ========================================================================= */}
       {actionsSubView === 'games' && (
         <div className="space-y-4 font-sans">
@@ -366,6 +367,8 @@ export default function ActionsScreen() {
             <MindfulMazeGame onBack={() => setActiveGame(null)} />
           ) : activeGame === 'color' ? (
             <ColorCalmGame onBack={() => setActiveGame(null)} />
+          ) : activeGame === 'zen' ? (
+            <ZenPatternsGame onBack={() => setActiveGame(null)} />
           ) : activeGame === 'breathe' ? (
             <BreatheAndPlayGame onBack={() => setActiveGame(null)} />
           ) : (
@@ -379,8 +382,8 @@ export default function ActionsScreen() {
                 {[
                   { id: 'maze', name: 'Mindful Maze', sub: 'Focus & Serenity', icon: '🌀', actionText: '✦ Play Mindful Maze', featured: true },
                   { id: 'color', name: 'Color Calm', sub: 'Creative stillness', icon: '🎨', actionText: '✦ Play Color Calm', featured: true },
-                  { id: 'breathe', name: 'Breathe & Play', sub: 'Memory match cards', icon: '🍃', actionText: '✦ Play Memory Match', featured: true },
-                  { id: 'memory', name: 'Zen Patterns', sub: 'Gentle focus', icon: '🧠', actionText: 'Coming Soon', featured: false }
+                  { id: 'zen', name: 'Zen Patterns', sub: 'Harmonic flow', icon: '🧠', actionText: '✦ Play Zen Patterns', featured: true },
+                  { id: 'breathe', name: 'Breathe & Play', sub: 'Memory match cards', icon: '🍃', actionText: '✦ Play Breathe & Play', featured: true }
                 ].map((game) => (
                   <div
                     key={game.id}
@@ -389,6 +392,8 @@ export default function ActionsScreen() {
                         setActiveGame('maze');
                       } else if (game.id === 'color') {
                         setActiveGame('color');
+                      } else if (game.id === 'zen') {
+                        setActiveGame('zen');
                       } else if (game.id === 'breathe') {
                         setActiveGame('breathe');
                       } else {
