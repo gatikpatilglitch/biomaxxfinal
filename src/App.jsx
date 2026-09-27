@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { WhoopDataProvider, useWhoopData } from './context/WhoopDataContext';
 import { AchievementsProvider } from './context/AchievementsContext';
 import { MedicationsProvider } from './context/MedicationsContext';
@@ -24,7 +24,48 @@ import BadgeDetailModal from './components/cyber/modals/BadgeDetailModal';
 import DoseReminderAlarmModal from './components/cyber/modals/DoseReminderAlarmModal';
 
 function AppContent() {
-  const { activeTab, setActiveTab, setYouSubView } = useWhoopData();
+  const { activeTab, setActiveTab, setYouSubView, isMuted } = useWhoopData();
+  const startupAudioRef = useRef(null);
+
+  // Play Ravi Music when the app starts or opens
+  useEffect(() => {
+    const audio = new Audio('/audio/ravi_music.mp3');
+    audio.volume = 0.85;
+    audio.muted = !!isMuted;
+    startupAudioRef.current = audio;
+
+    const playAudio = () => {
+      const p = audio.play();
+      if (p !== undefined) {
+        p.catch(() => {
+          // Autoplay policy prevented immediate playback; wait for first user interaction
+          const onFirstInteraction = () => {
+            if (startupAudioRef.current) {
+              startupAudioRef.current.play().catch(() => {});
+            }
+            window.removeEventListener('click', onFirstInteraction);
+            window.removeEventListener('touchstart', onFirstInteraction);
+            window.removeEventListener('keydown', onFirstInteraction);
+          };
+          window.addEventListener('click', onFirstInteraction, { once: true });
+          window.addEventListener('touchstart', onFirstInteraction, { once: true });
+          window.addEventListener('keydown', onFirstInteraction, { once: true });
+        });
+      }
+    };
+
+    playAudio();
+
+    return () => {
+      audio.pause();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (startupAudioRef.current) {
+      startupAudioRef.current.muted = !!isMuted;
+    }
+  }, [isMuted]);
 
   return (
     <div className="min-h-screen bg-[#070b14] text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-black antialiased relative">

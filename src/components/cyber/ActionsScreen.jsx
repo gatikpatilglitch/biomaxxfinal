@@ -33,6 +33,16 @@ import { soundFx } from '../../utils/audioSynthesizer';
 
 const MEDITATION_TRACKS = [
   {
+    id: 'ravi',
+    title: 'Ravi Music',
+    artist: 'Ravi',
+    badge: 'SIGNATURE THEME',
+    durationLabel: 'MEDITATION',
+    desc: 'Signature opening ambient soundtrack for BioMaxxx to calm breathing, reduce stress & center the mind.',
+    src: '/audio/ravi_music.mp3',
+    fallbackSrc: '/audio/ravi_music.mp3'
+  },
+  {
     id: 'nature',
     title: 'Nature Meditation',
     artist: 'Arulo',
@@ -83,9 +93,9 @@ export default function ActionsScreen() {
   const [phaseSecondsLeft, setPhaseSecondsLeft] = useState(4);
   const [cyclesCompleted, setCyclesCompleted] = useState(0);
 
-  // Daily Calm Meditation Audio State (Nature Meditation by Arulo & Deep Meditation by David Fesliyan)
+  // Daily Calm Meditation Audio State (Ravi Music, Nature Meditation by Arulo & Deep Meditation by David Fesliyan)
   const meditationAudioRef = useRef(null);
-  const [selectedTrackId, setSelectedTrackId] = useState('nature'); // Default to Nature Meditation by Arulo
+  const [selectedTrackId, setSelectedTrackId] = useState('ravi'); // Default to Ravi Music
   const [isMeditationPlaying, setIsMeditationPlaying] = useState(false);
   const [meditationElapsed, setMeditationElapsed] = useState(0); // 0 to 600s (10 mins)
   const [isMeditationMuted, setIsMeditationMuted] = useState(false);
@@ -532,7 +542,13 @@ export default function ActionsScreen() {
             <div className="relative z-10 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-mono text-cyan-300 font-bold uppercase tracking-widest flex items-center space-x-1.5">
-                  <Trees className="w-4 h-4 text-emerald-400" />
+                  {activeTrack.id === 'ravi' ? (
+                    <Music className="w-4 h-4 text-[#00F2FE]" />
+                  ) : activeTrack.id === 'nature' ? (
+                    <Trees className="w-4 h-4 text-emerald-400" />
+                  ) : (
+                    <Sparkles className="w-4 h-4 text-indigo-400" />
+                  )}
                   <span>{activeTrack.badge}</span>
                 </span>
                 <span className="text-xs font-mono text-indigo-300 font-bold px-2.5 py-1 rounded-full bg-indigo-950/70 border border-indigo-500/40">
@@ -574,7 +590,7 @@ export default function ActionsScreen() {
               </p>
 
               {/* Quick Track Switcher */}
-              <div className="flex items-center space-x-2 pt-1.5">
+              <div className="flex items-center space-x-2 pt-1.5 flex-wrap gap-y-2">
                 {MEDITATION_TRACKS.map((t) => {
                   const isSelected = selectedTrackId === t.id;
                   return (
@@ -587,7 +603,7 @@ export default function ActionsScreen() {
                           : 'bg-slate-900/80 border border-slate-700/60 text-slate-300 hover:text-white'
                       }`}
                     >
-                      {t.id === 'nature' ? <Leaf className="w-3.5 h-3.5 text-emerald-400" /> : <Sparkles className="w-3.5 h-3.5 text-cyan-400" />}
+                      {t.id === 'ravi' ? <Music className="w-3.5 h-3.5 text-[#00F2FE]" /> : t.id === 'nature' ? <Leaf className="w-3.5 h-3.5 text-emerald-400" /> : <Sparkles className="w-3.5 h-3.5 text-cyan-400" />}
                       <span>{t.title}</span>
                       {isSelected && isMeditationPlaying && (
                         <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse ml-0.5" />
@@ -661,6 +677,25 @@ export default function ActionsScreen() {
           <div className="space-y-2">
             {[
               { 
+                id: 'ravi',
+                title: 'Ravi Music (Signature Theme)', 
+                sub: 'Signature opening soundscape to calm & center',
+                action: () => {
+                  soundFx.playPopSound(1.2);
+                  selectTrack('ravi', !isMeditationPlaying || selectedTrackId !== 'ravi');
+                },
+                icon: Music,
+                active: isMeditationPlaying && selectedTrackId === 'ravi'
+              },
+              { 
+                id: 'nature',
+                title: 'Nature Sounds (Nature Meditation — Arulo)', 
+                sub: 'Soothing organic background & forest calm',
+                action: () => handleSelectNatureSounds(),
+                icon: Leaf,
+                active: isMeditationPlaying && selectedTrackId === 'nature'
+              },
+              { 
                 id: 'breathing',
                 title: 'Mindful Breathing', 
                 sub: '5 min • 4-7-8 Vagal reset exercise',
@@ -670,14 +705,6 @@ export default function ActionsScreen() {
                 },
                 icon: Wind,
                 active: false
-              },
-              { 
-                id: 'nature',
-                title: 'Nature Sounds (Nature Meditation — Arulo)', 
-                sub: 'Soothing organic background & forest calm',
-                action: () => handleSelectNatureSounds(),
-                icon: Leaf,
-                active: isMeditationPlaying && selectedTrackId === 'nature'
               },
               { 
                 id: 'gratitude',
@@ -716,7 +743,7 @@ export default function ActionsScreen() {
                     </div>
                   </div>
 
-                  {item.id === 'nature' ? (
+                  {item.id === 'nature' || item.id === 'ravi' ? (
                     <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-700/60 text-cyan-400 hover:text-white">
                       {item.active ? <Pause className="w-4 h-4 fill-cyan-400" /> : <Play className="w-4 h-4 fill-cyan-400" />}
                     </div>
