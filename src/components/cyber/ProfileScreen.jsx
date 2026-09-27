@@ -144,7 +144,6 @@ export default function ProfileScreen() {
     { id: 'emergency', label: 'Emergency' },
     { id: 'privacy', label: 'Privacy' },
     { id: 'settings', label: 'Settings' },
-    { id: 'help', label: 'Help' },
   ];
 
   const handleStartEdit = () => {
