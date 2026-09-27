@@ -169,6 +169,78 @@ class AudioSynthesizer {
       console.warn('Alert audio failed:', e);
     }
   }
+
+  // Continuous repeating alarm chime for Bedtime and Wake-Up alarms
+  startAlarmLoop(type = 'wakeup') {
+    this.stopAlarmLoop();
+    this.init();
+    if (!this.ctx) return;
+
+    this.alarmActive = true;
+    const playBurst = () => {
+      if (!this.alarmActive || !this.ctx) return;
+      try {
+        const now = this.ctx.currentTime;
+        if (type === 'bedtime') {
+          // Soothing, gentle bedtime reminder chime (harmonic C major / 528Hz Solfeggio)
+          const notes = [528, 659.25, 792, 1056];
+          notes.forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.22);
+            gain.gain.setValueAtTime(0.28, now + idx * 0.22);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.22 + 0.8);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now + idx * 0.22);
+            osc.stop(now + idx * 0.22 + 0.8);
+          });
+        } else {
+          // Clear, loud, uplifting morning wake-up alarm chime
+          const pattern = [784, 880, 1046.5, 1174.66, 1318.5]; // G5, A5, C6, D6, E6
+          pattern.forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const oscHarmonic = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.16);
+
+            oscHarmonic.type = 'sine';
+            oscHarmonic.frequency.setValueAtTime(freq * 2, now + idx * 0.16);
+
+            gain.gain.setValueAtTime(0.35, now + idx * 0.16);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.16 + 0.25);
+
+            osc.connect(gain);
+            oscHarmonic.connect(gain);
+            gain.connect(this.ctx.destination);
+
+            osc.start(now + idx * 0.16);
+            oscHarmonic.start(now + idx * 0.16);
+            osc.stop(now + idx * 0.16 + 0.25);
+            oscHarmonic.stop(now + idx * 0.16 + 0.25);
+          });
+        }
+      } catch (e) {
+        console.warn('Alarm burst error:', e);
+      }
+    };
+
+    // Play immediately and loop repeating every 1.5 seconds
+    playBurst();
+    this.alarmTimer = setInterval(playBurst, 1500);
+  }
+
+  stopAlarmLoop() {
+    this.alarmActive = false;
+    if (this.alarmTimer) {
+      clearInterval(this.alarmTimer);
+      this.alarmTimer = null;
+    }
+  }
 }
 
 export const soundFx = new AudioSynthesizer();
+

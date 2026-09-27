@@ -406,6 +406,95 @@ const INITIAL_ACCURATE_WHOOP_DATA = {
   dateDisplay: new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })
 };
 
+// Realistic Overnight Sleep & SpO2 Biometrics Generator synced with WHOOP data
+export const generateDefaultOvernightReport = (durationMinutes = 465, whoopData = {}) => {
+  const durMins = Math.max(30, durationMinutes || 465);
+  const hours = Math.floor(durMins / 60);
+  const mins = durMins % 60;
+  
+  const wakeDate = new Date();
+  const bedDate = new Date(wakeDate.getTime() - durMins * 60 * 1000);
+  
+  const formatTime = (d) => d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+  const bedFormatted = formatTime(bedDate);
+  const wakeFormatted = formatTime(wakeDate);
+
+  const avgSpo2 = whoopData?.spo2 ? Math.min(99, Math.max(95, whoopData.spo2 + 0.3)) : 97.8;
+  const lowestSpo2 = 94.1;
+  const dipHour = new Date(bedDate.getTime() + durMins * 0.62 * 60 * 1000);
+  const dipFormatted = formatTime(dipHour);
+
+  const deepPct = whoopData?.sleepStages?.deepPct || 28;
+  const remPct = whoopData?.sleepStages?.remPct || 23;
+  const lightPct = whoopData?.sleepStages?.lightPct || 41;
+  const awakePct = 100 - deepPct - remPct - lightPct;
+
+  const deepHours = parseFloat(((durMins * (deepPct / 100)) / 60).toFixed(1));
+  const remHours = parseFloat(((durMins * (remPct / 100)) / 60).toFixed(1));
+  const lightHours = parseFloat(((durMins * (lightPct / 100)) / 60).toFixed(1));
+  const awakeHours = parseFloat(((durMins * (awakePct / 100)) / 60).toFixed(1));
+
+  const sleepScore = whoopData?.sleepScore || 88;
+  const recoveryScore = whoopData?.recoveryScore || 84;
+  const efficiency = parseFloat((100 - (awakePct * 0.8)).toFixed(1));
+
+  // Hourly curve data for visual chart
+  const points = [];
+  const totalSteps = 8;
+  for (let i = 0; i <= totalSteps; i++) {
+    const ptDate = new Date(bedDate.getTime() + (durMins * (i / totalSteps)) * 60 * 1000);
+    const label = ptDate.toLocaleTimeString([], { hour: 'numeric', hour12: true });
+    let ptSpo2 = avgSpo2 + (Math.sin(i * 1.2) * 0.4);
+    let hr = 58 - Math.round(Math.sin((i / totalSteps) * Math.PI) * 10);
+    if (i === 5) {
+      ptSpo2 = lowestSpo2;
+      hr = 52;
+    }
+    points.push({
+      time: label,
+      spo2: parseFloat(ptSpo2.toFixed(1)),
+      hr: hr,
+      isDip: i === 5
+    });
+  }
+
+  return {
+    id: `report_${Date.now()}`,
+    date: new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }),
+    durationMinutes: durMins,
+    durationFormatted: `${hours}h ${mins}m`,
+    bedtime: bedFormatted,
+    wakeTime: wakeFormatted,
+    sleepScore,
+    recoveryScore,
+    efficiency,
+    avgSpo2: parseFloat(avgSpo2.toFixed(1)),
+    lowestSpo2,
+    lowestSpo2Time: dipFormatted,
+    hypoxemiaMinutes: 0,
+    respiratoryRate: whoopData?.breathsPerMin || 14.4,
+    restingHeartRate: 51,
+    lowestHeartRate: 48,
+    lowestHeartRateTime: '4:05 AM',
+    hrvBaseline: whoopData?.hrv || 76,
+    cvDipping: '18.4% (Optimal nocturnal dip)',
+    stages: {
+      deepHours,
+      deepPct,
+      remHours,
+      remPct,
+      lightHours,
+      lightPct,
+      awakeHours,
+      awakePct
+    },
+    hourlyCurve: points,
+    aiSummary: `Your SpO2 remained exceptionally stable at ${avgSpo2.toFixed(1)}% throughout your ${hours}h ${mins}m sleep cycle. Heart rate dipped optimally to 48 BPM during deep slow-wave sleep at 4:05 AM. Zero nocturnal desaturations (<90%) detected.`,
+    clinicalStatus: 'Restorative • Airways Nominal',
+    syncTimestamp: new Date().toISOString()
+  };
+};
+
 export function WhoopDataProvider({ children }) {
   // Navigation & Subview states
   const [activeTab, setActiveTab] = useState('home'); // 'home' | 'guardian' | 'actions' | 'you'
@@ -594,11 +683,49 @@ export function WhoopDataProvider({ children }) {
     { id: '4', title: 'Inhaler reminder', subtitle: 'Time for your scheduled dose.', time: '1d ago', type: 'teal', icon: 'inhaler', unread: false }
   ]);
 
-  // Reminders list
+  // Dual-Alarm & Sleep Cycle Tracking State
+  const [alarmSettings, setAlarmSettings] = useState(() => {
+    try {
+      const saved = localStorage.getItem('biomaxxx_alarm_settings_v1');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return {
+      bedtimeTime: '22:30', // 10:30 PM default
+      bedtimeEnabled: true,
+      wakeTime: '06:30',    // 6:30 AM default
+      wakeEnabled: true,
+      soundType: 'cyber_chime'
+    };
+  });
+
+  const [sleepSession, setSleepSession] = useState(() => {
+    try {
+      const saved = localStorage.getItem('biomaxxx_sleep_session_v1');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return {
+      isSleeping: false,
+      sleepStartTime: null,
+      sleepEndTime: null
+    };
+  });
+
+  const [activeRingingAlarm, setActiveRingingAlarm] = useState(null); // null | 'bedtime' | 'wakeup'
+  const [isOvernightReportOpen, setIsOvernightReportOpen] = useState(false);
+  const [overnightReport, setOvernightReport] = useState(() => {
+    try {
+      const saved = localStorage.getItem('biomaxxx_last_overnight_report_v1');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return generateDefaultOvernightReport(465, INITIAL_ACCURATE_WHOOP_DATA);
+  });
+
+  // Reminders list with Bedtime & Wake-Up alarm controls
   const [reminders, setReminders] = useState([
-    { id: 'r1', title: 'Inhaler Dose', time: 'Morning • 8:00 AM', category: 'medication', enabled: true },
-    { id: 'r2', title: 'Inhaler Dose', time: 'Evening • 8:00 PM', category: 'medication', enabled: true },
-    { id: 'r3', title: 'Sleep Reminder', time: '10:30 PM', category: 'health', enabled: true },
+    { id: 'alarm_bedtime', title: 'Bedtime Alarm (Sleep Routine)', time: '10:30 PM', category: 'alarm', enabled: true },
+    { id: 'alarm_wake', title: 'Morning Wake-Up Alarm', time: '6:30 AM', category: 'alarm', enabled: true },
+    { id: 'r1', title: 'Inhaler Dose (Morning)', time: '8:00 AM', category: 'medication', enabled: true },
+    { id: 'r2', title: 'Inhaler Dose (Evening)', time: '8:00 PM', category: 'medication', enabled: true },
     { id: 'r4', title: 'Hydration Alert', time: 'Every 2 hours', category: 'general', enabled: false }
   ]);
 
@@ -606,6 +733,181 @@ export function WhoopDataProvider({ children }) {
   const [symptomLogs, setSymptomLogs] = useState([
     { id: 's1', date: 'Today, 9:30 AM', symptom: 'None', notes: 'Clear chest after morning walk' }
   ]);
+
+  // Real-Time Clock Listener checking scheduled alarms every 3 seconds
+  const lastAlarmTriggerRef = useRef('');
+  useEffect(() => {
+    const checkClock = () => {
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      const timeNow = `${hh}:${mm}`;
+
+      // 1. Bedtime Alarm Check
+      if (
+        alarmSettings.bedtimeEnabled && 
+        timeNow === alarmSettings.bedtimeTime && 
+        lastAlarmTriggerRef.current !== `bedtime_${timeNow}` &&
+        !activeRingingAlarm
+      ) {
+        lastAlarmTriggerRef.current = `bedtime_${timeNow}`;
+        setActiveRingingAlarm('bedtime');
+        soundFx.startAlarmLoop('bedtime');
+      }
+
+      // 2. Morning Wake-Up Alarm Check
+      if (
+        alarmSettings.wakeEnabled && 
+        timeNow === alarmSettings.wakeTime && 
+        lastAlarmTriggerRef.current !== `wake_${timeNow}` &&
+        !activeRingingAlarm
+      ) {
+        lastAlarmTriggerRef.current = `wake_${timeNow}`;
+        setActiveRingingAlarm('wakeup');
+        soundFx.startAlarmLoop('wakeup');
+      }
+    };
+
+    const timer = setInterval(checkClock, 3000);
+    return () => clearInterval(timer);
+  }, [alarmSettings, activeRingingAlarm]);
+
+  // Alarm Actions
+  const triggerAlarm = useCallback((type = 'wakeup') => {
+    setActiveRingingAlarm(type);
+    soundFx.startAlarmLoop(type);
+  }, []);
+
+  const dismissAlarm = useCallback(() => {
+    soundFx.stopAlarmLoop();
+    setActiveRingingAlarm(null);
+  }, []);
+
+  const snoozeAlarm = useCallback((minutes = 5) => {
+    soundFx.stopAlarmLoop();
+    const type = activeRingingAlarm || 'wakeup';
+    setActiveRingingAlarm(null);
+    soundFx.playPopSound(1.1);
+    setTimeout(() => {
+      setActiveRingingAlarm(type);
+      soundFx.startAlarmLoop(type);
+    }, minutes * 60 * 1000);
+  }, [activeRingingAlarm]);
+
+  const startSleepSession = useCallback(() => {
+    soundFx.stopAlarmLoop();
+    setActiveRingingAlarm(null);
+    const now = Date.now();
+    const newSession = { isSleeping: true, sleepStartTime: now, sleepEndTime: null };
+    setSleepSession(newSession);
+    try {
+      localStorage.setItem('biomaxxx_sleep_session_v1', JSON.stringify(newSession));
+    } catch (e) {}
+    soundFx.playPopSound(1.4);
+  }, []);
+
+  const stopSleepSessionAndWakeUp = useCallback(() => {
+    soundFx.stopAlarmLoop();
+    setActiveRingingAlarm(null);
+
+    // Calculate elapsed minutes or realistic circadian window
+    let durationMinutes = 465; // default 7h 45m
+    if (sleepSession.sleepStartTime) {
+      const elapsedMs = Date.now() - sleepSession.sleepStartTime;
+      const calculatedMins = Math.round(elapsedMs / (1000 * 60));
+      if (calculatedMins >= 10) {
+        durationMinutes = calculatedMins;
+      }
+    }
+
+    const newReport = generateDefaultOvernightReport(durationMinutes, whoopData);
+    setOvernightReport(newReport);
+    try {
+      localStorage.setItem('biomaxxx_last_overnight_report_v1', JSON.stringify(newReport));
+    } catch (e) {}
+
+    const endedSession = { isSleeping: false, sleepStartTime: null, sleepEndTime: Date.now() };
+    setSleepSession(endedSession);
+    try {
+      localStorage.setItem('biomaxxx_sleep_session_v1', JSON.stringify(endedSession));
+    } catch (e) {}
+
+    soundFx.playPopSound(1.5);
+    setIsOvernightReportOpen(true);
+  }, [sleepSession, whoopData]);
+
+  const toggleAlarmSetting = useCallback((type) => {
+    setAlarmSettings(prev => {
+      const isBedtime = type === 'bedtime';
+      const key = isBedtime ? 'bedtimeEnabled' : 'wakeEnabled';
+      const updated = {
+        ...prev,
+        [key]: !prev[key]
+      };
+      try {
+        localStorage.setItem('biomaxxx_alarm_settings_v1', JSON.stringify(updated));
+      } catch (e) {}
+
+      // Keep reminders list in sync
+      setReminders(rList => rList.map(r => {
+        if (isBedtime && (r.id === 'alarm_bedtime' || r.id === 'r3')) {
+          return { ...r, enabled: updated.bedtimeEnabled };
+        }
+        if (!isBedtime && r.id === 'alarm_wake') {
+          return { ...r, enabled: updated.wakeEnabled };
+        }
+        return r;
+      }));
+
+      return updated;
+    });
+    soundFx.playPopSound(1.2);
+  }, []);
+
+  const updateAlarmTime = useCallback((type, timeString) => {
+    setAlarmSettings(prev => {
+      const isBedtime = type === 'bedtime';
+      const key = isBedtime ? 'bedtimeTime' : 'wakeTime';
+      const updated = {
+        ...prev,
+        [key]: timeString
+      };
+      try {
+        localStorage.setItem('biomaxxx_alarm_settings_v1', JSON.stringify(updated));
+      } catch (e) {}
+
+      // Format for reminder label (e.g. "22:30" -> "10:30 PM")
+      const [h, m] = timeString.split(':');
+      const hourNum = parseInt(h, 10);
+      const ampm = hourNum >= 12 ? 'PM' : 'AM';
+      const formattedHour = hourNum % 12 || 12;
+      const formattedTime = `${formattedHour}:${m} ${ampm}`;
+
+      setReminders(rList => rList.map(r => {
+        if (isBedtime && (r.id === 'alarm_bedtime' || r.id === 'r3')) {
+          return { ...r, time: formattedTime };
+        }
+        if (!isBedtime && r.id === 'alarm_wake') {
+          return { ...r, time: formattedTime };
+        }
+        return r;
+      }));
+
+      return updated;
+    });
+    soundFx.playPopSound(1.2);
+  }, []);
+
+  const openOvernightReport = useCallback((customData = null) => {
+    if (customData) setOvernightReport(customData);
+    setIsOvernightReportOpen(true);
+    soundFx.playPopSound(1.3);
+  }, []);
+
+  const closeOvernightReport = useCallback(() => {
+    setIsOvernightReportOpen(false);
+    soundFx.playPopSound(0.9);
+  }, []);
 
   // Actions: Log Inhaler Dose
   const logInhalerDose = useCallback(() => {
@@ -634,9 +936,29 @@ export function WhoopDataProvider({ children }) {
     soundFx?.playPopSound?.(1.2);
   }, []);
 
-  // Toggle Reminder
+  // Toggle Reminder & sync with Alarms
   const toggleReminder = useCallback((id) => {
-    setReminders(prev => prev.map(r => r.id === id ? { ...r, enabled: !r.enabled } : r));
+    setReminders(prev => prev.map(r => {
+      if (r.id === id) {
+        const nextEnabled = !r.enabled;
+        if (id === 'alarm_bedtime' || id === 'r3') {
+          setAlarmSettings(s => {
+            const nextS = { ...s, bedtimeEnabled: nextEnabled };
+            try { localStorage.setItem('biomaxxx_alarm_settings_v1', JSON.stringify(nextS)); } catch (e) {}
+            return nextS;
+          });
+        }
+        if (id === 'alarm_wake') {
+          setAlarmSettings(s => {
+            const nextS = { ...s, wakeEnabled: nextEnabled };
+            try { localStorage.setItem('biomaxxx_alarm_settings_v1', JSON.stringify(nextS)); } catch (e) {}
+            return nextS;
+          });
+        }
+        return { ...r, enabled: nextEnabled };
+      }
+      return r;
+    }));
     soundFx?.playPopSound?.(1.1);
   }, []);
 
@@ -718,7 +1040,24 @@ export function WhoopDataProvider({ children }) {
         updateUserData,
         environmentData,
         refreshEnvironmentData,
-        isRefreshingEnv
+        isRefreshingEnv,
+
+        // Sleep Cycle & Alarm System Exports
+        alarmSettings,
+        setAlarmSettings,
+        sleepSession,
+        activeRingingAlarm,
+        isOvernightReportOpen,
+        overnightReport,
+        triggerAlarm,
+        dismissAlarm,
+        snoozeAlarm,
+        startSleepSession,
+        stopSleepSessionAndWakeUp,
+        toggleAlarmSetting,
+        updateAlarmTime,
+        openOvernightReport,
+        closeOvernightReport
       }}
     >
       {children}

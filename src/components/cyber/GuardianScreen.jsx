@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { useWhoopData } from '../../context/WhoopDataContext';
 import { soundFx } from '../../utils/audioSynthesizer';
+import SleepAlarmSystem from './SleepAlarmSystem';
 
 export default function GuardianScreen() {
   const { 
@@ -804,40 +805,11 @@ export default function GuardianScreen() {
       )}
 
       {/* ========================================================================= */}
-      {/* VIEW 5: SLEEP & RECOVERY (Image 3 Screen 5)                                */}
+      {/* VIEW 5: SLEEP & RECOVERY (Sleep Cycle & Dual Alarm System)                 */}
       {/* ========================================================================= */}
       {guardianSubView === 'sleep' && (
         <div className="space-y-4">
-          <div className="p-5 rounded-3xl bg-[#0e1628] border border-indigo-500/30 space-y-3 font-mono">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-[10px] text-slate-400 block uppercase">SLEEP SCORE</span>
-                <span className="text-3xl font-black text-indigo-300">{whoopData.sleepScore} <span className="text-base font-normal text-slate-400">/ 100</span></span>
-                <span className="text-xs text-emerald-400 block mt-0.5">● Good Circadian Sync</span>
-              </div>
-              <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 flex items-center justify-center">
-                <Moon className="w-6 h-6 text-indigo-300" />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 text-center text-xs pt-1">
-              <div className="p-2 rounded-xl bg-slate-900 border border-slate-800">
-                <span className="text-[10px] text-slate-400 block">Time in Bed</span>
-                <span className="font-bold text-white">{whoopData.timeInBed}</span>
-              </div>
-              <div className="p-2 rounded-xl bg-slate-900 border border-slate-800">
-                <span className="text-[10px] text-slate-400 block">Sleep Debt</span>
-                <span className="font-bold text-amber-400">{whoopData.sleepDebtMinutes}m</span>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setIsSleepModalOpen(true)}
-              className="w-full py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs font-mono text-indigo-300 font-bold hover:bg-slate-800"
-            >
-              View full sleep analysis →
-            </button>
-          </div>
+          <SleepAlarmSystem />
         </div>
       )}
 

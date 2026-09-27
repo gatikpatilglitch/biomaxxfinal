@@ -15,6 +15,8 @@ import RespiratoryDetailsModal from './components/cyber/modals/RespiratoryDetail
 import WalkingPlanModal from './components/cyber/modals/WalkingPlanModal';
 import InhalerLogModal from './components/cyber/modals/InhalerLogModal';
 import GuardianAlertsModal from './components/cyber/modals/GuardianAlertsModal';
+import AlarmRingingOverlay from './components/cyber/modals/AlarmRingingOverlay';
+import OvernightReportModal from './components/cyber/modals/OvernightReportModal';
 
 function AppContent() {
   const { activeTab } = useWhoopData();
@@ -43,6 +45,8 @@ function AppContent() {
       <WalkingPlanModal />
       <InhalerLogModal />
       <GuardianAlertsModal />
+      <AlarmRingingOverlay />
+      <OvernightReportModal />
 
       {/* Bottom Floating Navigation Matching Images 1-4 */}
       <CyberBottomNav />

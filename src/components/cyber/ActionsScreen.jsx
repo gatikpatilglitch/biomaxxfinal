@@ -22,7 +22,11 @@ import {
   HelpCircle,
   Trees,
   Leaf,
-  Waves
+  Waves,
+  Bell,
+  Moon,
+  Sun,
+  Bed
 } from 'lucide-react';
 import { useWhoopData } from '../../context/WhoopDataContext';
 import { soundFx } from '../../utils/audioSynthesizer';
@@ -64,7 +68,13 @@ export default function ActionsScreen() {
     reminders,
     toggleReminder,
     saveSymptom,
-    whoopData
+    whoopData,
+    alarmSettings,
+    toggleAlarmSetting,
+    updateAlarmTime,
+    triggerAlarm,
+    setActiveTab,
+    setGuardianSubView
   } = useWhoopData();
 
   // Breathing 4-7-8 State
@@ -830,16 +840,149 @@ export default function ActionsScreen() {
 
 
       {/* ========================================================================= */}
-      {/* 7. REMINDERS (Image 4 Screen 9)                                           */}
+      {/* 7. REMINDERS & SLEEP ALARM CONTROLS                                       */}
       {/* ========================================================================= */}
       {actionsSubView === 'reminders' && (
-        <div className="space-y-3 font-mono">
-          <span className="text-xs text-slate-400 uppercase tracking-wider px-1 block">Scheduled Reminders</span>
+        <div className="space-y-4 font-mono">
+          
+          {/* Dual Alarm Master Controller */}
+          <div className="p-4 sm:p-5 rounded-3xl bg-[#090e1a] border border-cyan-500/30 space-y-4 shadow-xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none" />
+            
+            <div className="flex items-center justify-between border-b border-slate-800 pb-2.5 relative z-10">
+              <div className="flex items-center space-x-2">
+                <Bell className="w-4 h-4 text-cyan-400" />
+                <span className="text-xs font-bold text-white uppercase tracking-wider">Dual Sleep & Wake Alarms</span>
+              </div>
+              <button
+                onClick={() => {
+                  soundFx.playPopSound(1.2);
+                  setActiveTab('guardian');
+                  setGuardianSubView('sleep');
+                }}
+                className="text-[10px] text-cyan-300 hover:text-white underline cursor-pointer flex items-center space-x-1"
+              >
+                <span>Full Sleep Hub →</span>
+              </button>
+            </div>
+
+            {/* Bedtime & Wake Alarm Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 relative z-10">
+              
+              {/* Bedtime Alarm */}
+              <div className={`p-3.5 rounded-2xl border transition-all ${
+                alarmSettings.bedtimeEnabled 
+                  ? 'bg-[#0e1628] border-indigo-500/50 shadow-md' 
+                  : 'bg-[#0a0f1d] border-slate-800/80 opacity-70'
+              }`}>
+                <div className="flex items-center justify-between pb-2">
+                  <div className="flex items-center space-x-2">
+                    <Moon className="w-4 h-4 text-indigo-400" />
+                    <div>
+                      <span className="text-xs font-bold text-white block">Bedtime Alarm</span>
+                      <span className="text-[10px] text-indigo-300">Routine Reminder</span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => toggleAlarmSetting('bedtime')}
+                    className={`w-10 h-5 rounded-full transition-colors relative cursor-pointer ${
+                      alarmSettings.bedtimeEnabled ? 'bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]' : 'bg-slate-800'
+                    }`}
+                  >
+                    <span className={`w-3.5 h-3.5 rounded-full bg-white absolute top-0.75 transition-all ${
+                      alarmSettings.bedtimeEnabled ? 'right-0.75' : 'left-0.75'
+                    }`} />
+                  </button>
+                </div>
+
+                <div className="pt-2 flex items-center justify-between">
+                  <input
+                    type="time"
+                    value={alarmSettings.bedtimeTime}
+                    onChange={(e) => updateAlarmTime('bedtime', e.target.value)}
+                    className="bg-slate-900 border border-slate-700 rounded-xl px-2 py-1 text-xs font-bold text-white focus:outline-none focus:border-indigo-400"
+                  />
+                  <button
+                    onClick={() => {
+                      soundFx.playZenChime();
+                      soundFx.playPopSound(1.2);
+                    }}
+                    className="px-2 py-1 rounded-lg bg-slate-900 border border-slate-800 text-[10px] text-slate-300 hover:text-white flex items-center space-x-1"
+                  >
+                    <Volume2 className="w-3 h-3 text-indigo-400" />
+                    <span>Test</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Wake-Up Alarm */}
+              <div className={`p-3.5 rounded-2xl border transition-all ${
+                alarmSettings.wakeEnabled 
+                  ? 'bg-[#0e1628] border-cyan-400/50 shadow-md' 
+                  : 'bg-[#0a0f1d] border-slate-800/80 opacity-70'
+              }`}>
+                <div className="flex items-center justify-between pb-2">
+                  <div className="flex items-center space-x-2">
+                    <Sun className="w-4 h-4 text-cyan-400" />
+                    <div>
+                      <span className="text-xs font-bold text-white block">Wake-Up Alarm</span>
+                      <span className="text-[10px] text-cyan-300">Overnight Analysis</span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => toggleAlarmSetting('wake')}
+                    className={`w-10 h-5 rounded-full transition-colors relative cursor-pointer ${
+                      alarmSettings.wakeEnabled ? 'bg-cyan-400 shadow-[0_0_10px_rgba(0,242,254,0.5)]' : 'bg-slate-800'
+                    }`}
+                  >
+                    <span className={`w-3.5 h-3.5 rounded-full bg-white absolute top-0.75 transition-all ${
+                      alarmSettings.wakeEnabled ? 'right-0.75' : 'left-0.75'
+                    }`} />
+                  </button>
+                </div>
+
+                <div className="pt-2 flex items-center justify-between">
+                  <input
+                    type="time"
+                    value={alarmSettings.wakeTime}
+                    onChange={(e) => updateAlarmTime('wake', e.target.value)}
+                    className="bg-slate-900 border border-slate-700 rounded-xl px-2 py-1 text-xs font-bold text-white focus:outline-none focus:border-cyan-400"
+                  />
+                  <div className="flex items-center space-x-1">
+                    <button
+                      onClick={() => {
+                        soundFx.startAlarmLoop('wakeup');
+                        setTimeout(() => soundFx.stopAlarmLoop(), 2000);
+                      }}
+                      className="px-2 py-1 rounded-lg bg-slate-900 border border-slate-800 text-[10px] text-slate-300 hover:text-white flex items-center space-x-1"
+                    >
+                      <Volume2 className="w-3 h-3 text-cyan-400" />
+                      <span>Test</span>
+                    </button>
+                    <button
+                      onClick={() => triggerAlarm('wakeup')}
+                      className="px-2 py-1 rounded-lg bg-cyan-950/80 border border-cyan-500/50 text-[10px] text-cyan-300 font-bold hover:brightness-110 flex items-center space-x-1"
+                      title="Test morning wake-up ringing overlay & report modal"
+                    >
+                      <Bell className="w-3 h-3 text-cyan-400" />
+                      <span>Ring</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* General Medication & Health Reminders List */}
           <div className="space-y-2">
-            {reminders.map((r) => (
+            <span className="text-xs text-slate-400 uppercase tracking-wider px-1 block">Scheduled Medication & Health Alerts</span>
+            {reminders.filter(r => r.category !== 'alarm').map((r) => (
               <div 
                 key={r.id}
-                className="p-3.5 rounded-2xl bg-[#0e1628] border border-slate-800 flex items-center justify-between"
+                className="p-3.5 rounded-2xl bg-[#0e1628] border border-slate-800 flex items-center justify-between hover:border-slate-700 transition-colors"
               >
                 <div>
                   <span className="text-xs font-bold text-white block">{r.title}</span>
@@ -847,13 +990,14 @@ export default function ActionsScreen() {
                 </div>
                 <button
                   onClick={() => toggleReminder(r.id)}
-                  className={`w-11 h-6 rounded-full transition-colors relative ${r.enabled ? 'bg-cyan-500' : 'bg-slate-800'}`}
+                  className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer ${r.enabled ? 'bg-cyan-500' : 'bg-slate-800'}`}
                 >
                   <span className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-all ${r.enabled ? 'right-1' : 'left-1'}`} />
                 </button>
               </div>
             ))}
           </div>
+
         </div>
       )}
 
