@@ -16,7 +16,8 @@ import {
   Heart,
   Droplet,
   Coffee,
-  Plus
+  Plus,
+  HelpCircle
 } from 'lucide-react';
 import { useWhoopData } from '../../context/WhoopDataContext';
 import { soundFx } from '../../utils/audioSynthesizer';
@@ -48,9 +49,12 @@ export default function ActionsScreen() {
   const [isMeditationPlaying, setIsMeditationPlaying] = useState(false);
 
 
-  // AI Assistant Chat State
+  // App Help Guide Bot State
   const [messages, setMessages] = useState([
-    { sender: 'bot', text: 'Hi Aditi! How can I help you today? I can guide your breathing, check air quality safety, or optimize your sleep.' }
+    { 
+      sender: 'bot', 
+      text: "Welcome to BioMaxxx! 👋 I'm your App Help Bot. I'm here to guide new users on how to use every feature and navigate the app easily. Ask me where to find anything or tap a guide topic below!" 
+    }
   ]);
   const [chatInput, setChatInput] = useState('');
 
@@ -105,23 +109,31 @@ export default function ActionsScreen() {
     setMessages((prev) => [...prev, { sender: 'user', text }]);
     setChatInput('');
 
-    // Automated smart clinical / wellness responses
+    // Helpful new-user guidance
     setTimeout(() => {
-      let reply = "Your biometrics look great today! Rest and steady pacing are recommended.";
+      let reply = "Here to help! BioMaxxx is structured into 4 main navigation tabs at the bottom:\n• Home: Real-time recovery, strain, vitals overview\n• Guardian: Whoop SpO2 analytics, 30-day health calendar & live Bangalore AQI\n• Actions: Guided breathing, relaxation games, inhaler dose logging\n• You: Personalized clinical parameters and Whoop device status.";
       const lower = text.toLowerCase();
-      if (lower.includes('breath') || lower.includes('exercise')) {
-        reply = "I recommend 4-7-8 breathing right now. Inhale for 4s, hold for 7s, and exhale through pursed lips for 8s to calm the vagus nerve.";
-      } else if (lower.includes('out') || lower.includes('safe') || lower.includes('air')) {
-        reply = `Today's AQI is ${whoopData.aqi} (Moderate). Your best outdoor window is 7:00 AM – 8:30 AM before ground-level ozone builds.`;
-      } else if (lower.includes('sleep')) {
-        reply = `Based on your ${whoopData.dayStrain} strain, aim for bed at ${whoopData.bedtime} to repay your 41m sleep debt and clear airway fatigue.`;
-      } else if (lower.includes('stress')) {
-        reply = "Try the 10-minute Daily Calm meditation or a gentle 4-7-8 breathing session in the Actions tab.";
+      if (lower.includes('home') || lower.includes('dashboard')) {
+        reply = "🏠 Home Tab Guide:\nThe Home screen provides your primary biometric snapshot. View your Recovery Score circle, daily Strain score, Resting Heart Rate, and Sleep Debt. Tap any metric tile to view deeper biometrics.";
+      } else if (lower.includes('guardian') || lower.includes('aqi') || lower.includes('weather') || lower.includes('environment')) {
+        reply = "🛡️ Guardian Tab Guide:\n• Whoop Analytics: View past 7-day SpO2 continuous levels and a 30-day interactive health calendar.\n• Environment: Live, hourly updating weather & AQI (PM2.5, PM10, Ozone, NO2) calibrated for MSRIT Mathikere, Bengaluru.";
+      } else if (lower.includes('whoop') || lower.includes('spo2') || lower.includes('calendar')) {
+        reply = "⌚ Whoop Data Guide:\nGo to Guardian → Whoop tab to inspect your accurate 7-day SpO2 respiratory oxygenation chart, plus a 30-day calendar displaying your daily strain, recovery, and sleep debt.";
+      } else if (lower.includes('breath') || lower.includes('4-7-8') || lower.includes('exercise')) {
+        reply = "💨 Breathing Exercises Guide:\nGo to Actions → Breathing. Tap 'Start 4-7-8 Breathing' to follow the expanding/contracting visual guide (Inhale 4s, Hold 7s, Exhale 8s). Great for calming the nervous system and easing breathing distress.";
+      } else if (lower.includes('game') || lower.includes('maze') || lower.includes('color') || lower.includes('pattern') || lower.includes('breathe & play')) {
+        reply = "🎮 Relaxation Games Guide:\nGo to Actions → Games to play 4 calming, low-pressure games:\n1. Mindful Maze: Gentle procedural maze flow\n2. Color Calm: Digital mindfulness coloring\n3. Zen Patterns: Rhythmic sacred geometry flow\n4. Breathe & Play: 3D memory card matching.";
+      } else if (lower.includes('inhaler') || lower.includes('dose') || lower.includes('medication')) {
+        reply = "💊 Inhaler Tracking Guide:\nGo to Actions → Inhaler to log your daily doses with '+ Log Dose Now', check remaining doses, and review your morning/afternoon/evening schedule.";
+      } else if (lower.includes('stress') || lower.includes('meditat') || lower.includes('calm')) {
+        reply = "🌿 Stress Relief Guide:\nGo to Actions → Stress Relief for a guided 10-minute Daily Calm meditation with soothing audio and physical muscle relaxation techniques.";
+      } else if (lower.includes('you') || lower.includes('profile')) {
+        reply = "👤 Profile Guide:\nTap the 'You' tab at the bottom to check your user health profile, connected Whoop band status, and clinical respiratory target zones.";
       }
 
       setMessages((prev) => [...prev, { sender: 'bot', text: reply }]);
       soundFx.playPopSound(1.4);
-    }, 600);
+    }, 500);
   };
 
   const subNavItems = [
@@ -131,7 +143,7 @@ export default function ActionsScreen() {
     { id: 'games', label: 'Games' },
     { id: 'inhaler', label: 'Inhaler' },
     { id: 'reminders', label: 'Reminders' },
-    { id: 'ai_assistant', label: 'AI Bot' },
+    { id: 'help_bot', label: 'Help Bot' },
   ];
 
   return (
@@ -176,7 +188,7 @@ export default function ActionsScreen() {
               { id: 'games', title: 'Games', desc: 'Fun interactive biofeedback stress busters.', icon: Gamepad2, color: 'text-emerald-400' },
               { id: 'inhaler', title: 'Inhaler Tracker', desc: `Track doses (${inhalerData.dosesToday}/${inhalerData.maxDoses} logged today).`, icon: CheckCircle2, color: 'text-teal-400' },
               { id: 'reminders', title: 'Reminders', desc: 'Scheduled alerts for doses & medication.', icon: Clock, color: 'text-blue-400' },
-              { id: 'ai_assistant', title: 'AI Assistant', desc: 'Ask anything. Get personalized guidance.', icon: Bot, color: 'text-purple-400' },
+              { id: 'help_bot', title: 'App Guide & Help Bot', desc: 'New here? Learn how to navigate and use BioMaxxx.', icon: HelpCircle, color: 'text-cyan-400' },
             ].map((item) => {
               const Icon = item.icon;
               return (
@@ -490,12 +502,25 @@ export default function ActionsScreen() {
       )}
 
       {/* ========================================================================= */}
-      {/* 8. AI ASSISTANT (Image 4 Screen 10)                                       */}
+      {/* 8. HELP BOT (App Guide for New Users)                                     */}
       {/* ========================================================================= */}
-      {actionsSubView === 'ai_assistant' && (
+      {actionsSubView === 'help_bot' && (
         <div className="space-y-3 font-sans">
+          <div className="px-1 flex items-center justify-between">
+            <div>
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center space-x-1.5">
+                <HelpCircle className="w-4 h-4 text-cyan-400" />
+                <span>App Guide & Help Bot</span>
+              </h3>
+              <p className="text-[11px] text-slate-400">Ask how to navigate and use BioMaxxx features</p>
+            </div>
+            <span className="text-[10px] font-mono text-cyan-400 font-bold px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-500/40">
+              Online
+            </span>
+          </div>
+
           {/* Chat Stream Card */}
-          <div className="p-4 rounded-3xl bg-[#0e1628] border border-cyan-500/30 min-h-[300px] flex flex-col justify-between space-y-3">
+          <div className="p-4 rounded-3xl bg-[#0e1628] border border-cyan-500/30 min-h-[320px] flex flex-col justify-between space-y-3 shadow-[0_0_20px_rgba(0,242,254,0.05)]">
             <div className="space-y-2.5 max-h-[260px] overflow-y-auto pr-1">
               {messages.map((m, idx) => (
                 <div key={idx} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -504,43 +529,51 @@ export default function ActionsScreen() {
                       ? 'bg-cyan-500/20 text-cyan-200 border border-cyan-500/40'
                       : 'bg-slate-900 text-slate-200 border border-slate-800'
                   }`}>
-                    {m.text}
+                    {m.text.split('\n').map((line, i) => (
+                      <span key={i} className="block">{line}</span>
+                    ))}
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Quick Prompt Chips */}
-            <div className="flex flex-wrap gap-1.5 pt-2 border-t border-slate-800 font-mono text-[10px]">
-              {[
-                'Breathing exercise suggestions',
-                'Is it safe to go out today?',
-                'Tips for better sleep',
-                'I feel stressed, what can I do?'
-              ].map((chip, i) => (
-                <button
-                  key={i}
-                  onClick={() => handleSendMessage(chip)}
-                  className="px-2.5 py-1 rounded-full bg-slate-900 border border-slate-700/80 hover:border-cyan-400 text-slate-300 hover:text-cyan-300 transition-colors"
-                >
-                  {chip}
-                </button>
-              ))}
+            {/* Quick Prompt Chips for New Users */}
+            <div className="space-y-1.5 pt-2 border-t border-slate-800 font-mono text-[10px]">
+              <span className="text-[10px] text-slate-500 block uppercase">Guide Topics:</span>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  '🏠 How to use Home screen?',
+                  '🛡️ How to check AQI & Weather?',
+                  '💨 How does Breathing work?',
+                  '🎮 What games can I play?',
+                  '⌚ How to view Whoop data?',
+                  '💊 How to track Inhaler doses?'
+                ].map((chip, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleSendMessage(chip)}
+                    className="px-2.5 py-1 rounded-full bg-slate-900 border border-slate-700/80 hover:border-cyan-400 text-slate-300 hover:text-cyan-300 transition-colors"
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Input bar */}
-            <div className="flex items-center space-x-2 pt-1">
+            <div className="flex items-center space-x-2 pt-1 font-sans">
               <input
                 type="text"
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                placeholder="Type your question..."
-                className="flex-1 px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-slate-200 focus:outline-none focus:border-cyan-400"
+                placeholder="Ask how to use any feature..."
+                className="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-xs text-slate-200 focus:outline-none focus:border-cyan-400"
               />
               <button
                 onClick={() => handleSendMessage()}
-                className="p-2 rounded-xl bg-cyan-500 text-slate-950 font-bold hover:brightness-110"
+                className="p-2.5 rounded-xl bg-cyan-500 text-slate-950 font-bold hover:brightness-110 active:scale-95 transition-all"
+                title="Send question"
               >
                 <Send className="w-4 h-4" />
               </button>
