@@ -43,7 +43,6 @@ export default function GuardianScreen() {
     { id: 'wearable', label: 'WHOOP' },
     { id: 'sleep', label: 'Sleep' },
     { id: 'trends', label: 'Trends' },
-    { id: 'ai_insights', label: 'AI Insights' },
   ];
 
   const handleSelectSubView = (id) => {
@@ -144,24 +143,6 @@ export default function GuardianScreen() {
                 <span className="text-xs text-rose-400 block">❤️ Recovery</span>
                 <span className={`text-xl font-black ${whoopData.recoveryScore >= 67 ? 'text-emerald-400' : whoopData.recoveryScore >= 34 ? 'text-amber-400' : 'text-rose-400'}`}>{whoopData.recoveryScore}%</span>
               </div>
-            </div>
-          </div>
-
-          {/* AI Guardian Insight Card */}
-          <div 
-            onClick={() => setGuardianSubView('ai_insights')}
-            className="p-4 rounded-3xl bg-gradient-to-r from-cyan-950/40 via-[#0e1628] to-slate-900 border border-cyan-500/30 hover:border-cyan-500/60 shadow-lg cursor-pointer group space-y-2 transition-all"
-          >
-            <div className="flex items-center space-x-2 text-cyan-300 font-bold text-xs font-mono">
-              <Sparkles className="w-4 h-4 text-cyan-400 group-hover:rotate-12 transition-transform" />
-              <span>AI Guardian Insight</span>
-            </div>
-            <p className="text-xs text-slate-200 leading-relaxed font-sans">
-              "Your current signals suggest light outdoor activity is suitable."
-            </p>
-            <div className="flex items-center space-x-1 text-xs font-mono text-cyan-400 group-hover:translate-x-1 transition-transform">
-              <span>View details</span>
-              <ChevronRight className="w-3.5 h-3.5" />
             </div>
           </div>
         </div>
@@ -460,53 +441,6 @@ export default function GuardianScreen() {
                 </div>
                 <span className="text-sm font-bold text-amber-400">{whoopData.aqi}</span>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* VIEW 7: AI GUARDIAN INSIGHTS (Image 3 Screen 7)                           */}
-      {/* ========================================================================= */}
-      {guardianSubView === 'ai_insights' && (
-        <div className="space-y-4">
-          <div className="p-5 rounded-3xl bg-gradient-to-br from-[#0e1628] via-[#0b101c] to-cyan-950/20 border border-cyan-500/30 space-y-4 font-sans">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-2xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-cyan-400" />
-              </div>
-              <h3 className="text-sm sm:text-base font-bold text-white">
-                Your recovery and environmental conditions are compatible with light outdoor activity.
-              </h3>
-            </div>
-
-            <div className="space-y-1.5 font-mono text-xs">
-              <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-bold">Why?</span>
-              <div className="grid grid-cols-2 gap-2 text-slate-300">
-                <div className="p-2 rounded-xl bg-slate-900 border border-slate-800">
-                  Recovery: <strong className="text-emerald-400">{whoopData.recoveryScore}%</strong>
-                </div>
-                <div className="p-2 rounded-xl bg-slate-900 border border-slate-800">
-                  SpO₂: <strong className="text-cyan-300">{whoopData.spo2}%</strong>
-                </div>
-                <div className="p-2 rounded-xl bg-slate-900 border border-slate-800">
-                  AQI: <strong className="text-amber-400">{whoopData.aqi} ({whoopData.aqiStatus})</strong>
-                </div>
-                <div className="p-2 rounded-xl bg-slate-900 border border-slate-800">
-                  Recent Sleep: <strong className="text-indigo-300">{whoopData.sleepHours}h</strong>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-emerald-500/30 space-y-2">
-              <span className="text-[10px] font-mono text-emerald-400 uppercase font-bold block">Recommended</span>
-              <p className="text-xs text-white">Light / moderate activity (20–35 min)</p>
-              <button
-                onClick={() => setIsWalkingModalOpen(true)}
-                className="w-full py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-950 font-bold font-mono text-xs"
-              >
-                View walking plan →
-              </button>
             </div>
           </div>
         </div>
