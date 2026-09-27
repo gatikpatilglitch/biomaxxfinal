@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useWhoopData } from '../../context/WhoopDataContext';
 import { soundFx } from '../../utils/audioSynthesizer';
+import MindfulMazeGame from './MindfulMazeGame';
 
 export default function ActionsScreen() {
   const { 
@@ -54,8 +55,9 @@ export default function ActionsScreen() {
   ]);
   const [chatInput, setChatInput] = useState('');
 
-  // Memory Game State
+  // Games State
   const [gameScore, setGameScore] = useState(0);
+  const [activeGame, setActiveGame] = useState('maze');
 
   // 4-7-8 Breathing Loop Effect
   useEffect(() => {
@@ -354,37 +356,50 @@ export default function ActionsScreen() {
       )}
 
       {/* ========================================================================= */}
-      {/* 4. GAMES (Image 4 Screen 4)                                               */}
+      {/* 4. GAMES (Image 4 Screen 4 - Mindful Maze & Calm Games)                   */}
       {/* ========================================================================= */}
       {actionsSubView === 'games' && (
-        <div className="space-y-3 font-sans">
-          <div className="px-1 flex items-center justify-between">
-            <span className="text-xs font-mono uppercase text-slate-400 font-bold">Stress Buster Games</span>
-            <span className="text-xs font-mono text-cyan-400 font-bold">Score: {gameScore} pts</span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { id: 'maze', name: 'Mindful Maze', sub: 'Focus & Relax', icon: '🌀' },
-              { id: 'breathe', name: 'Breathe & Play', sub: 'Follow your breath', icon: '🍃' },
-              { id: 'color', name: 'Color Calm', sub: 'Soothing visuals', icon: '🎨' },
-              { id: 'memory', name: 'Memory Match', sub: 'Improve focus', icon: '🧠' }
-            ].map((game) => (
-              <div
-                key={game.id}
-                onClick={() => {
-                  setGameScore(s => s + 10);
-                  soundFx.playPopSound(1.5);
-                }}
-                className="p-4 rounded-3xl bg-[#0e1628] border border-slate-800 hover:border-cyan-500/40 text-center space-y-2 cursor-pointer transition-all hover:scale-[1.02]"
-              >
-                <div className="text-3xl">{game.icon}</div>
-                <div className="font-bold text-xs text-white">{game.name}</div>
-                <div className="text-[10px] text-slate-400">{game.sub}</div>
-                <span className="text-[9px] font-mono text-cyan-400 block pt-1">Tap to Play +10</span>
+        <div className="space-y-4 font-sans">
+          {activeGame === 'maze' ? (
+            <MindfulMazeGame onBack={() => setActiveGame(null)} />
+          ) : (
+            <div className="space-y-3">
+              <div className="px-1 flex items-center justify-between">
+                <span className="text-xs font-mono uppercase text-slate-400 font-bold">Mindfulness & Calming Games</span>
+                <span className="text-[10px] font-mono text-cyan-400/80">Low-pressure • Focus & Relax</span>
               </div>
-            ))}
-          </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { id: 'maze', name: 'Mindful Maze', sub: 'Focus & Serenity', icon: '🌀', featured: true },
+                  { id: 'breathe', name: 'Breathe & Play', sub: 'Follow your breath', icon: '🍃' },
+                  { id: 'color', name: 'Color Calm', sub: 'Soothing visuals', icon: '🎨' },
+                  { id: 'memory', name: 'Zen Patterns', sub: 'Gentle focus', icon: '🧠' }
+                ].map((game) => (
+                  <div
+                    key={game.id}
+                    onClick={() => {
+                      if (game.id === 'maze') {
+                        setActiveGame('maze');
+                      } else {
+                        soundFx.playPopSound(1.2);
+                      }
+                    }}
+                    className={`p-4 rounded-3xl bg-[#0e1628] border ${
+                      game.featured ? 'border-cyan-500/50 shadow-[0_0_15px_rgba(0,242,254,0.12)]' : 'border-slate-800'
+                    } hover:border-cyan-400 text-center space-y-2 cursor-pointer transition-all hover:scale-[1.02]`}
+                  >
+                    <div className="text-3xl">{game.icon}</div>
+                    <div className="font-bold text-xs text-white">{game.name}</div>
+                    <div className="text-[10px] text-slate-400">{game.sub}</div>
+                    <span className="text-[9px] font-mono text-cyan-400 block pt-1 font-semibold">
+                      {game.id === 'maze' ? '✦ Play Mindful Maze' : 'Coming Soon'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
