@@ -19,6 +19,7 @@ import {
 import { useWhoopData } from '../../context/WhoopDataContext';
 import { soundFx } from '../../utils/audioSynthesizer';
 import NextBadgeHomeCard from './NextBadgeHomeCard';
+import NextMedicationHomeCard from './NextMedicationHomeCard';
 
 export default function HomeScreen() {
   const { 
@@ -422,6 +423,11 @@ export default function HomeScreen() {
           </div>
         </div>
       </div>
+
+      {/* ========================================================================= */}
+      {/* 5.4 COMPACT NEXT MEDICATION DOSE CARD                                     */}
+      {/* ========================================================================= */}
+      <NextMedicationHomeCard />
 
       {/* ========================================================================= */}
       {/* 5.5 COMPACT NEXT BADGE MILESTONE CARD                                     */}

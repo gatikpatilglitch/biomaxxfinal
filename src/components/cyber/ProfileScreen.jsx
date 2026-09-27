@@ -38,6 +38,7 @@ import {
   calculateBMI 
 } from '../../utils/healthCalculations';
 import { useAchievements } from '../../context/AchievementsContext';
+import MedicationsScreen from './MedicationsScreen';
 
 export default function ProfileScreen() {
   const { 
@@ -972,6 +973,13 @@ export default function ProfileScreen() {
           )}
 
         </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 3.5. MEDICATIONS & INHALER VIEW                                           */}
+      {/* ========================================================================= */}
+      {youSubView === 'medications' && (
+        <MedicationsScreen onBack={() => setYouSubView('overview')} />
       )}
 
       {/* ========================================================================= */}

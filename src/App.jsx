@@ -1,6 +1,7 @@
 import React from 'react';
 import { WhoopDataProvider, useWhoopData } from './context/WhoopDataContext';
 import { AchievementsProvider } from './context/AchievementsContext';
+import { MedicationsProvider } from './context/MedicationsContext';
 
 // Cyber UI Components
 import CyberHeader from './components/cyber/CyberHeader';
@@ -20,9 +21,10 @@ import AlarmRingingOverlay from './components/cyber/modals/AlarmRingingOverlay';
 import OvernightReportModal from './components/cyber/modals/OvernightReportModal';
 import BadgeUnlockModal from './components/cyber/modals/BadgeUnlockModal';
 import BadgeDetailModal from './components/cyber/modals/BadgeDetailModal';
+import DoseReminderAlarmModal from './components/cyber/modals/DoseReminderAlarmModal';
 
 function AppContent() {
-  const { activeTab } = useWhoopData();
+  const { activeTab, setActiveTab, setYouSubView } = useWhoopData();
 
   return (
     <div className="min-h-screen bg-[#070b14] text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-black antialiased relative">
@@ -52,6 +54,14 @@ function AppContent() {
       <OvernightReportModal />
       <BadgeUnlockModal />
       <BadgeDetailModal />
+      <DoseReminderAlarmModal
+        onOpenMedications={() => {
+          setActiveTab('you');
+          if (setYouSubView) {
+            setYouSubView('medications');
+          }
+        }}
+      />
 
       {/* Bottom Floating Navigation Matching Images 1-4 */}
       <CyberBottomNav />
@@ -64,7 +74,9 @@ export default function App() {
   return (
     <WhoopDataProvider>
       <AchievementsProvider>
-        <AppContent />
+        <MedicationsProvider>
+          <AppContent />
+        </MedicationsProvider>
       </AchievementsProvider>
     </WhoopDataProvider>
   );
