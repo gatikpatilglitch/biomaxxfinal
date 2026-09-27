@@ -37,6 +37,7 @@ import {
   getBMICategory,
   calculateBMI 
 } from '../../utils/healthCalculations';
+import { useAchievements } from '../../context/AchievementsContext';
 
 export default function ProfileScreen() {
   const { 
@@ -49,6 +50,15 @@ export default function ProfileScreen() {
     setActiveTab,
     setGuardianSubView
   } = useWhoopData();
+
+  const { 
+    badges, 
+    overallProgress, 
+    nextBadgeToUnlock, 
+    earnedBadges, 
+    upcomingBadges, 
+    openBadgeDetail 
+  } = useAchievements();
 
   const [fitnessTab, setFitnessTab] = useState('nutrition'); // 'stats' | 'goals' | 'nutrition'
   const [nutritionGoal, setNutritionGoal] = useState('loss'); // 'loss' | 'maintain' | 'gain'
@@ -965,29 +975,201 @@ export default function ProfileScreen() {
       )}
 
       {/* ========================================================================= */}
-      {/* 4. ACHIEVEMENTS (Image 2 Screen 8)                                        */}
+      {/* 4. ACHIEVEMENTS & BADGES SYSTEM                                           */}
       {/* ========================================================================= */}
       {youSubView === 'achievements' && (
-        <div className="space-y-4 font-mono">
-          <div className="p-4 rounded-3xl bg-[#0e1628] border border-slate-800 space-y-3">
-            <span className="text-xs text-slate-400 uppercase tracking-wider block font-bold">Earned Badges</span>
-            <div className="grid grid-cols-3 gap-2 text-center">
-              {[
-                { name: 'First Walk', sub: 'Completed', icon: '🏃' },
-                { name: 'Sleep Streak', sub: '3 Days', icon: '🌙' },
-                { name: 'AQI Hero', sub: '7 Days', icon: '🛡️' },
-                { name: 'Consistency', sub: '7 Days', icon: '⭐' },
-                { name: 'Stress Free', sub: '5 Sessions', icon: '🧘' },
-                { name: 'Health Guardian', sub: '30 Days', icon: '🏅' },
-              ].map((badge, i) => (
-                <div key={i} className="p-2.5 rounded-2xl bg-slate-900 border border-slate-800 space-y-1">
-                  <div className="text-2xl">{badge.icon}</div>
-                  <span className="text-[10px] font-bold text-white block">{badge.name}</span>
-                  <span className="text-[9px] text-cyan-400 block">{badge.sub}</span>
+        <div className="space-y-4 font-sans animate-in fade-in duration-300">
+          
+          {/* A. YOUR JOURNEY */}
+          <div className="p-4 sm:p-5 rounded-3xl bg-[#0e1628] border border-cyan-500/30 space-y-3 shadow-[0_0_25px_rgba(0,242,254,0.08)]">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-mono tracking-widest text-slate-400 uppercase font-bold">
+                YOUR JOURNEY
+              </span>
+              <span className="text-xs font-mono font-bold text-cyan-400">
+                {overallProgress.percent}% COMPLETE
+              </span>
+            </div>
+
+            <div className="flex items-center space-x-2.5">
+              <span className="text-2xl">🏆</span>
+              <h3 className="text-base sm:text-lg font-black text-white font-sans">
+                {overallProgress.earnedCount} / {overallProgress.totalCount} BADGES EARNED
+              </h3>
+            </div>
+
+            {/* Overall progress bar */}
+            <div className="space-y-1.5">
+              <div className="w-full h-2.5 rounded-full bg-slate-900 border border-slate-800 overflow-hidden">
+                <div 
+                  className="h-full rounded-full bg-gradient-to-r from-cyan-500 via-teal-400 to-emerald-400 shadow-[0_0_12px_rgba(0,242,254,0.7)] transition-all duration-700"
+                  style={{ width: `${overallProgress.percent}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-[10px] font-mono text-slate-400">
+                <span>{overallProgress.earnedCount} Unlocked</span>
+                <span>{overallProgress.totalCount - overallProgress.earnedCount} Remaining</span>
+              </div>
+            </div>
+          </div>
+
+          {/* B. NEXT TO UNLOCK */}
+          {nextBadgeToUnlock && (
+            <div className="space-y-2 font-mono">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-[10px] tracking-wider text-slate-400 uppercase font-bold">
+                  NEXT TO UNLOCK
+                </span>
+                <span className="text-[10px] text-cyan-400 font-semibold">
+                  Closest milestone
+                </span>
+              </div>
+
+              <div 
+                onClick={() => openBadgeDetail(nextBadgeToUnlock.badge)}
+                className="w-full p-5 rounded-3xl bg-gradient-to-b from-[#0f1b33] to-[#0c1424] border-2 border-cyan-500/40 hover:border-cyan-400 shadow-[0_0_30px_rgba(0,242,254,0.18)] transition-all cursor-pointer text-center space-y-3 group"
+              >
+                <div className="w-16 h-16 mx-auto rounded-2xl bg-cyan-500/15 border border-cyan-500/40 flex items-center justify-center text-3xl shadow-[0_0_20px_rgba(0,242,254,0.3)] group-hover:scale-105 transition-transform">
+                  <span>{nextBadgeToUnlock.badge.icon}</span>
+                </div>
+
+                <div className="space-y-0.5">
+                  <h4 className="text-base font-black text-white font-sans tracking-wide group-hover:text-cyan-300 transition-colors">
+                    {nextBadgeToUnlock.badge.name}
+                  </h4>
+                  <p className="text-xs text-slate-300 font-sans px-2 leading-relaxed">
+                    “{nextBadgeToUnlock.badge.description}”
+                  </p>
+                </div>
+
+                <div className="max-w-xs mx-auto space-y-2 pt-1 font-mono">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-400">Progress</span>
+                    <span className="text-white font-bold">
+                      {nextBadgeToUnlock.badge.current} / {nextBadgeToUnlock.badge.target} {nextBadgeToUnlock.badge.unit}
+                    </span>
+                  </div>
+
+                  <div className="w-full h-2.5 rounded-full bg-slate-900 border border-slate-800 overflow-hidden">
+                    <div 
+                      className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-teal-400 shadow-[0_0_10px_rgba(0,242,254,0.8)] transition-all duration-500"
+                      style={{ width: `${nextBadgeToUnlock.progressPercent}%` }}
+                    />
+                  </div>
+
+                  <span className="text-xs font-bold text-cyan-400 block pt-0.5">
+                    {nextBadgeToUnlock.remainingLabel}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* C. EARNED BADGES (2-Column Grid) */}
+          <div className="space-y-2 font-mono">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-[10px] tracking-wider text-slate-400 uppercase font-bold">
+                EARNED BADGES ({earnedBadges.length})
+              </span>
+              <span className="text-[10px] text-slate-500">
+                Tap to inspect
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5">
+              {earnedBadges.map((badge) => (
+                <div
+                  key={badge.id}
+                  onClick={() => openBadgeDetail(badge)}
+                  className="p-3.5 rounded-2xl bg-gradient-to-b from-[#0d1629] to-[#091122] border border-cyan-500/40 hover:border-cyan-400 shadow-[0_0_18px_rgba(0,242,254,0.18)] transition-all cursor-pointer flex flex-col items-center text-center space-y-2 group"
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center text-2xl shadow-[0_0_15px_rgba(0,242,254,0.35)] group-hover:scale-105 transition-transform">
+                    <span>{badge.icon}</span>
+                  </div>
+
+                  <div className="space-y-1 w-full">
+                    <h5 className="text-xs font-black text-white font-sans tracking-wide leading-tight group-hover:text-cyan-300 transition-colors">
+                      {badge.name}
+                    </h5>
+                    <div className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-bold">
+                      <CheckCircle2 className="w-3 h-3 text-cyan-400 stroke-[3]" />
+                      <span>✓ EARNED</span>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
+
+          {/* D. UPCOMING BADGES (2-Column Grid) */}
+          <div className="space-y-2 font-mono">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-[10px] tracking-wider text-slate-400 uppercase font-bold">
+                UPCOMING BADGES ({upcomingBadges.length})
+              </span>
+              <span className="text-[10px] text-slate-500">
+                In progress & locked
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5">
+              {upcomingBadges.map((badge) => {
+                const isLocked = badge.status === 'locked';
+                const progressPercent = Math.min(100, Math.round((badge.current / badge.target) * 100));
+
+                return (
+                  <div
+                    key={badge.id}
+                    onClick={() => openBadgeDetail(badge)}
+                    className={`p-3.5 rounded-2xl transition-all cursor-pointer flex flex-col items-center text-center space-y-2 group ${
+                      isLocked
+                        ? 'bg-slate-900/60 border border-slate-800/80 opacity-70 hover:opacity-100 hover:border-slate-700'
+                        : 'bg-[#0d1629] border border-cyan-500/25 hover:border-cyan-500/50 shadow-sm'
+                    }`}
+                  >
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl relative ${
+                      isLocked
+                        ? 'bg-slate-900 border border-slate-800 text-slate-600 grayscale'
+                        : 'bg-slate-900 border border-cyan-500/30'
+                    }`}>
+                      <span>{badge.icon}</span>
+                      {isLocked && (
+                        <div className="absolute inset-0 rounded-2xl bg-black/50 flex items-center justify-center">
+                          <Lock className="w-4 h-4 text-slate-400" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-1 w-full">
+                      <h5 className="text-xs font-bold text-white font-sans tracking-wide leading-tight group-hover:text-cyan-300 transition-colors">
+                        {badge.name}
+                      </h5>
+
+                      {isLocked ? (
+                        <div className="inline-flex items-center space-x-1 text-[10px] font-mono text-slate-400">
+                          <Lock className="w-3 h-3 text-slate-500" />
+                          <span>LOCKED</span>
+                        </div>
+                      ) : (
+                        <div className="space-y-1 w-full pt-0.5">
+                          <span className="text-[10px] font-mono text-cyan-300 font-bold block">
+                            {badge.current} / {badge.target} {badge.unit}
+                          </span>
+                          <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                            <div 
+                              className="h-full rounded-full bg-cyan-500"
+                              style={{ width: `${progressPercent}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
         </div>
       )}
 

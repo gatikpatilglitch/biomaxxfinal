@@ -1,10 +1,18 @@
 import React from 'react';
 import { X, Moon, Clock, Bed, Sparkles, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { useWhoopData } from '../../../context/WhoopDataContext';
+import { useAchievements } from '../../../context/AchievementsContext';
 import { soundFx } from '../../../utils/audioSynthesizer';
 
 export default function SleepDetailsModal() {
   const { isSleepModalOpen, setIsSleepModalOpen, whoopData } = useWhoopData();
+  const { trackAction } = useAchievements();
+
+  React.useEffect(() => {
+    if (isSleepModalOpen) {
+      trackAction('sleep_observer');
+    }
+  }, [isSleepModalOpen, trackAction]);
 
   if (!isSleepModalOpen) return null;
 

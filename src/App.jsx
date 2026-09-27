@@ -1,5 +1,6 @@
 import React from 'react';
 import { WhoopDataProvider, useWhoopData } from './context/WhoopDataContext';
+import { AchievementsProvider } from './context/AchievementsContext';
 
 // Cyber UI Components
 import CyberHeader from './components/cyber/CyberHeader';
@@ -17,6 +18,8 @@ import InhalerLogModal from './components/cyber/modals/InhalerLogModal';
 import GuardianAlertsModal from './components/cyber/modals/GuardianAlertsModal';
 import AlarmRingingOverlay from './components/cyber/modals/AlarmRingingOverlay';
 import OvernightReportModal from './components/cyber/modals/OvernightReportModal';
+import BadgeUnlockModal from './components/cyber/modals/BadgeUnlockModal';
+import BadgeDetailModal from './components/cyber/modals/BadgeDetailModal';
 
 function AppContent() {
   const { activeTab } = useWhoopData();
@@ -47,6 +50,8 @@ function AppContent() {
       <GuardianAlertsModal />
       <AlarmRingingOverlay />
       <OvernightReportModal />
+      <BadgeUnlockModal />
+      <BadgeDetailModal />
 
       {/* Bottom Floating Navigation Matching Images 1-4 */}
       <CyberBottomNav />
@@ -58,7 +63,10 @@ function AppContent() {
 export default function App() {
   return (
     <WhoopDataProvider>
-      <AppContent />
+      <AchievementsProvider>
+        <AppContent />
+      </AchievementsProvider>
     </WhoopDataProvider>
   );
 }
+

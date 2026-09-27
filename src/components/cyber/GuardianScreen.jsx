@@ -30,6 +30,7 @@ import {
   Compass
 } from 'lucide-react';
 import { useWhoopData } from '../../context/WhoopDataContext';
+import { useAchievements } from '../../context/AchievementsContext';
 import { soundFx } from '../../utils/audioSynthesizer';
 import SleepAlarmSystem from './SleepAlarmSystem';
 
@@ -46,6 +47,22 @@ export default function GuardianScreen() {
     refreshEnvironmentData,
     isRefreshingEnv
   } = useWhoopData();
+
+  const { trackAction } = useAchievements();
+
+  // Track Guardian meaningful check
+  React.useEffect(() => {
+    trackAction('guardian_check');
+  }, [trackAction]);
+
+  // Track Environmental and Sleep subview checks
+  React.useEffect(() => {
+    if (guardianSubView === 'environment') {
+      trackAction('air_aware');
+    } else if (guardianSubView === 'sleep') {
+      trackAction('sleep_observer');
+    }
+  }, [guardianSubView, trackAction]);
 
   const [trendRange, setTrendRange] = useState('7D'); // '7D' | '30D' | '3M'
   const [selectedCalendarDay, setSelectedCalendarDay] = useState(null);

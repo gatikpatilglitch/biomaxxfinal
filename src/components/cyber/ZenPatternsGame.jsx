@@ -101,6 +101,11 @@ export default function ZenPatternsGame({ onBack }) {
       soundFx?.playPopSound?.(1.8);
       setTimeout(() => {
         setIsCompleted(true);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('biomaxxx_achievement_action', { 
+            detail: { action: 'relaxation_activity', payload: { game: 'zen_patterns' } } 
+          }));
+        }
       }, 500);
     }
   }, [activeNodes, currentPattern.nodes.length, isCompleted]);

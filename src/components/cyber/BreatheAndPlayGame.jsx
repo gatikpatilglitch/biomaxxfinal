@@ -135,6 +135,11 @@ export default function BreatheAndPlayGame({ onBack }) {
       soundFx?.playPopSound?.(1.7);
       setTimeout(() => {
         setIsCompleted(true);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('biomaxxx_achievement_action', { 
+            detail: { action: 'relaxation_activity', payload: { game: 'breathe_and_play' } } 
+          }));
+        }
       }, 500);
     }
   }, [matchedUids, cards.length, isCompleted]);

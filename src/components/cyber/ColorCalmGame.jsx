@@ -226,6 +226,11 @@ export default function ColorCalmGame({ onBack }) {
       soundFx?.playPopSound?.(1.6);
       setTimeout(() => {
         setIsCompleted(true);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('biomaxxx_achievement_action', { 
+            detail: { action: 'relaxation_activity', payload: { game: 'color_calm' } } 
+          }));
+        }
       }, 500);
     }
   }, [progressPercent, activeSceneId, isCompleted]);

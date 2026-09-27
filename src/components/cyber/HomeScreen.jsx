@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useWhoopData } from '../../context/WhoopDataContext';
 import { soundFx } from '../../utils/audioSynthesizer';
+import NextBadgeHomeCard from './NextBadgeHomeCard';
 
 export default function HomeScreen() {
   const { 
@@ -421,6 +422,11 @@ export default function HomeScreen() {
           </div>
         </div>
       </div>
+
+      {/* ========================================================================= */}
+      {/* 5.5 COMPACT NEXT BADGE MILESTONE CARD                                     */}
+      {/* ========================================================================= */}
+      <NextBadgeHomeCard />
 
       {/* ========================================================================= */}
       {/* 6. WHOOP LIVE CONNECTION STATUS CARD                                      */}

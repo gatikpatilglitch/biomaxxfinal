@@ -222,6 +222,11 @@ export default function MindfulMazeGame({ onBack }) {
       soundFx?.playPopSound?.(1.8);
       setTimeout(() => {
         setIsCompleted(true);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('biomaxxx_achievement_action', { 
+            detail: { action: 'relaxation_activity', payload: { game: 'mindful_maze' } } 
+          }));
+        }
       }, 250);
     }
   }, [canMoveTo, currentMaze, isCompleted, isPaused]);

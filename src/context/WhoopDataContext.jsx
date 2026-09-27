@@ -596,6 +596,9 @@ export function WhoopDataProvider({ children }) {
   // Actions: Force Live Sync
   const syncWhoop = useCallback(() => {
     fetchWhoopMetrics(true);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('biomaxxx_achievement_action', { detail: { action: 'whoop_sync' } }));
+    }
   }, [fetchWhoopMetrics]);
 
   // MSRIT Mathikere Environmental & Weather Telemetry
@@ -931,6 +934,9 @@ export function WhoopDataProvider({ children }) {
       };
     });
     soundFx?.playPopSound?.(1.4);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('biomaxxx_achievement_action', { detail: { action: 'health_tracking' } }));
+    }
   }, []);
 
   // Actions: Toggle Medication checkbox
@@ -940,6 +946,9 @@ export function WhoopDataProvider({ children }) {
       schedule: prev.schedule.map(item => item.id === id ? { ...item, taken: !item.taken } : item)
     }));
     soundFx?.playPopSound?.(1.2);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('biomaxxx_achievement_action', { detail: { action: 'health_tracking' } }));
+    }
   }, []);
 
   // Toggle Reminder & sync with Alarms
@@ -975,6 +984,9 @@ export function WhoopDataProvider({ children }) {
       ...prev
     ]);
     soundFx?.playPopSound?.(1.3);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('biomaxxx_achievement_action', { detail: { action: 'health_tracking' } }));
+    }
   }, []);
 
   // Update user profile info & persist

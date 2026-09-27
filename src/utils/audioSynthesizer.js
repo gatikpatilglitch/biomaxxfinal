@@ -240,7 +240,34 @@ class AudioSynthesizer {
       this.alarmTimer = null;
     }
   }
+
+  // Harmonic celebratory shimmer chime for unlocking badges
+  playBadgeUnlockSound() {
+    if (this.isMuted) return;
+    this.init();
+    if (!this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      // Majestic ascending chime chord (C5, E5, G5, B5, D6)
+      const chord = [523.25, 659.25, 783.99, 987.77, 1174.66];
+      chord.forEach((freq, i) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, now + i * 0.08);
+        gain.gain.setValueAtTime(0.22, now + i * 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.6);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now + i * 0.08);
+        osc.stop(now + i * 0.08 + 0.6);
+      });
+    } catch (e) {
+      console.warn('Unlock sound error:', e);
+    }
+  }
 }
 
 export const soundFx = new AudioSynthesizer();
+
 
