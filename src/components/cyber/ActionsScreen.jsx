@@ -19,10 +19,36 @@ import {
   Droplet,
   Coffee,
   Plus,
-  HelpCircle
+  HelpCircle,
+  Trees,
+  Leaf,
+  Waves
 } from 'lucide-react';
 import { useWhoopData } from '../../context/WhoopDataContext';
 import { soundFx } from '../../utils/audioSynthesizer';
+
+const MEDITATION_TRACKS = [
+  {
+    id: 'nature',
+    title: 'Nature Meditation',
+    artist: 'Arulo',
+    badge: 'NATURE SOUNDS',
+    durationLabel: '10 MIN SESSION',
+    desc: 'Soothing organic ambient synth by Arulo for natural calm, forest breathing & vagal balance.',
+    src: '/audio/nature_meditation_arulo.mp3',
+    fallbackSrc: 'https://assets.mixkit.co/music/345/345.mp3'
+  },
+  {
+    id: 'deep',
+    title: 'Deep Meditation',
+    artist: 'David Fesliyan',
+    badge: 'DEEP RELAX',
+    durationLabel: '10 MIN SESSION',
+    desc: 'Harmonic atmospheric soundscape by David Fesliyan for deep mental tranquility & cortisol reduction.',
+    src: '/audio/deep_meditation_david_fesliyan.mp3',
+    fallbackSrc: 'https://www.fesliyanstudios.com/musicfiles/2019-04-06_-_Deep_Meditation_-_David_Fesliyan.mp3'
+  }
+];
 import MindfulMazeGame from './MindfulMazeGame';
 import ColorCalmGame from './ColorCalmGame';
 import BreatheAndPlayGame from './BreatheAndPlayGame';
@@ -47,11 +73,21 @@ export default function ActionsScreen() {
   const [phaseSecondsLeft, setPhaseSecondsLeft] = useState(4);
   const [cyclesCompleted, setCyclesCompleted] = useState(0);
 
-  // Daily Calm Meditation Audio State (Deep Meditation by David Fesliyan)
+  // Daily Calm Meditation Audio State (Nature Meditation by Arulo & Deep Meditation by David Fesliyan)
   const meditationAudioRef = useRef(null);
+  const [selectedTrackId, setSelectedTrackId] = useState('nature'); // Default to Nature Meditation by Arulo
   const [isMeditationPlaying, setIsMeditationPlaying] = useState(false);
   const [meditationElapsed, setMeditationElapsed] = useState(0); // 0 to 600s (10 mins)
   const [isMeditationMuted, setIsMeditationMuted] = useState(false);
+
+  const activeTrack = MEDITATION_TRACKS.find(t => t.id === selectedTrackId) || MEDITATION_TRACKS[0];
+
+  // Ensure volume is unmuted and at 100% on mount
+  useEffect(() => {
+    if (meditationAudioRef.current) {
+      meditationAudioRef.current.volume = 1.0;
+    }
+  }, []);
 
   // 10-Minute Meditation Timer Loop
   useEffect(() => {
@@ -74,6 +110,40 @@ export default function ActionsScreen() {
     return () => clearInterval(interval);
   }, [isMeditationPlaying]);
 
+  const selectTrack = (trackId, autoPlay = true) => {
+    const track = MEDITATION_TRACKS.find(t => t.id === trackId) || MEDITATION_TRACKS[0];
+    setSelectedTrackId(track.id);
+    setMeditationElapsed(0);
+    if (meditationAudioRef.current) {
+      meditationAudioRef.current.pause();
+      meditationAudioRef.current.src = track.src;
+      meditationAudioRef.current.currentTime = 0;
+      meditationAudioRef.current.load();
+      if (autoPlay) {
+        const p = meditationAudioRef.current.play();
+        if (p !== undefined) {
+          p.then(() => {
+            setIsMeditationPlaying(true);
+            soundFx.playPopSound(1.4);
+          }).catch((err) => {
+            console.warn("Autoplay blocked or fallback:", err);
+            if (track.fallbackSrc) {
+              meditationAudioRef.current.src = track.fallbackSrc;
+              meditationAudioRef.current.load();
+              meditationAudioRef.current.play()
+                .then(() => setIsMeditationPlaying(true))
+                .catch(() => setIsMeditationPlaying(false));
+            } else {
+              setIsMeditationPlaying(false);
+            }
+          });
+        }
+      } else {
+        setIsMeditationPlaying(false);
+      }
+    }
+  };
+
   const toggleMeditationAudio = () => {
     if (!meditationAudioRef.current) return;
     if (isMeditationPlaying) {
@@ -81,6 +151,10 @@ export default function ActionsScreen() {
       setIsMeditationPlaying(false);
       soundFx.playPopSound(0.85);
     } else {
+      if (!meditationAudioRef.current.src || !meditationAudioRef.current.src.includes(activeTrack.src.replace('/audio/', ''))) {
+        meditationAudioRef.current.src = activeTrack.src;
+        meditationAudioRef.current.load();
+      }
       const playPromise = meditationAudioRef.current.play();
       if (playPromise !== undefined) {
         playPromise
@@ -89,10 +163,26 @@ export default function ActionsScreen() {
             soundFx.playPopSound(1.4);
           })
           .catch((err) => {
-            console.warn("Audio playback prevented or error:", err);
-            setIsMeditationPlaying(false);
+            console.warn("Audio playback error, trying fallback:", err);
+            if (activeTrack.fallbackSrc && meditationAudioRef.current.src !== activeTrack.fallbackSrc) {
+              meditationAudioRef.current.src = activeTrack.fallbackSrc;
+              meditationAudioRef.current.load();
+              meditationAudioRef.current.play()
+                .then(() => setIsMeditationPlaying(true))
+                .catch(() => setIsMeditationPlaying(false));
+            } else {
+              setIsMeditationPlaying(false);
+            }
           });
       }
+    }
+  };
+
+  const handleSelectNatureSounds = () => {
+    if (selectedTrackId !== 'nature') {
+      selectTrack('nature', true);
+    } else {
+      toggleMeditationAudio();
     }
   };
 
@@ -389,8 +479,8 @@ export default function ActionsScreen() {
       {/* ========================================================================= */}
       {actionsSubView === 'stress' && (
         <div className="space-y-4">
-          {/* Daily Calm Feature Card with Deep Meditation by David Fesliyan */}
-          <div className="w-full rounded-3xl overflow-hidden border border-indigo-500/30 relative shadow-2xl p-5 bg-[#090e1a] space-y-4">
+          {/* Daily Calm Feature Card with Nature Meditation by Arulo & Deep Meditation by David Fesliyan */}
+          <div className="w-full rounded-3xl overflow-hidden border border-cyan-500/30 relative shadow-2xl p-5 bg-[#090e1a] space-y-4">
             
             {/* Background lake art */}
             <div 
@@ -402,48 +492,100 @@ export default function ActionsScreen() {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#080d17] via-[#080d17]/60 to-transparent pointer-events-none" />
 
-            {/* Real HTML5 Audio Element for Deep Meditation by David Fesliyan */}
+            {/* Real HTML5 Audio Element */}
             <audio
               ref={meditationAudioRef}
-              src="/audio/deep_meditation_david_fesliyan.mp3"
+              src={activeTrack.src}
               loop
               preload="auto"
+              onError={(e) => {
+                console.warn("Audio element error, attempting fallback:", e);
+                if (activeTrack.fallbackSrc && meditationAudioRef.current && meditationAudioRef.current.src !== activeTrack.fallbackSrc) {
+                  meditationAudioRef.current.src = activeTrack.fallbackSrc;
+                  meditationAudioRef.current.load();
+                  if (isMeditationPlaying) {
+                    meditationAudioRef.current.play().catch(() => {});
+                  }
+                }
+              }}
               onEnded={() => {
                 if (meditationElapsed < 600 && meditationAudioRef.current) {
                   meditationAudioRef.current.play().catch(() => {});
                 }
               }}
             >
-              <source src="/audio/deep_meditation_david_fesliyan.mp3" type="audio/mpeg" />
-              <source src="https://www.fesliyanstudios.com/musicfiles/2019-04-06_-_Deep_Meditation_-_David_Fesliyan.mp3" type="audio/mpeg" />
+              <source src={activeTrack.src} type="audio/mpeg" />
+              {activeTrack.fallbackSrc && <source src={activeTrack.fallbackSrc} type="audio/mpeg" />}
             </audio>
 
             {/* Header info */}
-            <div className="relative z-10 space-y-1">
+            <div className="relative z-10 space-y-1.5">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-mono text-cyan-300 font-bold uppercase tracking-widest flex items-center space-x-1.5">
-                  <Music className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>GUIDED MEDITATION</span>
+                  <Trees className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>{activeTrack.badge}</span>
                 </span>
                 <span className="text-[10px] font-mono text-indigo-300 font-bold px-2 py-0.5 rounded-full bg-indigo-950/70 border border-indigo-500/40">
-                  10 MIN SESSION
+                  {activeTrack.durationLabel}
                 </span>
               </div>
               
-              <h3 className="text-lg font-black text-white flex items-center space-x-2">
-                <span>Daily Calm</span>
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-black text-white flex items-center space-x-2">
+                  <span>Daily Calm</span>
+                  {isMeditationPlaying && (
+                    <span className="w-2 h-2 rounded-full bg-[#00F2FE] shadow-[0_0_8px_#00F2FE] animate-ping" />
+                  )}
+                </h3>
+
+                {/* Animated Equalizer Waveform while playing */}
                 {isMeditationPlaying && (
-                  <span className="w-2 h-2 rounded-full bg-[#00F2FE] shadow-[0_0_8px_#00F2FE] animate-ping" />
+                  <div className="flex items-end space-x-1 h-3.5 py-0.5">
+                    {[40, 85, 60, 100, 50, 75, 90, 45, 65, 80].map((h, idx) => (
+                      <span
+                        key={idx}
+                        className="w-0.5 bg-cyan-400 rounded-full animate-pulse"
+                        style={{
+                          height: `${h}%`,
+                          animationDuration: `${0.35 + (idx % 4) * 0.15}s`
+                        }}
+                      />
+                    ))}
+                  </div>
                 )}
-              </h3>
+              </div>
               
               <p className="text-xs font-sans text-cyan-300 font-semibold flex items-center space-x-1.5">
-                <span>Deep Meditation</span>
-                <span className="text-slate-400 font-normal">— by David Fesliyan</span>
+                <span>{activeTrack.title}</span>
+                <span className="text-slate-400 font-normal">— by {activeTrack.artist}</span>
               </p>
               <p className="text-[11px] font-sans text-slate-300 leading-snug">
-                Soothing ambient soundtrack composed for deep relaxation, breathwork & vagal reset.
+                {activeTrack.desc}
               </p>
+
+              {/* Quick Track Switcher */}
+              <div className="flex items-center space-x-2 pt-1">
+                {MEDITATION_TRACKS.map((t) => {
+                  const isSelected = selectedTrackId === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => selectTrack(t.id, true)}
+                      className={`px-2.5 py-1 rounded-xl text-[10px] font-mono font-bold transition-all flex items-center space-x-1.5 ${
+                        isSelected 
+                          ? 'bg-cyan-500/20 border border-cyan-400 text-cyan-300 shadow-[0_0_10px_rgba(0,242,254,0.2)]'
+                          : 'bg-slate-900/80 border border-slate-700/60 text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      {t.id === 'nature' ? <Leaf className="w-3 h-3 text-emerald-400" /> : <Sparkles className="w-3 h-3 text-cyan-400" />}
+                      <span>{t.title}</span>
+                      {isSelected && isMeditationPlaying && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse ml-0.5" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Interactive Progress Scrubber & Live 10-Min Session Time Display */}
@@ -458,8 +600,8 @@ export default function ActionsScreen() {
               />
               <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
                 <span className="text-cyan-300 font-bold">{formatMeditationTime(meditationElapsed)}</span>
-                <span className="text-[10px] text-slate-500 font-sans">
-                  {isMeditationPlaying ? 'Playing Ambient Audio' : 'Paused'}
+                <span className="text-[10px] text-slate-400 font-sans">
+                  {isMeditationPlaying ? `Playing: ${activeTrack.title}` : 'Paused (10 Min Session)'}
                 </span>
                 <span className="text-slate-400 font-bold">10:00</span>
               </div>
@@ -470,7 +612,7 @@ export default function ActionsScreen() {
               <div className="flex items-center space-x-2.5">
                 <button
                   onClick={toggleMeditationAudio}
-                  className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-indigo-500 via-teal-500 to-cyan-400 text-slate-950 font-bold font-mono text-xs shadow-[0_0_15px_rgba(0,242,254,0.3)] hover:opacity-95 active:scale-95 transition-all flex items-center space-x-2"
+                  className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-400 text-slate-950 font-bold font-mono text-xs shadow-[0_0_15px_rgba(0,242,254,0.3)] hover:opacity-95 active:scale-95 transition-all flex items-center space-x-2"
                 >
                   {isMeditationPlaying ? (
                     <>
@@ -505,24 +647,75 @@ export default function ActionsScreen() {
 
           </div>
 
+          {/* Stress Relief Activities List */}
           <div className="space-y-2">
             {[
-              { title: 'Mindful Breathing', sub: '5 min • Quick vagal reset' },
-              { title: 'Nature Sounds (Pine Forest Rain)', sub: 'Soothing organic background' },
-              { title: 'Gratitude Reflection', sub: 'Cortisol reduction practice' }
-            ].map((item, i) => (
-              <div 
-                key={i} 
-                onClick={() => soundFx.playPopSound(1.2)}
-                className="p-3.5 rounded-2xl bg-[#0e1628] border border-slate-800 flex items-center justify-between cursor-pointer hover:border-indigo-500/30"
-              >
-                <div>
-                  <span className="text-xs font-bold text-white block">{item.title}</span>
-                  <span className="text-[11px] text-slate-400">{item.sub}</span>
+              { 
+                id: 'breathing',
+                title: 'Mindful Breathing', 
+                sub: '5 min • 4-7-8 Vagal reset exercise',
+                action: () => {
+                  soundFx.playPopSound(1.2);
+                  setActionsSubView('breathing');
+                },
+                icon: Wind,
+                active: false
+              },
+              { 
+                id: 'nature',
+                title: 'Nature Sounds (Nature Meditation — Arulo)', 
+                sub: 'Soothing organic background & forest calm',
+                action: () => handleSelectNatureSounds(),
+                icon: Leaf,
+                active: isMeditationPlaying && selectedTrackId === 'nature'
+              },
+              { 
+                id: 'gratitude',
+                title: 'Gratitude Reflection', 
+                sub: 'Cortisol reduction practice',
+                action: () => soundFx.playPopSound(1.2),
+                icon: Sparkles,
+                active: false
+              }
+            ].map((item) => {
+              const ItemIcon = item.icon;
+              return (
+                <div 
+                  key={item.id} 
+                  onClick={item.action}
+                  className={`p-3.5 rounded-2xl border flex items-center justify-between cursor-pointer transition-all ${
+                    item.active 
+                      ? 'bg-[#0b1c30] border-cyan-400/60 shadow-[0_0_12px_rgba(0,242,254,0.15)]'
+                      : 'bg-[#0e1628] border-slate-800 hover:border-cyan-500/30'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className={`p-2 rounded-xl ${item.active ? 'bg-cyan-500/20 text-cyan-300' : 'bg-slate-900 text-slate-400'}`}>
+                      <ItemIcon className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <span className={`text-xs font-bold block ${item.active ? 'text-cyan-300' : 'text-white'}`}>{item.title}</span>
+                        {item.active && (
+                          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/30 animate-pulse">
+                            PLAYING NOW
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[11px] text-slate-400">{item.sub}</span>
+                    </div>
+                  </div>
+
+                  {item.id === 'nature' ? (
+                    <div className="p-2 rounded-xl bg-slate-900 border border-slate-700/60 text-cyan-400 hover:text-white">
+                      {item.active ? <Pause className="w-4 h-4 fill-cyan-400" /> : <Play className="w-4 h-4 fill-cyan-400" />}
+                    </div>
+                  ) : (
+                    <ChevronRight className="w-4 h-4 text-slate-500" />
+                  )}
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-500" />
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
