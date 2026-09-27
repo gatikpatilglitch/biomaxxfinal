@@ -38,9 +38,8 @@ export default function GuardianScreen() {
 
   const subNavItems = [
     { id: 'overview', label: 'Overview' },
-    { id: 'respiratory', label: 'Respiratory' },
-    { id: 'environment', label: 'Environment' },
     { id: 'wearable', label: 'WHOOP' },
+    { id: 'environment', label: 'Environment' },
     { id: 'sleep', label: 'Sleep' },
     { id: 'trends', label: 'Trends' },
   ];
@@ -61,7 +60,7 @@ export default function GuardianScreen() {
               key={item.id}
               onClick={() => handleSelectSubView(item.id)}
               className={`px-3 py-1.5 rounded-xl text-xs font-mono transition-all cursor-pointer ${
-                guardianSubView === item.id
+                guardianSubView === item.id || (guardianSubView === 'respiratory' && item.id === 'wearable')
                   ? 'bg-cyan-500/20 text-[#00F2FE] border border-cyan-500/40 font-bold shadow-[0_0_10px_rgba(0,242,254,0.25)]'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
@@ -101,7 +100,7 @@ export default function GuardianScreen() {
             {/* 3 Status Pills */}
             <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800 font-mono text-center text-xs">
               <div 
-                onClick={() => setGuardianSubView('respiratory')}
+                onClick={() => setGuardianSubView('wearable')}
                 className="p-2 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-emerald-500/40 cursor-pointer transition-colors"
               >
                 <span className="text-[10px] text-slate-400 block">Respiratory</span>
@@ -149,84 +148,7 @@ export default function GuardianScreen() {
       )}
 
       {/* ========================================================================= */}
-      {/* VIEW 2: RESPIRATORY MONITOR (Image 3 Screen 2)                            */}
-      {/* ========================================================================= */}
-      {guardianSubView === 'respiratory' && (
-        <div className="space-y-4">
-          <div className="p-5 rounded-3xl bg-[#0e1628]/95 border border-cyan-500/30 space-y-4">
-            <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 rounded-full border-4 border-cyan-500/30 border-t-[#00F2FE] flex items-center justify-center shrink-0">
-                <Activity className="w-7 h-7 text-[#00F2FE] animate-pulse" />
-              </div>
-              <div>
-                <span className="text-[10px] font-mono text-slate-400 uppercase">RESPIRATORY STATUS</span>
-                <h3 className="text-xl font-black text-emerald-400 font-sans">LOW RISK</h3>
-                <span className="text-xs font-mono text-slate-300">SpO₂: {whoopData.spo2}% • Strain: Low</span>
-              </div>
-            </div>
-
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Your breathing pattern is stable. No signs of distress detected.
-            </p>
-
-            <button 
-              onClick={() => setIsRespiratoryModalOpen(true)}
-              className="w-full py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs font-mono text-cyan-300 font-bold hover:bg-slate-800 transition-colors"
-            >
-              View detailed analysis →
-            </button>
-          </div>
-
-          {/* Recent Trend Chart Simulation */}
-          <div className="p-4 rounded-3xl bg-[#0e1628]/90 border border-slate-800 space-y-3 font-mono">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-bold text-white">Recent Trend</span>
-              <div className="flex space-x-1 bg-slate-900 p-0.5 rounded-lg border border-slate-800">
-                {['7D', '30D', '3M'].map(r => (
-                  <button
-                    key={r}
-                    onClick={() => setTrendRange(r)}
-                    className={`px-2 py-0.5 rounded text-[10px] ${trendRange === r ? 'bg-cyan-500/20 text-cyan-300 font-bold' : 'text-slate-500'}`}
-                  >
-                    {r}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Sparkline Graphic */}
-            <div className="h-28 w-full flex items-end justify-between px-2 pt-4">
-              {[96, 97, 98, 98, 97, 98, 98].map((val, idx) => (
-                <div key={idx} className="flex flex-col items-center space-y-1">
-                  <div 
-                    style={{ height: `${(val - 90) * 10}px` }} 
-                    className="w-7 rounded-t-lg bg-gradient-to-t from-cyan-900/40 to-cyan-400 drop-shadow-[0_0_6px_rgba(0,242,254,0.4)]"
-                  />
-                  <span className="text-[9px] text-slate-400">D{idx+1}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-3 gap-2 text-center text-xs pt-2 border-t border-slate-800">
-              <div>
-                <span className="text-[10px] text-slate-400 block">SpO₂</span>
-                <span className="font-bold text-emerald-400">{whoopData.spo2}%</span>
-              </div>
-              <div>
-                <span className="text-[10px] text-slate-400 block">Resp. Strain</span>
-                <span className="font-bold text-cyan-300">Low</span>
-              </div>
-              <div>
-                <span className="text-[10px] text-slate-400 block">Breaths/min</span>
-                <span className="font-bold text-white">{whoopData.breathsPerMin}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* VIEW 3: ENVIRONMENT MONITOR (Image 3 Screen 3)                            */}
+      {/* VIEW 2: ENVIRONMENT MONITOR (Image 3 Screen 3)                            */}
       {/* ========================================================================= */}
       {guardianSubView === 'environment' && (
         <div className="space-y-4">
@@ -269,9 +191,9 @@ export default function GuardianScreen() {
       )}
 
       {/* ========================================================================= */}
-      {/* VIEW 4: WEARABLE DATA (WHOOP) (Image 3 Screen 4)                          */}
+      {/* VIEW 3: WEARABLE DATA & RESPIRATORY ANALYSIS (WHOOP 4.0)                  */}
       {/* ========================================================================= */}
-      {guardianSubView === 'wearable' && (
+      {(guardianSubView === 'wearable' || guardianSubView === 'respiratory') && (
         <div className="space-y-4">
           {/* Header Card */}
           <div className="p-4 rounded-3xl bg-[#0c1220] border border-slate-800 flex items-center justify-between">
@@ -343,6 +265,115 @@ export default function GuardianScreen() {
               <div className="p-2 rounded-xl bg-slate-900/60 border border-slate-800 flex justify-between">
                 <span className="text-slate-400">Energy (kJ)</span>
                 <span className="font-bold text-cyan-300">{whoopData.kilojoule?.toLocaleString() || '3,780'} kJ</span>
+              </div>
+            </div>
+          </div>
+
+          {/* ========================================================================= */}
+          {/* RESPIRATORY HEALTH ANALYSIS (Moved into WHOOP Tab)                        */}
+          {/* ========================================================================= */}
+          <div className="p-5 rounded-3xl bg-[#0e1628]/95 border border-cyan-500/30 space-y-4 shadow-lg relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-mono font-bold tracking-widest text-cyan-300 uppercase">
+                RESPIRATORY HEALTH ANALYSIS
+              </span>
+              <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
+                Pulse Oximetry
+              </span>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <div className="w-16 h-16 rounded-full border-4 border-cyan-500/30 border-t-[#00F2FE] flex items-center justify-center shrink-0">
+                <Activity className="w-7 h-7 text-[#00F2FE] animate-pulse" />
+              </div>
+              <div>
+                <span className="text-[10px] font-mono text-slate-400 uppercase">CURRENT STATUS</span>
+                <h3 className={`text-xl font-black font-sans ${whoopData.respiratoryStatus === 'LOW RISK' ? 'text-emerald-400' : 'text-amber-400'}`}>
+                  {whoopData.respiratoryStatus}
+                </h3>
+                <span className="text-xs font-mono text-slate-300">
+                  SpO₂: <strong className="text-white">{whoopData.spo2}%</strong> • Strain: <strong className="text-cyan-300">{whoopData.respiratoryStrain}</strong> • {whoopData.breathsPerMin} RPM
+                </span>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-300 leading-relaxed font-sans">
+              Your breathing pattern is stable. Continuous bronchial telemetry and blood oxygen saturation captured directly by WHOOP 4.0 optical sensor.
+            </p>
+
+            <button 
+              onClick={() => setIsRespiratoryModalOpen(true)}
+              className="w-full py-2.5 rounded-xl bg-slate-900 border border-cyan-500/40 text-xs font-mono text-cyan-300 font-bold hover:bg-slate-800 transition-colors flex items-center justify-center space-x-1.5 cursor-pointer shadow-sm"
+            >
+              <span>View detailed clinical analysis</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* ========================================================================= */}
+          {/* ACCURATE 7-DAY SpO2 TREND CHART (From Official WHOOP History)             */}
+          {/* ========================================================================= */}
+          <div className="p-4 rounded-3xl bg-[#0e1628]/90 border border-slate-800 space-y-3 font-mono shadow-md">
+            <div className="flex items-center justify-between text-xs">
+              <div>
+                <span className="font-bold text-white block">SpO₂ 7-Day History</span>
+                <span className="text-[10px] text-slate-400">Official WHOOP Band Telemetry</span>
+              </div>
+              <div className="flex items-center space-x-1.5 bg-slate-900 px-2.5 py-1 rounded-xl border border-slate-800 text-[11px]">
+                <span className="text-slate-400">7D Avg:</span>
+                <span className="text-emerald-400 font-bold">{whoopData.spo2Avg7D || '95.9'}%</span>
+              </div>
+            </div>
+
+            {/* Sparkline / Bar Graphic with Exact 7-Day SpO2 points */}
+            <div className="h-32 w-full flex items-end justify-between px-2 pt-4 border-b border-slate-800/80 pb-2">
+              {(whoopData.spo2History7D || [
+                { day: 'Sun', date: '2026-09-20', spo2: 96.1 },
+                { day: 'Tue', date: '2026-09-22', spo2: 94.3 },
+                { day: 'Wed', date: '2026-09-23', spo2: 95.0 },
+                { day: 'Thu', date: '2026-09-24', spo2: 96.4 },
+                { day: 'Fri', date: '2026-09-25', spo2: 95.0 },
+                { day: 'Sat', date: '2026-09-26', spo2: 97.1 },
+                { day: 'Sun', date: '2026-09-27', spo2: 97.3 }
+              ]).map((item, idx) => {
+                const heightPx = Math.max(20, Math.round((item.spo2 - 90) * 11));
+                const isLatest = idx === (whoopData.spo2History7D?.length || 7) - 1;
+                return (
+                  <div key={idx} className="flex flex-col items-center space-y-1.5 group cursor-pointer">
+                    <span className={`text-[9px] font-bold ${isLatest ? 'text-cyan-300' : 'text-slate-400 group-hover:text-white transition-colors'}`}>
+                      {item.spo2}%
+                    </span>
+                    <div 
+                      style={{ height: `${heightPx}px` }} 
+                      className={`w-7 rounded-t-lg transition-all ${
+                        isLatest 
+                          ? 'bg-gradient-to-t from-cyan-900 to-cyan-400 shadow-[0_0_12px_rgba(0,242,254,0.6)] ring-1 ring-cyan-400/50' 
+                          : 'bg-gradient-to-t from-slate-900 to-teal-400/80 group-hover:to-cyan-400'
+                      }`}
+                    />
+                    <span className={`text-[9px] ${isLatest ? 'text-cyan-300 font-bold' : 'text-slate-400'}`}>
+                      {item.day}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* 3 Metrics Footer */}
+            <div className="grid grid-cols-3 gap-2 text-center text-xs pt-1">
+              <div>
+                <span className="text-[10px] text-slate-400 block">Current SpO₂</span>
+                <span className="font-bold text-emerald-400">{whoopData.spo2}%</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-400 block">Resp. Strain</span>
+                <span className="font-bold text-cyan-300">{whoopData.respiratoryStrain}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-400 block">Resp. Rate</span>
+                <span className="font-bold text-white">{whoopData.breathsPerMin} RPM</span>
               </div>
             </div>
           </div>

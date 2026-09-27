@@ -141,7 +141,7 @@ export default function HomeScreen() {
             <div 
               onClick={() => {
                 setActiveTab('guardian');
-                setGuardianSubView('respiratory');
+                setGuardianSubView('wearable');
               }}
               className="flex items-center justify-between text-xs font-mono text-slate-400 uppercase tracking-wider cursor-pointer group"
             >
