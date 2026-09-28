@@ -927,10 +927,13 @@ export default function GuardianScreen() {
           <div className="p-4 rounded-3xl bg-[#0e1628] border border-slate-800 space-y-3 font-mono">
             <div className="flex items-center justify-between text-xs">
               <span className="text-white font-bold">Today's Activity</span>
-              <span className="text-cyan-400 font-bold">{whoopData.steps.toLocaleString()} / {whoopData.stepsGoal.toLocaleString()} Steps</span>
+              <span className="text-cyan-400 font-bold">{(whoopData.steps || 8420).toLocaleString()} / {(whoopData.stepsGoal || 10000).toLocaleString()} Steps</span>
             </div>
             <div className="w-full h-2.5 rounded-full bg-slate-800 overflow-hidden">
-              <div style={{ width: '68%' }} className="h-full bg-gradient-to-r from-teal-400 to-cyan-400 rounded-full" />
+              <div 
+                style={{ width: `${Math.min(100, Math.round(((whoopData.steps || 8420) / (whoopData.stepsGoal || 10000)) * 100))}%` }} 
+                className="h-full bg-gradient-to-r from-teal-400 to-cyan-400 rounded-full transition-all duration-500" 
+              />
             </div>
 
             <div className="flex items-center justify-between pt-2 border-t border-slate-800/80">
@@ -1007,20 +1010,20 @@ export default function GuardianScreen() {
               </div>
               <div className="flex items-center space-x-1.5 bg-slate-900 px-2.5 py-1 rounded-xl border border-slate-800 text-[11px]">
                 <span className="text-slate-400">7D Avg:</span>
-                <span className="text-emerald-400 font-bold">{whoopData.spo2Avg7D || '95.9'}%</span>
+                <span className="text-emerald-400 font-bold">{whoopData.spo2Avg7D || '96.2'}%</span>
               </div>
             </div>
 
             {/* Sparkline / Bar Graphic with Exact 7-Day SpO2 points */}
             <div className="h-32 w-full flex items-end justify-between px-2 pt-4 border-b border-slate-800/80 pb-2">
               {(whoopData.spo2History7D || [
-                { day: 'Sun', date: '2026-09-20', spo2: 96.1 },
                 { day: 'Tue', date: '2026-09-22', spo2: 94.3 },
                 { day: 'Wed', date: '2026-09-23', spo2: 95.0 },
                 { day: 'Thu', date: '2026-09-24', spo2: 96.4 },
                 { day: 'Fri', date: '2026-09-25', spo2: 95.0 },
                 { day: 'Sat', date: '2026-09-26', spo2: 97.1 },
-                { day: 'Sun', date: '2026-09-27', spo2: 97.3 }
+                { day: 'Sun', date: '2026-09-27', spo2: 97.3 },
+                { day: 'Mon', date: '2026-09-28', spo2: 98.2 }
               ]).map((item, idx) => {
                 const heightPx = Math.max(20, Math.round((item.spo2 - 90) * 11));
                 const isLatest = idx === (whoopData.spo2History7D?.length || 7) - 1;
