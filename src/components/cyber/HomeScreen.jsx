@@ -174,8 +174,14 @@ export default function HomeScreen() {
             </div>
 
             {/* AQI */}
-            <div>
-              <span className="text-[10px] text-slate-400 block font-bold">AQI</span>
+            <div 
+              onClick={() => {
+                setActiveTab('guardian');
+                setGuardianSubView('environment');
+              }}
+              className="cursor-pointer group"
+            >
+              <span className="text-[10px] text-slate-400 block font-bold group-hover:text-cyan-400 transition-colors">AQI (Bengaluru)</span>
               <div className="flex items-baseline space-x-1.5">
                 <span className="text-lg font-black text-amber-400">{whoopData.aqi}</span>
                 <span className="text-[11px] text-slate-400">{whoopData.aqiStatus}</span>

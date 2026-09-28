@@ -27,12 +27,14 @@ import {
   Sun,
   CloudRain,
   Navigation,
-  Compass
+  Compass,
+  Eye
 } from 'lucide-react';
 import { useWhoopData } from '../../context/WhoopDataContext';
 import { useAchievements } from '../../context/AchievementsContext';
 import { soundFx } from '../../utils/audioSynthesizer';
 import SleepAlarmSystem from './SleepAlarmSystem';
+import { CITIES, classifyAqi, getInitialCityEnvironment } from '../../utils/msritWeatherService';
 
 export default function GuardianScreen() {
   const { 
@@ -45,7 +47,10 @@ export default function GuardianScreen() {
     setIsSleepModalOpen,
     environmentData,
     refreshEnvironmentData,
-    isRefreshingEnv
+    isRefreshingEnv,
+    selectedCity,
+    setSelectedCity,
+    allCitiesData
   } = useWhoopData();
 
   const { trackAction } = useAchievements();
@@ -174,8 +179,11 @@ export default function GuardianScreen() {
                 <span className="text-xs text-cyan-400 block">💧 SpO₂</span>
                 <span className="text-xl font-black text-white">{whoopData.spo2}%</span>
               </div>
-              <div className="p-3 rounded-2xl bg-[#0e1628]/90 border border-slate-800">
-                <span className="text-xs text-amber-400 block">☁️ AQI</span>
+              <div 
+                onClick={() => setGuardianSubView('environment')}
+                className="p-3 rounded-2xl bg-[#0e1628]/90 border border-slate-800 hover:border-amber-500/40 cursor-pointer transition-all"
+              >
+                <span className="text-xs text-amber-400 block">☁️ AQI (Bengaluru)</span>
                 <span className="text-xl font-black text-amber-400">{whoopData.aqi}</span>
                 <span className="text-[10px] text-slate-400 block">{whoopData.aqiStatus}</span>
               </div>
@@ -189,17 +197,89 @@ export default function GuardianScreen() {
       )}
 
       {/* ========================================================================= */}
-      {/* VIEW 2: ELABORATED MSRIT ENVIRONMENTAL STATION & TIMETABLES               */}
-      {/* Location: MSRIT Post, M.S. Ramaiah Nagar, Mathikere, Bengaluru – 560054   */}
+      {/* VIEW 2: 5-CITY METROPOLITAN ENVIRONMENTAL STATION & TIMETABLES             */}
+      {/* Cities: Mumbai, Delhi, Bengaluru, Kolkata, Chennai                        */}
       {/* ========================================================================= */}
       {guardianSubView === 'environment' && (() => {
-        const env = environmentData || getInitialMsritEnvironment();
+        const activeCityId = selectedCity || 'bengaluru';
+        const activeCityMeta = CITIES[activeCityId] || CITIES.bengaluru;
+        const env = environmentData || (allCitiesData && allCitiesData[activeCityId]) || getInitialCityEnvironment(activeCityId);
         const aqiInfo = env.aqiDetails || classifyAqi(env.aqi);
 
         return (
           <div className="space-y-4 animate-in fade-in duration-300 font-mono">
 
-            {/* 1. MSRIT Location & Environmental Station Master Banner */}
+            {/* 1. 5-CITY METROPOLITAN SELECTOR HUD */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-[11px] font-mono text-slate-400 font-bold uppercase tracking-wider flex items-center space-x-1.5">
+                  <Compass className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>5-City Metropolitan Air Quality Network</span>
+                </span>
+                <span className="text-[10px] font-mono text-cyan-400 hidden sm:inline">
+                  Live Satellite & CPCB Synchronized
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                {Object.values(CITIES).map((c) => {
+                  const cityData = (allCitiesData && allCitiesData[c.id]) || getInitialCityEnvironment(c.id);
+                  const isSelected = activeCityId === c.id;
+                  const cAqiInfo = cityData?.aqiDetails || classifyAqi(cityData?.aqi || 75);
+
+                  return (
+                    <button
+                      key={c.id}
+                      onClick={() => {
+                        soundFx.playPopSound(1.2);
+                        setSelectedCity(c.id);
+                      }}
+                      className={`p-3 rounded-2xl border text-left transition-all relative overflow-hidden cursor-pointer ${
+                        isSelected
+                          ? 'bg-gradient-to-b from-cyan-950/70 to-[#0c1220] border-cyan-400 shadow-[0_0_15px_rgba(0,242,254,0.3)] ring-1 ring-cyan-400/50'
+                          : 'bg-[#0c1220]/80 hover:bg-[#0e1628] border-slate-800 hover:border-slate-700'
+                      }`}
+                    >
+                      {isSelected && (
+                        <div className="absolute top-0 right-0 w-2.5 h-2.5 rounded-bl-lg bg-cyan-400 shadow-[0_0_8px_#00F2FE]" />
+                      )}
+
+                      <div className="flex items-center justify-between mb-1">
+                        <span className={`text-xs font-bold font-sans ${isSelected ? 'text-cyan-300' : 'text-white'}`}>
+                          {c.name}
+                        </span>
+                        <span className="text-[9px] text-slate-400 font-sans truncate ml-1">
+                          {c.state.replace('NCT of ', '')}
+                        </span>
+                      </div>
+
+                      <div className="flex items-baseline justify-between mt-1">
+                        <div className="flex items-center space-x-1.5">
+                          <span className={`text-base font-black font-mono ${cAqiInfo.textClass}`}>
+                            {cityData?.aqi || '--'}
+                          </span>
+                          <span className="text-[9px] text-slate-400 font-mono">AQI</span>
+                        </div>
+                        <span className="text-[11px] font-sans font-medium text-slate-300">
+                          {cityData?.weather?.temperature != null ? `${cityData.weather.temperature}°C` : '--'}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between mt-1.5 pt-1.5 border-t border-slate-800/80 text-[10px]">
+                        <span className={`font-sans truncate font-medium ${cAqiInfo.textClass}`}>
+                          {cityData?.aqiStatus || cAqiInfo.status}
+                        </span>
+                        <span className="text-slate-400">
+                          {cityData?.weather?.condition?.split(' ')[1] || '⛅'}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 2. City Location & Environmental Station Master Banner */}
             <div className="p-4 sm:p-5 rounded-3xl bg-[#0c1220]/95 border border-slate-800 space-y-3.5 shadow-2xl relative overflow-hidden">
               <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -212,29 +292,29 @@ export default function GuardianScreen() {
                   <div>
                     <div className="flex items-center space-x-2">
                       <h3 className="text-sm sm:text-base font-black text-white font-sans">
-                        MSRIT Atmospheric Station
+                        {env.location?.stationName || `${activeCityMeta.name} Ambient Monitoring Station`}
                       </h3>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                        PIN: 560054
+                        PIN: {env.location?.pincode || activeCityMeta.pincode}
                       </span>
                     </div>
                     <p className="text-xs text-slate-200 mt-1 font-sans font-medium">
-                      MSRIT Post, M.S. Ramaiah Nagar, Mathikere, Bengaluru – 560054
+                      {env.location?.fullAddress || activeCityMeta.fullAddress}
                     </p>
                     <p className="text-[11px] text-slate-400 mt-0.5">
-                      13.0305° N, 77.5648° E • Elevation 928 m • Ramaiah Campus & BEL Road Zone
+                      {env.location?.latitude || activeCityMeta.latitude}° N, {env.location?.longitude || activeCityMeta.longitude}° E • Elevation {env.location?.elevation || activeCityMeta.elevation} • {env.location?.monitoringZone || activeCityMeta.monitoringZone}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center space-x-2 shrink-0">
                   <button
-                    onClick={() => refreshEnvironmentData(true)}
+                    onClick={() => refreshEnvironmentData(true, activeCityId)}
                     disabled={isRefreshingEnv}
                     className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs text-cyan-300 font-bold transition-all shadow-sm cursor-pointer"
                   >
                     <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingEnv ? 'animate-spin text-cyan-400' : ''}`} />
-                    <span>{isRefreshingEnv ? 'Updating...' : 'Live Sync'}</span>
+                    <span>{isRefreshingEnv ? 'Updating...' : `Live Sync (${activeCityMeta.name})`}</span>
                   </button>
                 </div>
               </div>
@@ -246,12 +326,12 @@ export default function GuardianScreen() {
                   <span>● Live Satellite & CPCB Monitoring Feed</span>
                 </span>
                 <span className="text-slate-300">
-                  Last Updated: <strong className="text-white">{env.lastUpdated}</strong>
+                  Last Updated: <strong className="text-white">{env.lastUpdated || 'Today • Live Station Feed'}</strong>
                 </span>
               </div>
             </div>
 
-            {/* 2. Primary Atmospheric Air Quality Hero Card */}
+            {/* 1. AIR QUALITY STATUS */}
             <div className={`p-5 rounded-3xl bg-[#0e1628]/95 border ${aqiInfo.borderClass} space-y-4 shadow-xl relative overflow-hidden`}>
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 
@@ -266,8 +346,8 @@ export default function GuardianScreen() {
                   </div>
 
                   <div>
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block">
-                      AIR QUALITY STATUS
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-bold">
+                      1. AIR QUALITY STATUS
                     </span>
                     <h3 className={`text-xl font-black font-sans ${aqiInfo.textClass} flex items-center space-x-2`}>
                       <span>{env.aqiStatus}</span>
@@ -279,199 +359,311 @@ export default function GuardianScreen() {
                   </div>
                 </div>
 
-                {/* Primary Pollutants Quick Peek */}
-                <div className="grid grid-cols-3 gap-2 text-center text-xs sm:w-72 bg-slate-900/60 p-2.5 rounded-2xl border border-slate-800">
-                  <div>
-                    <span className="text-[10px] text-slate-400 block">PM2.5</span>
-                    <span className="font-black text-white">{env.pollutants.pm25}</span>
-                    <span className="text-[9px] text-slate-500 block">µg/m³</span>
+                {/* Primary Pollutant Driver Peek */}
+                <div className="bg-slate-900/80 p-3 rounded-2xl border border-slate-800 text-xs sm:w-72">
+                  <span className="text-[10px] text-amber-400 uppercase tracking-wider font-bold block mb-1">
+                    Dominant Driver Pollutant
+                  </span>
+                  <div className="text-sm font-bold text-white">
+                    {env.dominantPollutant || 'PM2.5 (Fine Respirable Particulates)'}
                   </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 block">PM10</span>
-                    <span className="font-black text-white">{env.pollutants.pm10}</span>
-                    <span className="text-[9px] text-slate-500 block">µg/m³</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 block">O₃ (Ozone)</span>
-                    <span className="font-black text-white">{env.pollutants.o3}</span>
-                    <span className="text-[9px] text-slate-500 block">µg/m³</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Personalized Clinical Action Alert for Aditi */}
-              <div className="p-3.5 rounded-2xl bg-cyan-950/30 border border-cyan-500/30 text-xs text-slate-200 flex items-start space-x-3">
-                <span className="text-base shrink-0">🫁</span>
-                <div>
-                  <strong className="text-cyan-300 font-bold font-sans block mb-0.5">
-                    Respiratory Clinical Impact (Mathikere Micro-Climate):
-                  </strong>
-                  <span className="font-sans text-slate-300 leading-relaxed">
-                    {aqiInfo.patientImpact} Ambient particulate levels are within safe physiological margins for normal campus activities. During evening rush hours on New BEL Road, vehicle exhaust spikes; avoid prolonged roadside exposure.
+                  <span className="text-[11px] text-slate-400 mt-1 block">
+                    Current value: <strong className="text-white">{env.pollutants?.pm25 ?? '--'} µg/m³</strong> (CPCB Standard: 60 µg/m³)
                   </span>
                 </div>
               </div>
 
-              {/* Comprehensive 6-Pollutant Matrix */}
-              <div className="pt-2 border-t border-slate-800/80">
-                <span className="text-[11px] font-bold text-slate-400 block mb-2 font-sans">
-                  Particulate & Chemical Pollutant Matrix (Mathikere Station):
-                </span>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
-                  <div className="p-2 rounded-xl bg-slate-900/60 border border-slate-800 flex justify-between items-center">
-                    <div>
-                      <span className="text-slate-400 block text-[10px]">PM2.5 (Fine Respirable)</span>
-                      <span className="font-bold text-emerald-400">{env.pollutants.pm25} µg/m³</span>
-                    </div>
-                    <span className="text-[9px] text-slate-500">Limit: {env.pollutants.pm25Limit}</span>
-                  </div>
-
-                  <div className="p-2 rounded-xl bg-slate-900/60 border border-slate-800 flex justify-between items-center">
-                    <div>
-                      <span className="text-slate-400 block text-[10px]">PM10 (Inhalable Dust)</span>
-                      <span className="font-bold text-emerald-400">{env.pollutants.pm10} µg/m³</span>
-                    </div>
-                    <span className="text-[9px] text-slate-500">Limit: {env.pollutants.pm10Limit}</span>
-                  </div>
-
-                  <div className="p-2 rounded-xl bg-slate-900/60 border border-slate-800 flex justify-between items-center">
-                    <div>
-                      <span className="text-slate-400 block text-[10px]">NO₂ (Traffic Emissions)</span>
-                      <span className="font-bold text-emerald-400">{env.pollutants.no2} µg/m³</span>
-                    </div>
-                    <span className="text-[9px] text-slate-500">Limit: {env.pollutants.no2Limit}</span>
-                  </div>
-
-                  <div className="p-2 rounded-xl bg-slate-900/60 border border-slate-800 flex justify-between items-center">
-                    <div>
-                      <span className="text-slate-400 block text-[10px]">O₃ (Ground Ozone)</span>
-                      <span className="font-bold text-amber-400">{env.pollutants.o3} µg/m³</span>
-                    </div>
-                    <span className="text-[9px] text-slate-500">Limit: {env.pollutants.o3Limit}</span>
-                  </div>
-
-                  <div className="p-2 rounded-xl bg-slate-900/60 border border-slate-800 flex justify-between items-center">
-                    <div>
-                      <span className="text-slate-400 block text-[10px]">SO₂ (Sulfur Dioxide)</span>
-                      <span className="font-bold text-emerald-400">{env.pollutants.so2} µg/m³</span>
-                    </div>
-                    <span className="text-[9px] text-slate-500">Limit: {env.pollutants.so2Limit}</span>
-                  </div>
-
-                  <div className="p-2 rounded-xl bg-slate-900/60 border border-slate-800 flex justify-between items-center">
-                    <div>
-                      <span className="text-slate-400 block text-[10px]">CO (Carbon Monoxide)</span>
-                      <span className="font-bold text-emerald-400">{env.pollutants.co} µg/m³</span>
-                    </div>
-                    <span className="text-[9px] text-slate-500">Limit: {env.pollutants.coLimit}</span>
-                  </div>
+              {/* 1-Sentence Health Impact Recommendation */}
+              <div className="p-3.5 rounded-2xl bg-cyan-950/40 border border-cyan-500/30 text-xs text-slate-200 space-y-1.5">
+                <div className="flex items-center space-x-2">
+                  <span className="text-base">🫁</span>
+                  <strong className="text-cyan-300 font-bold font-sans">
+                    Health Impact Recommendation:
+                  </strong>
                 </div>
+                <p className="font-sans text-slate-200 leading-relaxed pl-6">
+                  {env.healthRecommendation || 'Air quality is acceptable; unusually sensitive individuals should consider limiting prolonged outdoor exertion along high-density traffic corridors.'}
+                </p>
+                {env.patientClinicalImpact && (
+                  <p className="font-sans text-slate-400 text-[11px] leading-relaxed pl-6 pt-1 border-t border-cyan-500/20">
+                    <strong className="text-slate-300">{activeCityMeta.name} Micro-Climate Context:</strong> {env.patientClinicalImpact}
+                  </p>
+                )}
               </div>
             </div>
 
-            {/* 3. Comprehensive Weather Biometrics HUD */}
+            {/* 2. PARTICULATE & CHEMICAL POLLUTANT MATRIX */}
+            <div className="p-5 rounded-3xl bg-[#0c1220]/95 border border-slate-800 space-y-3.5 shadow-xl font-mono">
+              <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+                <div>
+                  <h4 className="text-sm font-bold text-white font-sans flex items-center space-x-2">
+                    <Layers className="w-4 h-4 text-cyan-400" />
+                    <span>2. Particulate & Chemical Pollutant Matrix</span>
+                    <span className="text-[10px] text-cyan-400 font-mono font-normal">({activeCityMeta.name})</span>
+                  </h4>
+                  <p className="text-[11px] text-slate-400 font-sans mt-0.5">
+                    Live concentration metrics vs. CPCB 24-hr standards
+                  </p>
+                </div>
+                <span className="text-[10px] text-slate-400 font-mono">Standard: CPCB India</span>
+              </div>
+
+              {/* Structured Matrix Table */}
+              <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/60">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="bg-slate-900/90 text-slate-400 text-[11px] font-sans border-b border-slate-800 uppercase tracking-wider">
+                      <th className="py-2.5 px-3">Pollutant</th>
+                      <th className="py-2.5 px-3">Concentration</th>
+                      <th className="py-2.5 px-3">24-Hr Standard</th>
+                      <th className="py-2.5 px-3">Status / Category</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60 font-mono">
+                    <tr className="hover:bg-slate-800/30 transition-colors">
+                      <td className="py-2.5 px-3 font-medium text-white">
+                        <span className="font-bold">PM2.5</span>
+                        <span className="text-[10px] text-slate-400 block font-sans">Fine Respirable Particulates</span>
+                      </td>
+                      <td className="py-2.5 px-3 font-bold text-cyan-300">
+                        {env.pollutants?.pm25 ?? '--'} µg/m³
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-400">
+                        {env.pollutants?.pm25Limit || 60} µg/m³
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          (env.pollutants?.pm25Status || '').includes('Good') ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                          (env.pollutants?.pm25Status || '').includes('Satisfactory') ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                          (env.pollutants?.pm25Status || '').includes('Moderate') ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' :
+                          'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                        }`}>
+                          {env.pollutants?.pm25Status || (env.pollutants?.pm25 <= 60 ? 'Satisfactory' : 'Moderate')}
+                        </span>
+                      </td>
+                    </tr>
+
+                    <tr className="hover:bg-slate-800/30 transition-colors">
+                      <td className="py-2.5 px-3 font-medium text-white">
+                        <span className="font-bold">PM10</span>
+                        <span className="text-[10px] text-slate-400 block font-sans">Inhalable Coarse Dust</span>
+                      </td>
+                      <td className="py-2.5 px-3 font-bold text-cyan-300">
+                        {env.pollutants?.pm10 ?? '--'} µg/m³
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-400">
+                        {env.pollutants?.pm10Limit || 100} µg/m³
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          (env.pollutants?.pm10Status || '').includes('Good') ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                          (env.pollutants?.pm10Status || '').includes('Satisfactory') ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                          'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                        }`}>
+                          {env.pollutants?.pm10Status || (env.pollutants?.pm10 <= 100 ? 'Good' : 'Moderate')}
+                        </span>
+                      </td>
+                    </tr>
+
+                    <tr className="hover:bg-slate-800/30 transition-colors">
+                      <td className="py-2.5 px-3 font-medium text-white">
+                        <span className="font-bold">NO₂</span>
+                        <span className="text-[10px] text-slate-400 block font-sans">Nitrogen Dioxide (Vehicular Exhaust)</span>
+                      </td>
+                      <td className="py-2.5 px-3 font-bold text-cyan-300">
+                        {env.pollutants?.no2 ?? '--'} µg/m³
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-400">
+                        {env.pollutants?.no2Limit || 80} µg/m³
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          (env.pollutants?.no2Status || '').includes('Good') ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                          'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                        }`}>
+                          {env.pollutants?.no2Status || (env.pollutants?.no2 <= 80 ? 'Good' : 'Moderate')}
+                        </span>
+                      </td>
+                    </tr>
+
+                    <tr className="hover:bg-slate-800/30 transition-colors">
+                      <td className="py-2.5 px-3 font-medium text-white">
+                        <span className="font-bold">SO₂</span>
+                        <span className="text-[10px] text-slate-400 block font-sans">Sulfur Dioxide (Industrial)</span>
+                      </td>
+                      <td className="py-2.5 px-3 font-bold text-cyan-300">
+                        {env.pollutants?.so2 ?? '--'} µg/m³
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-400">
+                        {env.pollutants?.so2Limit || 80} µg/m³
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          (env.pollutants?.so2Status || '').includes('Good') ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                          'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                        }`}>
+                          {env.pollutants?.so2Status || (env.pollutants?.so2 <= 80 ? 'Good' : 'Moderate')}
+                        </span>
+                      </td>
+                    </tr>
+
+                    <tr className="hover:bg-slate-800/30 transition-colors">
+                      <td className="py-2.5 px-3 font-medium text-white">
+                        <span className="font-bold">CO</span>
+                        <span className="text-[10px] text-slate-400 block font-sans">Carbon Monoxide (Combustion)</span>
+                      </td>
+                      <td className="py-2.5 px-3 font-bold text-cyan-300">
+                        {env.pollutants?.co ?? '--'} µg/m³
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-400">
+                        {env.pollutants?.coLimit || 2000} µg/m³
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          (env.pollutants?.coStatus || '').includes('Good') ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                          'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                        }`}>
+                          {env.pollutants?.coStatus || (env.pollutants?.co <= 2000 ? 'Good' : 'Moderate')}
+                        </span>
+                      </td>
+                    </tr>
+
+                    <tr className="hover:bg-slate-800/30 transition-colors">
+                      <td className="py-2.5 px-3 font-medium text-white">
+                        <span className="font-bold">O₃</span>
+                        <span className="text-[10px] text-slate-400 block font-sans">Ground-Level Ozone</span>
+                      </td>
+                      <td className="py-2.5 px-3 font-bold text-cyan-300">
+                        {env.pollutants?.o3 ?? '--'} µg/m³
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-400">
+                        {env.pollutants?.o3Limit || 100} µg/m³
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          (env.pollutants?.o3Status || '').includes('Good') ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                          'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                        }`}>
+                          {env.pollutants?.o3Status || (env.pollutants?.o3 <= 100 ? 'Good' : 'Moderate')}
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* 3. REAL-TIME WEATHER BIOMETRICS */}
             <div className="p-5 rounded-3xl bg-[#0c1220]/95 border border-slate-800 space-y-3.5 shadow-xl font-mono">
               <div className="flex items-center justify-between text-xs border-b border-slate-800/80 pb-2.5">
                 <span className="font-bold text-white font-sans flex items-center space-x-1.5">
                   <Sun className="w-4 h-4 text-amber-400" />
-                  <span>Real-Time Weather Biometrics (Mathikere 560054)</span>
+                  <span>3. Real-Time Weather Biometrics</span>
+                  <span className="text-[10px] text-cyan-400 font-mono font-normal">({activeCityMeta.name} Meteorological Hub)</span>
                 </span>
-                <span className="text-cyan-400 font-bold">{env.weather.condition}</span>
+                <span className="text-cyan-400 font-bold">{env.weather?.condition || 'Real-Time'}</span>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs text-center">
+                {/* 1. Temperature & RealFeel */}
                 <div className="p-3 rounded-2xl bg-slate-900/70 border border-slate-800">
                   <span className="text-[10px] text-slate-400 block flex items-center justify-center space-x-1">
                     <Thermometer className="w-3.5 h-3.5 text-rose-400" />
-                    <span>Temperature</span>
+                    <span>Temperature & RealFeel</span>
                   </span>
                   <span className="text-xl font-black text-white mt-1 block">
-                    {env.weather.temperature}°C
+                    {env.weather?.temperature ?? '--'}°C
                   </span>
                   <span className="text-[10px] text-slate-400">
-                    Feels like {env.weather.feelsLike}°C
+                    RealFeel: <strong className="text-slate-200">{env.weather?.feelsLike ?? env.weather?.temperature ?? '--'}°C</strong>
                   </span>
                 </div>
 
+                {/* 2. Relative Humidity */}
                 <div className="p-3 rounded-2xl bg-slate-900/70 border border-slate-800">
                   <span className="text-[10px] text-slate-400 block flex items-center justify-center space-x-1">
                     <Droplets className="w-3.5 h-3.5 text-cyan-400" />
                     <span>Relative Humidity</span>
                   </span>
                   <span className="text-xl font-black text-cyan-300 mt-1 block">
-                    {env.weather.humidity}%
+                    {env.weather?.humidity ?? '--'}%
                   </span>
                   <span className="text-[10px] text-slate-400">
-                    Optimal Comfort
+                    {env.weather?.humidity > 70 ? 'High Humidity' : env.weather?.humidity < 30 ? 'Dry Air' : 'Optimal Comfort'}
                   </span>
                 </div>
 
+                {/* 3. Wind Speed & Direction */}
                 <div className="p-3 rounded-2xl bg-slate-900/70 border border-slate-800">
                   <span className="text-[10px] text-slate-400 block flex items-center justify-center space-x-1">
                     <Wind className="w-3.5 h-3.5 text-teal-400" />
-                    <span>Wind Speed</span>
+                    <span>Wind Speed & Direction</span>
                   </span>
                   <span className="text-xl font-black text-teal-300 mt-1 block">
-                    {env.weather.windSpeed} km/h
+                    {env.weather?.windSpeed ?? '--'} km/h
                   </span>
                   <span className="text-[10px] text-slate-400">
-                    {env.weather.windDirection}
+                    Direction: <strong className="text-slate-200">{env.weather?.windDirection || 'Normal'}</strong>
                   </span>
                 </div>
 
-                <div className="p-3 rounded-2xl bg-slate-900/70 border border-slate-800">
-                  <span className="text-[10px] text-slate-400 block flex items-center justify-center space-x-1">
-                    <Compass className="w-3.5 h-3.5 text-indigo-400" />
-                    <span>Pressure</span>
-                  </span>
-                  <span className="text-xl font-black text-indigo-300 mt-1 block">
-                    {env.weather.surfacePressure} hPa
-                  </span>
-                  <span className="text-[10px] text-slate-400">
-                    Altitude 928m
-                  </span>
-                </div>
-
+                {/* 4. UV Index & Solar Radiation */}
                 <div className="p-3 rounded-2xl bg-slate-900/70 border border-slate-800">
                   <span className="text-[10px] text-slate-400 block flex items-center justify-center space-x-1">
                     <Sun className="w-3.5 h-3.5 text-amber-400" />
-                    <span>UV Index</span>
+                    <span>UV Index & Solar Radiation</span>
                   </span>
                   <span className="text-xl font-black text-amber-400 mt-1 block">
-                    {env.weather.uvIndex}
+                    UV {env.weather?.uvIndex ?? '--'}
                   </span>
-                  <span className="text-[10px] text-slate-400">
-                    {env.weather.uvRating}
+                  <span className="text-[10px] text-slate-400 truncate block">
+                    {env.weather?.solarRadiation || 'Peak 820 W/m² / 0 W/m²'}
                   </span>
                 </div>
 
+                {/* 5. Atmospheric Pressure */}
                 <div className="p-3 rounded-2xl bg-slate-900/70 border border-slate-800">
                   <span className="text-[10px] text-slate-400 block flex items-center justify-center space-x-1">
-                    <CloudRain className="w-3.5 h-3.5 text-cyan-400" />
-                    <span>Precipitation</span>
+                    <Compass className="w-3.5 h-3.5 text-indigo-400" />
+                    <span>Atmospheric Pressure</span>
                   </span>
-                  <span className="text-xl font-black text-cyan-300 mt-1 block">
-                    {env.weather.rainProb}%
+                  <span className="text-xl font-black text-indigo-300 mt-1 block">
+                    {env.weather?.surfacePressure ?? '--'} hPa
                   </span>
                   <span className="text-[10px] text-slate-400">
-                    Rain Probability
+                    Elevation {activeCityMeta.elevation}
+                  </span>
+                </div>
+
+                {/* 6. Visibility */}
+                <div className="p-3 rounded-2xl bg-slate-900/70 border border-slate-800">
+                  <span className="text-[10px] text-slate-400 block flex items-center justify-center space-x-1">
+                    <Eye className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Visibility</span>
+                  </span>
+                  <span className="text-xl font-black text-emerald-300 mt-1 block">
+                    {env.weather?.visibilityKm ?? '14.3'} km
+                  </span>
+                  <span className="text-[10px] text-slate-400">
+                    Precipitation: <strong className="text-slate-200">{env.weather?.rainProb ?? '0'}%</strong>
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* 4. PROPER ENVIRONMENTAL TIMETABLES SECTION */}
+            {/* 4. ENVIRONMENTAL TIMETABLES */}
             <div className="p-5 rounded-3xl bg-[#0c1220]/95 border border-slate-800 space-y-4 shadow-xl font-mono">
               
-              {/* Timetable Sub-Tab Switcher */}
+              {/* Solar & Ambient Cycle Timetable Dashboard Header */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-800/80 pb-3">
                 <div>
                   <h4 className="text-sm font-bold text-white font-sans flex items-center space-x-2">
                     <Clock className="w-4 h-4 text-cyan-400" />
-                    <span>MSRIT Mathikere Environmental Timetables</span>
+                    <span>4. Environmental Timetables</span>
+                    <span className="text-[10px] text-cyan-400 font-mono font-normal">({activeCityMeta.name} Solar & Cycle Matrix)</span>
                   </h4>
-                  <p className="text-[11px] text-slate-400">
-                    Synchronized hourly & daily forecasts for respiratory planning
+                  <p className="text-[11px] text-slate-400 font-sans mt-0.5">
+                    Solar windows, ambient cycles & synchronized hourly forecasts
                   </p>
                 </div>
 
@@ -479,7 +671,7 @@ export default function GuardianScreen() {
                   {[
                     { id: 'hourly', label: '24-Hr Hourly' },
                     { id: 'weekly', label: '7-Day Forecast' },
-                    { id: 'campus', label: 'Campus Cycles' }
+                    { id: 'campus', label: `${activeCityMeta.name} Cycles` }
                   ].map((tab) => (
                     <button
                       key={tab.id}
@@ -496,6 +688,55 @@ export default function GuardianScreen() {
                       {tab.label}
                     </button>
                   ))}
+                </div>
+              </div>
+
+              {/* Dedicated Solar & Ambient Cycle Timetable Card */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                <div className="p-3 rounded-2xl bg-slate-900/80 border border-slate-800">
+                  <span className="text-[10px] text-amber-400 uppercase tracking-wider block font-bold">
+                    Sunrise & Sunset
+                  </span>
+                  <div className="mt-1 font-bold text-white text-xs">
+                    🌅 {env.solarTimetable?.sunrise || '06:08 AM'}
+                  </div>
+                  <div className="text-slate-300 text-xs">
+                    🌇 {env.solarTimetable?.sunset || '06:11 PM'}
+                  </div>
+                  <span className="text-[9px] text-slate-500 block mt-1">Solar Day Window</span>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-slate-900/80 border border-slate-800">
+                  <span className="text-[10px] text-indigo-400 uppercase tracking-wider block font-bold">
+                    Dawn & Dusk
+                  </span>
+                  <div className="mt-1 font-bold text-white text-xs">
+                    🌌 {env.solarTimetable?.dawn || '05:48 AM'}
+                  </div>
+                  <div className="text-slate-300 text-xs">
+                    🌆 {env.solarTimetable?.dusk || '06:33 PM'}
+                  </div>
+                  <span className="text-[9px] text-slate-500 block mt-1">Civil Twilight Cycle</span>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-slate-900/80 border border-slate-800">
+                  <span className="text-[10px] text-yellow-400 uppercase tracking-wider block font-bold">
+                    Peak Solar Hours
+                  </span>
+                  <div className="mt-1 font-bold text-amber-300 text-xs">
+                    ☀️ {env.solarTimetable?.peakSolarHours || '11:30 AM – 02:30 PM'}
+                  </div>
+                  <span className="text-[9px] text-slate-400 block mt-1">Highest UV Window (Max UV ~8.3)</span>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-slate-900/80 border border-slate-800">
+                  <span className="text-[10px] text-rose-400 uppercase tracking-wider block font-bold">
+                    Peak AQI Window
+                  </span>
+                  <div className="mt-1 font-bold text-rose-300 text-xs">
+                    🚗 {env.solarTimetable?.peakAqiWindow || '08:30–10:30 AM & 18:00–20:30'}
+                  </div>
+                  <span className="text-[9px] text-slate-400 block mt-1">Daily Traffic Congestion Trapping</span>
                 </div>
               </div>
 
@@ -529,6 +770,7 @@ export default function GuardianScreen() {
                           <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                             slot.aqi <= 50 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
                             slot.aqi <= 100 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                            slot.aqi <= 200 ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' :
                             'bg-rose-500/20 text-rose-400 border border-rose-500/30'
                           }`}>
                             AQI {slot.aqi}
@@ -584,15 +826,15 @@ export default function GuardianScreen() {
                 </div>
               )}
 
-              {/* TIMETABLE VIEW C: MSRIT CAMPUS MICRO-CLIMATE & TRAFFIC CYCLES */}
+              {/* TIMETABLE VIEW C: CITY SPECIFIC COMMUTE & MICRO-CLIMATE CYCLES */}
               {envTimetableTab === 'campus' && (
                 <div className="space-y-2.5">
                   <p className="text-xs font-sans text-slate-300 leading-relaxed">
-                    Micro-climate analysis for Mathikere / M.S. Ramaiah Campus based on vehicular density on New BEL Road and atmospheric boundary layer convection:
+                    Micro-climate analysis for {activeCityMeta.name} ({activeCityMeta.state}) based on arterial vehicular congestion and regional atmospheric boundary convection:
                   </p>
 
                   <div className="space-y-2">
-                    {(env.campusTimetable || []).map((c, idx) => (
+                    {(env.campusTimetable || activeCityMeta.commuteCycles || []).map((c, idx) => (
                       <div
                         key={idx}
                         className="p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-1.5"
@@ -605,6 +847,7 @@ export default function GuardianScreen() {
                           <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                             c.color === 'emerald' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
                             c.color === 'amber' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                            c.color === 'orange' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' :
                             'bg-rose-500/20 text-rose-400 border border-rose-500/30'
                           }`}>
                             AQI {c.expectedAqi}

@@ -1,6 +1,14 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { soundFx } from '../utils/audioSynthesizer';
-import { getInitialMsritEnvironment, fetchLiveMsritEnvironment } from '../utils/msritWeatherService';
+import { 
+  CITIES,
+  getInitialCityEnvironment, 
+  fetchLiveCityEnvironment,
+  fetchAllCitiesEnvironment,
+  getAllInitialCitiesEnvironment,
+  getInitialMsritEnvironment, 
+  fetchLiveMsritEnvironment 
+} from '../utils/msritWeatherService';
 
 const WhoopDataContext = createContext(null);
 
@@ -601,45 +609,105 @@ export function WhoopDataProvider({ children }) {
     }
   }, [fetchWhoopMetrics]);
 
-  // MSRIT Mathikere Environmental & Weather Telemetry
-  const [environmentData, setEnvironmentData] = useState(() => getInitialMsritEnvironment());
+  // 5 Major Metropolitan Cities Environmental & Weather Telemetry (Bengaluru, Mumbai, Delhi, Kolkata, Chennai)
+  const [selectedCity, setSelectedCityState] = useState(() => {
+    try {
+      const stored = localStorage.getItem('biomaxxx_selected_city');
+      return (stored && stored !== 'mumbai' && CITIES[stored]) ? stored : 'bengaluru';
+    } catch {
+      return 'bengaluru';
+    }
+  });
+  const [allCitiesData, setAllCitiesData] = useState(() => getAllInitialCitiesEnvironment());
   const [isRefreshingEnv, setIsRefreshingEnv] = useState(false);
 
-  const refreshEnvironmentData = useCallback(async (isManual = false) => {
+  // Active city environment data
+  const environmentData = allCitiesData[selectedCity] || allCitiesData.bengaluru || getInitialCityEnvironment(selectedCity || 'bengaluru');
+
+  const setSelectedCity = useCallback((cityId) => {
+    if (!CITIES[cityId]) return;
+    setSelectedCityState(cityId);
+    try {
+      localStorage.setItem('biomaxxx_selected_city', cityId);
+    } catch {
+      // ignore
+    }
+    const current = allCitiesData[cityId] || getInitialCityEnvironment(cityId);
+    setWhoopData(prev => ({
+      ...prev,
+      aqi: current.aqi,
+      aqiStatus: current.aqiStatus,
+      pm25: current.pollutants.pm25,
+      pm10: current.pollutants.pm10,
+      o3: current.pollutants.o3,
+      no2: current.pollutants.no2,
+      temperature: current.weather.temperature,
+      humidity: current.weather.humidity,
+      locationName: current.location.name,
+      locationAddress: current.location.fullAddress
+    }));
+  }, [allCitiesData]);
+
+  const refreshEnvironmentData = useCallback(async (isManual = false, targetCityId = null) => {
     if (isManual) {
       setIsRefreshingEnv(true);
       soundFx?.playPopSound?.(1.2);
     }
     try {
-      const live = await fetchLiveMsritEnvironment();
-      if (live) {
-        setEnvironmentData(live);
-        setWhoopData(prev => ({
-          ...prev,
-          aqi: live.aqi,
-          aqiStatus: live.aqiStatus,
-          pm25: live.pollutants.pm25,
-          pm10: live.pollutants.pm10,
-          o3: live.pollutants.o3,
-          no2: live.pollutants.no2,
-          temperature: live.weather.temperature,
-          humidity: live.weather.humidity,
-          locationName: live.location.name,
-          locationAddress: live.location.fullAddress
-        }));
+      if (targetCityId && CITIES[targetCityId]) {
+        const live = await fetchLiveCityEnvironment(targetCityId);
+        if (live) {
+          setAllCitiesData(prev => ({ ...prev, [targetCityId]: live }));
+          if (targetCityId === selectedCity) {
+            setWhoopData(prev => ({
+              ...prev,
+              aqi: live.aqi,
+              aqiStatus: live.aqiStatus,
+              pm25: live.pollutants.pm25,
+              pm10: live.pollutants.pm10,
+              o3: live.pollutants.o3,
+              no2: live.pollutants.no2,
+              temperature: live.weather.temperature,
+              humidity: live.weather.humidity,
+              locationName: live.location.name,
+              locationAddress: live.location.fullAddress
+            }));
+          }
+        }
+      } else {
+        const allLive = await fetchAllCitiesEnvironment();
+        if (allLive && Object.keys(allLive).length > 0) {
+          setAllCitiesData(allLive);
+          const activeLive = allLive[selectedCity] || allLive.bengaluru;
+          if (activeLive) {
+            setWhoopData(prev => ({
+              ...prev,
+              aqi: activeLive.aqi,
+              aqiStatus: activeLive.aqiStatus,
+              pm25: activeLive.pollutants.pm25,
+              pm10: activeLive.pollutants.pm10,
+              o3: activeLive.pollutants.o3,
+              no2: activeLive.pollutants.no2,
+              temperature: activeLive.weather.temperature,
+              humidity: activeLive.weather.humidity,
+              locationName: activeLive.location.name,
+              locationAddress: activeLive.location.fullAddress
+            }));
+          }
+        }
       }
     } catch (e) {
-      console.warn("Could not fetch live MSRIT environmental telemetry:", e);
+      console.warn("Could not fetch live environmental telemetry:", e);
     } finally {
       if (isManual) {
         setTimeout(() => setIsRefreshingEnv(false), 500);
       }
     }
-  }, []);
+  }, [selectedCity]);
 
   useEffect(() => {
     refreshEnvironmentData(false);
-    // Poll MSRIT weather and atmospheric conditions every 15 minutes
+    // Poll weather and atmospheric conditions every 15 minutes
     const envInterval = setInterval(() => {
       refreshEnvironmentData(false);
     }, 15 * 60 * 1000);
@@ -1062,6 +1130,9 @@ export function WhoopDataProvider({ children }) {
         environmentData,
         refreshEnvironmentData,
         isRefreshingEnv,
+        selectedCity,
+        setSelectedCity,
+        allCitiesData,
 
         // Sleep Cycle & Alarm System Exports
         alarmSettings,
