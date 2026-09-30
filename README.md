@@ -92,49 +92,9 @@ biomaxxx/
 
 ---
 
-## 🐳 Running with Docker (Recommended for Production)
+## 🚀 Running Locally
 
-BioMaxxx includes a production-ready **Docker Compose** stack orchestrating:
-1. **`postgres`**: Official PostgreSQL 16 Alpine container with persistent storage and auto-executing schema from `schema.sql`.
-2. **`backend`**: Node.js 20 Express + Socket.io backend API with health checks.
-3. **`frontend`**: High-performance multi-stage built Nginx Alpine reverse-proxy container serving the Vite React SPA and proxying `/api/` and `/socket.io/`.
-
-### Prerequisites
-- Install [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop) and ensure Docker Desktop is running.
-
-### 1-Click Launch (Windows)
-Double-click **`docker-run.bat`** or run in PowerShell:
-```cmd
-.\docker-run.bat
-```
-
-### Manual Command Line Launch
-```bash
-# Build and start all 3 services in detached mode
-docker compose up --build -d
-
-# Check cluster status
-docker compose ps
-
-# View live application logs
-docker compose logs -f
-```
-
-Access the services:
-- **Frontend App**: [http://localhost:3000](http://localhost:3000)
-- **Backend API**: [http://localhost:5000/api/copd/correlations/1](http://localhost:5000/api/copd/correlations/1)
-- **PostgreSQL**: `localhost:5432` (`biomaxxx` database)
-
-To stop the Docker cluster:
-```bash
-docker compose down
-```
-
----
-
-## 🚀 Running Locally without Docker (No Virtualization Needed)
-
-BioMaxxx runs completely natively on Node.js without requiring Docker or hardware virtualization.
+BioMaxxx runs natively on Node.js.
 
 ### 🌟 Quickest Option: 1-Click Launch (Windows)
 Double-click **`run-local.bat`** in the project folder.
