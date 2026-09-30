@@ -35,12 +35,14 @@ import {
   AlertTriangle,
   Radio,
   Info,
-  X
+  X,
+  FileText
 } from 'lucide-react';
 import { useWhoopData } from '../../context/WhoopDataContext';
 import { useAchievements } from '../../context/AchievementsContext';
 import { soundFx } from '../../utils/audioSynthesizer';
 import SleepAlarmSystem from './SleepAlarmSystem';
+import VitalsReportView from './VitalsReportView';
 import { CITIES, classifyAqi, getInitialCityEnvironment } from '../../utils/msritWeatherService';
 
 export default function GuardianScreen() {
@@ -92,6 +94,7 @@ export default function GuardianScreen() {
 
   const subNavItems = [
     { id: 'overview', label: 'Overview' },
+    { id: 'report', label: 'Health Report' },
     { id: 'wearable', label: 'WHOOP' },
     { id: 'environment', label: 'Environment' },
     { id: 'sleep', label: 'Sleep' },
@@ -201,7 +204,49 @@ export default function GuardianScreen() {
               </div>
             </div>
           </div>
+
+          {/* Quick-Access AI Vitals & Health Report Card */}
+          <div 
+            onClick={() => handleSelectSubView('report')}
+            className="p-4 rounded-3xl bg-gradient-to-r from-[#0c1424] via-[#101b33] to-[#0c1424] border border-cyan-500/30 hover:border-cyan-400/60 shadow-[0_0_20px_rgba(0,242,254,0.12)] transition-all cursor-pointer group space-y-2.5"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-[#00F2FE] group-hover:scale-105 transition-transform">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-widest font-bold">
+                      NEW • AI REPORT
+                    </span>
+                    <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                      BMI 21.3 Healthy
+                    </span>
+                  </div>
+                  <h4 className="text-sm font-bold text-white font-sans flex items-center gap-1.5">
+                    Personalized Health & Vitals Report
+                  </h4>
+                </div>
+              </div>
+
+              <div className="w-8 h-8 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 group-hover:text-cyan-300 group-hover:border-cyan-500/40 transition-colors">
+                <ChevronRight className="w-4 h-4" />
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-300 leading-relaxed font-sans">
+              Day, Week, Month & Year reports explained in simple words. Includes interactive visual charts & habits to improve your vitals.
+            </p>
+          </div>
         </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* VIEW: COMPREHENSIVE AI VITALS & PERSONAL HEALTH REPORT                     */}
+      {/* ========================================================================= */}
+      {guardianSubView === 'report' && (
+        <VitalsReportView onBack={() => handleSelectSubView('overview')} />
       )}
 
       {/* ========================================================================= */}
