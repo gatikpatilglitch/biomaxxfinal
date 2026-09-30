@@ -236,7 +236,7 @@ class KeyRotator {
           throw new Error(data?.error?.message || `Groq API responded with HTTP ${response.status}`);
         }
 
-        const reply = data.choices?.[0]?.message?.content;
+        const reply = data.choices?.[0]?.message?.content || data.choices?.[0]?.message?.reasoning;
         if (!reply) {
           throw new Error('Groq returned empty response.');
         }
