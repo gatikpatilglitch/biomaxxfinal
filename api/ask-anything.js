@@ -1,20 +1,28 @@
 // api/ask-anything.js - BioMaxxx "Ask Me Anything" AI Bot (local Ollama LLM)
 const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3.1:8b';
+// Optional "user:password" when Ollama sits behind a tunnel with basic auth (e.g. ngrok --basic-auth)
+const OLLAMA_BASIC_AUTH = process.env.OLLAMA_BASIC_AUTH;
 
 async function ollamaChat({ messages, systemInstruction }) {
   let res;
   try {
     res = await fetch(`${OLLAMA_URL}/api/chat`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': '1',
+        ...(OLLAMA_BASIC_AUTH && {
+          Authorization: `Basic ${Buffer.from(OLLAMA_BASIC_AUTH).toString('base64')}`
+        })
+      },
       body: JSON.stringify({
         model: OLLAMA_MODEL,
         stream: false,
         messages: [{ role: 'system', content: systemInstruction }, ...messages],
         options: { temperature: 0.4 }
       }),
-      signal: AbortSignal.timeout(120000)
+      signal: AbortSignal.timeout(55000)
     });
   } catch (err) {
     throw new Error(`Local LLM unreachable at ${OLLAMA_URL}. Is Ollama running? (${err.message})`);
