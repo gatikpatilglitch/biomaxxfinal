@@ -16,27 +16,69 @@ class KeyRotator {
   }
 
   /**
-   * Reloads keys from "API keys/keys.json" and environment variables
+   * Reloads keys from "API keys/" folder (all files: .json, .txt, .csv) and environment variables
    */
   reloadKeys() {
     const loadedGroq = new Set();
     const loadedGemini = new Set();
 
-    // 1. Try reading from "API keys/keys.json"
+    // 1. Scan the "API keys" directory for all files
     try {
-      const keysPath = path.resolve(process.cwd(), 'API keys', 'keys.json');
-      if (fs.existsSync(keysPath)) {
-        const raw = fs.readFileSync(keysPath, 'utf-8');
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed.groq)) {
-          parsed.groq.forEach(k => k && loadedGroq.add(k.trim()));
-        }
-        if (Array.isArray(parsed.gemini)) {
-          parsed.gemini.forEach(k => k && loadedGemini.add(k.trim()));
+      const dirPath = path.resolve(process.cwd(), 'API keys');
+      if (fs.existsSync(dirPath)) {
+        const files = fs.readdirSync(dirPath);
+        for (const file of files) {
+          // Skip documentation / markdown
+          if (file.toLowerCase().endsWith('.md')) continue;
+
+          const filePath = path.join(dirPath, file);
+          const stat = fs.statSync(filePath);
+          if (!stat.isFile()) continue;
+
+          const rawContent = fs.readFileSync(filePath, 'utf-8');
+
+          // Attempt JSON parsing first
+          let isJson = false;
+          try {
+            const parsed = JSON.parse(rawContent);
+            isJson = true;
+
+            const extractKeys = (val) => {
+              if (typeof val === 'string') {
+                const trimmed = val.trim();
+                if (trimmed.startsWith('gsk_')) loadedGroq.add(trimmed);
+                else if (trimmed.startsWith('AIza') || trimmed.startsWith('AQ.')) loadedGemini.add(trimmed);
+                else if (trimmed.length > 20) loadedGroq.add(trimmed); // Default to Groq for long tokens
+              } else if (Array.isArray(val)) {
+                val.forEach(extractKeys);
+              } else if (val && typeof val === 'object') {
+                Object.values(val).forEach(extractKeys);
+              }
+            };
+
+            extractKeys(parsed);
+          } catch {
+            isJson = false;
+          }
+
+          // If not JSON or to catch any regex matches in raw text
+          if (!isJson) {
+            // Match groq keys: gsk_ followed by alphanumeric characters
+            const groqMatches = rawContent.match(/gsk_[a-zA-Z0-9_\-]+/g);
+            if (groqMatches) {
+              groqMatches.forEach(k => loadedGroq.add(k.trim()));
+            }
+
+            // Match gemini keys: AIza... or AQ....
+            const geminiMatches = rawContent.match(/(?:AIza[0-9A-Za-z_\-]{35}|AQ\.[a-zA-Z0-9_\-]+)/g);
+            if (geminiMatches) {
+              geminiMatches.forEach(k => loadedGemini.add(k.trim()));
+            }
+          }
         }
       }
     } catch (e) {
-      console.warn('[KeyRotator] Note: Could not read API keys/keys.json:', e.message);
+      console.warn('[KeyRotator] Note: Could not scan API keys folder:', e.message);
     }
 
     // 2. Read from environment variables
@@ -46,15 +88,16 @@ class KeyRotator {
     const envGemini = process.env.GEMINI_API_KEYS || process.env.GEMINI_API_KEY || '';
     envGemini.split(',').forEach(k => k.trim() && loadedGemini.add(k.trim()));
 
+    const prevGroqCount = this.groqKeys.length;
     this.groqKeys = Array.from(loadedGroq);
     this.geminiKeys = Array.from(loadedGemini);
 
     // In case no keys are found in environment or file, log warning
     if (this.groqKeys.length === 0 && this.geminiKeys.length === 0) {
-      console.warn('[KeyRotator] Warning: No API keys configured. Set GROQ_API_KEY or GEMINI_API_KEY in environment or in "API keys/keys.json".');
+      console.warn('[KeyRotator] Warning: No API keys configured. Place keys in "API keys/" folder or set GROQ_API_KEY.');
+    } else if (this.groqKeys.length !== prevGroqCount) {
+      console.log(`[KeyRotator] Key pool loaded: ${this.groqKeys.length} Groq key(s), ${this.geminiKeys.length} Gemini key(s).`);
     }
-
-    console.log(`[KeyRotator] Initialized with ${this.groqKeys.length} Groq key(s) and ${this.geminiKeys.length} Gemini key(s).`);
   }
 
   /**
@@ -279,6 +322,9 @@ class KeyRotator {
    * High-level handler: Groq with rotation first, then Gemini with rotation fallback
    */
   async executeChat({ messages, systemInstruction, userQuery }) {
+    // Dynamically refresh key pool in case new keys were added to "API keys/" folder or env
+    this.reloadKeys();
+
     // 1. Prepare full messages array with system instruction
     const fullMessages = [];
     if (systemInstruction) {
