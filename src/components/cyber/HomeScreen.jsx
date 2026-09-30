@@ -14,7 +14,8 @@ import {
   Heart,
   CheckCircle2,
   Smile,
-  Gamepad2
+  Gamepad2,
+  Bot
 } from 'lucide-react';
 import { useWhoopData } from '../../context/WhoopDataContext';
 import { soundFx } from '../../utils/audioSynthesizer';
@@ -63,6 +64,9 @@ export default function HomeScreen() {
     } else if (action === 'games' || action === 'eye') {
       setActiveTab('actions');
       setActionsSubView('games');
+    } else if (action === 'ask_bot') {
+      setActiveTab('actions');
+      setActionsSubView('help_bot');
     }
   };
 
@@ -319,6 +323,40 @@ export default function HomeScreen() {
       {/* 3.5 AI HEALTH INSIGHTS (POWERED BY GOOGLE GEMINI 2.5 FLASH)               */}
       {/* ========================================================================= */}
       <AiHealthInsightsCard whoopData={whoopData} />
+
+      {/* ========================================================================= */}
+      {/* 3.6 ASK ME ANYTHING AI COMPANION (ROTATING API KEYS ENGINE)               */}
+      {/* ========================================================================= */}
+      <div 
+        onClick={() => handleQuickAction('ask_bot')}
+        className="w-full p-4 rounded-3xl bg-gradient-to-r from-[#0d162a]/95 via-[#0c1833]/90 to-[#081e3c]/90 border border-cyan-500/40 hover:border-cyan-400 shadow-[0_0_25px_rgba(0,242,254,0.12)] cursor-pointer group transition-all duration-300 relative overflow-hidden"
+      >
+        <div className="absolute top-0 right-0 w-48 h-48 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="flex items-center justify-between relative z-10">
+          <div className="flex items-center space-x-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center text-cyan-300 shadow-[0_0_15px_rgba(0,242,254,0.3)] group-hover:scale-105 transition-transform shrink-0">
+              <Bot className="w-6 h-6 animate-pulse" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <h3 className="text-sm font-black text-white uppercase tracking-wider font-sans flex items-center space-x-1.5">
+                  <span>Ask Me Anything AI</span>
+                </h3>
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-cyan-950/90 text-cyan-300 border border-cyan-500/40">
+                  Key Rotator
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 mt-0.5 font-sans line-clamp-1">
+                Ask about your live WHOOP vitals, Bangalore AQI, diet targets & exercises
+              </p>
+            </div>
+          </div>
+          <button className="flex items-center space-x-1 text-xs font-mono text-cyan-400 group-hover:text-cyan-300 transition-colors shrink-0 pl-3">
+            <span className="hidden sm:inline font-bold">Open Chat</span>
+            <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </button>
+        </div>
+      </div>
 
       {/* ========================================================================= */}
       {/* 4. TODAY'S RECOMMENDATION: BEST TIME TO WALK (CINEMATIC CARD)             */}

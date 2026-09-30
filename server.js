@@ -19,6 +19,7 @@ import {
 } from './whoopService.js';
 import { handleHealthInsights } from './api/health-insights.js';
 import { handleFitnessPlan } from './api/fitness-plan.js';
+import { handleAskAnything } from './api/ask-anything.js';
 
 dotenv.config();
 
@@ -421,11 +422,12 @@ app.post('/api/whoop/disconnect', async (req, res) => {
 });
 
 // ==========================================
-// 5. GOOGLE GEMINI AI HEALTH & FITNESS ENGINE
+// 5. GOOGLE GEMINI & GROQ AI ENGINES
 // ==========================================
 app.post('/api/health-insights', handleHealthInsights);
 app.post('/api/fitness-plan', handleFitnessPlan);
 app.post('/api/health/fitness-plan', handleFitnessPlan);
+app.post('/api/ask-anything', handleAskAnything);
 
 // ==========================================
 // 6. BIOFEEDBACK & WEBSOCKET ENGINE
