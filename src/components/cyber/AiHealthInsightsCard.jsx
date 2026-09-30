@@ -31,7 +31,7 @@ export default function AiHealthInsightsCard({ whoopData }) {
     generateInsights(whoopData);
   };
 
-  // Helper to format raw markdown-like bullets from Gemini into clean UI points
+  // Helper to format raw markdown-like bullets from Groq AI into clean UI points
   const formatInsightPoints = (text) => {
     if (!text) return [];
     
@@ -80,7 +80,7 @@ export default function AiHealthInsightsCard({ whoopData }) {
               <h3 className="text-sm sm:text-base font-extrabold text-white tracking-tight font-sans flex items-center gap-1.5">
                 <span>AI Health Insights</span>
                 <span className="text-[10px] font-mono font-bold tracking-wider px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
-                  GEMINI 2.5
+                  GROQ AI
                 </span>
               </h3>
             </div>

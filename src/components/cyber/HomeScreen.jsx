@@ -317,7 +317,7 @@ export default function HomeScreen() {
       </div>
 
       {/* ========================================================================= */}
-      {/* 3.5 AI HEALTH INSIGHTS (POWERED BY GOOGLE GEMINI 2.5 FLASH)               */}
+      {/* 3.5 AI HEALTH INSIGHTS (POWERED BY GROQ AI WITH MULTI-KEY ROTATION)       */}
       {/* ========================================================================= */}
       <AiHealthInsightsCard whoopData={whoopData} />
 
