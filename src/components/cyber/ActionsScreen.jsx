@@ -30,7 +30,6 @@ import {
 } from 'lucide-react';
 import { useWhoopData } from '../../context/WhoopDataContext';
 import { soundFx } from '../../utils/audioSynthesizer';
-import AskMeAnythingBot from './AskMeAnythingBot';
 
 const MEDITATION_TRACKS = [
   {
@@ -332,7 +331,6 @@ export default function ActionsScreen() {
     { id: 'games', label: 'Games' },
     { id: 'inhaler', label: 'Inhaler' },
     { id: 'reminders', label: 'Reminders' },
-    { id: 'help_bot', label: 'Ask AI Bot' },
   ];
 
   return (
@@ -377,7 +375,6 @@ export default function ActionsScreen() {
               { id: 'games', title: 'Games', desc: 'Fun interactive biofeedback stress busters.', icon: Gamepad2, color: 'text-emerald-400' },
               { id: 'inhaler', title: 'Inhaler Tracker', desc: `Track doses (${inhalerData.dosesToday}/${inhalerData.maxDoses} logged today).`, icon: CheckCircle2, color: 'text-teal-400' },
               { id: 'reminders', title: 'Reminders', desc: 'Scheduled alerts for doses & medication.', icon: Clock, color: 'text-blue-400' },
-              { id: 'help_bot', title: 'App Guide & Help Bot', desc: 'New here? Learn how to navigate and use BioMaxxx.', icon: HelpCircle, color: 'text-cyan-400' },
             ].map((item) => {
               const Icon = item.icon;
               return (
@@ -1027,13 +1024,6 @@ export default function ActionsScreen() {
           </div>
 
         </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* 8. ASK ME ANYTHING AI BOT (Key-Rotating BioMaxxx Context Bot)             */}
-      {/* ========================================================================= */}
-      {actionsSubView === 'help_bot' && (
-        <AskMeAnythingBot />
       )}
 
     </div>

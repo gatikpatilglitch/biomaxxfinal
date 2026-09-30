@@ -6,6 +6,7 @@ import { MedicationsProvider } from './context/MedicationsContext';
 // Cyber UI Components
 import CyberHeader from './components/cyber/CyberHeader';
 import CyberBottomNav from './components/cyber/CyberBottomNav';
+import FloatingChatBot from './components/cyber/FloatingChatBot';
 import HomeScreen from './components/cyber/HomeScreen';
 import GuardianScreen from './components/cyber/GuardianScreen';
 import ActionsScreen from './components/cyber/ActionsScreen';
@@ -106,6 +107,9 @@ function AppContent() {
 
       {/* Bottom Floating Navigation Matching Images 1-4 */}
       <CyberBottomNav />
+
+      {/* Floating Ask Me Anything AI chatbot */}
+      <FloatingChatBot />
 
     </div>
   );
