@@ -1,5 +1,32 @@
-// api/ask-anything.js - BioMaxxx "Ask Me Anything" AI Bot with Dynamic Key Rotation
-import { keyRotator } from './keyRotator.js';
+// api/ask-anything.js - BioMaxxx "Ask Me Anything" AI Bot (local Ollama LLM)
+const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3.1:8b';
+
+async function ollamaChat({ messages, systemInstruction }) {
+  let res;
+  try {
+    res = await fetch(`${OLLAMA_URL}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: OLLAMA_MODEL,
+        stream: false,
+        messages: [{ role: 'system', content: systemInstruction }, ...messages],
+        options: { temperature: 0.4 }
+      }),
+      signal: AbortSignal.timeout(120000)
+    });
+  } catch (err) {
+    throw new Error(`Local LLM unreachable at ${OLLAMA_URL}. Is Ollama running? (${err.message})`);
+  }
+  if (!res.ok) {
+    throw new Error(`Ollama returned ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  }
+  const data = await res.json();
+  const content = data?.message?.content?.trim();
+  if (!content) throw new Error('Local LLM returned an empty response.');
+  return { content, provider: 'ollama', model: OLLAMA_MODEL };
+}
 
 export async function handleAskAnything(req, res) {
   if (req.method !== 'POST') {
@@ -76,20 +103,13 @@ STRICT APP-CONTEXT CONSTRAINTS:
     }
     formattedMessages.push({ role: 'user', content: message });
 
-    // Execute with automatic key rotation
-    const result = await keyRotator.executeChat({
-      messages: formattedMessages,
-      systemInstruction,
-      userQuery: message
-    });
+    const result = await ollamaChat({ messages: formattedMessages, systemInstruction });
 
     return res.status(200).json({
       success: true,
       answer: result.content,
       provider: result.provider,
-      model: result.model,
-      keyIndex: result.keyIndex,
-      totalKeys: result.totalKeys
+      model: result.model
     });
   } catch (error) {
     console.error('Error in ask-anything AI bot:', error);

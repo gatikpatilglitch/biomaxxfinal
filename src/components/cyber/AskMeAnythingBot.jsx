@@ -182,7 +182,7 @@ export default function AskMeAnythingBot({ isModal = false, onClose = null }) {
               </h3>
               <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 font-bold flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span>ROTATING KEY POOL</span>
+                <span>LOCAL LLM</span>
               </span>
             </div>
             <p className="text-[11px] font-mono text-slate-400 mt-0.5">
@@ -249,7 +249,7 @@ export default function AskMeAnythingBot({ isModal = false, onClose = null }) {
                   <span>{msg.timestamp || 'Just now'}</span>
                   {msg.meta && (
                     <span className="text-cyan-400/80">
-                      ⚡ {msg.meta.provider?.toUpperCase()} ({msg.meta.model?.split('/').pop()}) • Key #{msg.meta.keyIndex}
+                      ⚡ {msg.meta.provider?.toUpperCase()} ({msg.meta.model?.split('/').pop()})
                     </span>
                   )}
                 </div>
@@ -265,7 +265,7 @@ export default function AskMeAnythingBot({ isModal = false, onClose = null }) {
               <RefreshCw className="w-3.5 h-3.5 animate-spin text-cyan-400" />
             </div>
             <div className="p-3 rounded-2xl bg-[#0f172a] border border-cyan-500/30 text-xs font-mono text-cyan-300 flex items-center space-x-2 animate-pulse">
-              <span>Thinking with rotating AI engine...</span>
+              <span>Thinking with local AI model...</span>
             </div>
           </div>
         )}
@@ -328,7 +328,7 @@ export default function AskMeAnythingBot({ isModal = false, onClose = null }) {
           </span>
           {lastMeta && (
             <span className="font-mono text-slate-500 hidden sm:inline">
-              Key Rotation Pool: Active
+              Running locally via Ollama
             </span>
           )}
         </div>
