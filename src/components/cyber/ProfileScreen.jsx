@@ -551,7 +551,7 @@ export default function ProfileScreen() {
       )}
 
       {/* ========================================================================= */}
-      {/* 3. HEALTH & FITNESS (Gemini AI Calorie Targets, Veg/Non-Veg & BMI Workouts)*/}
+      {/* 3. HEALTH & FITNESS (Groq AI Calorie Targets, Veg/Non-Veg & BMI Workouts) */}
       {/* ========================================================================= */}
       {youSubView === 'fitness' && (
         <AiFitnessNutritionView userData={userData} whoopData={whoopData} />

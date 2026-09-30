@@ -1,19 +1,14 @@
-// api/fitness-plan.js - BioMaxxx AI Health, Nutrition & BMI-Adapted Fitness Engine Powered by Google Gemini
-import { GoogleGenerativeAI } from '@google/generative-ai';
+// api/fitness-plan.js - BioMaxxx AI Health, Nutrition & BMI-Adapted Fitness Engine Powered by Groq AI
+import { keyRotator } from './keyRotator.js';
 
 /**
- * Generates an AI-customized nutrition & BMI-adapted workout plan using Google Gemini
+ * Generates an AI-customized nutrition & BMI-adapted workout plan using Groq AI (with multi-key rotation)
  * @param {import('express').Request} req
  * @param {import('express').Response} res
  */
 export async function handleFitnessPlan(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed. Please use POST.' });
-  }
-
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return res.status(500).json({ error: 'GEMINI_API_KEY is not configured in server environment variables.' });
   }
 
   try {
@@ -150,59 +145,42 @@ Return your response strictly as valid, raw JSON without markdown code fences, m
   }
 }`;
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const preferredModelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+    const systemInstruction = 'You are an expert clinical nutritionist and sports physiologist for BioMaxxx. Output strictly valid, parseable JSON matching the exact schema without extra commentary or markdown code fences.';
 
-    const callModelWithRetry = async (modelInstance, userPrompt, retries = 2) => {
-      for (let attempt = 0; attempt <= retries; attempt++) {
-        try {
-          const res = await modelInstance.generateContent(userPrompt);
-          return await res.response;
-        } catch (err) {
-          const is503 = err?.message && err.message.includes('503');
-          if (is503 && attempt < retries) {
-            await new Promise(r => setTimeout(r, 1200 * (attempt + 1)));
-            continue;
-          }
-          throw err;
-        }
+    // Generate through Groq AI (with multi-key rotation and Gemini fallback)
+    const result = await keyRotator.executeChat({
+      messages: [
+        { role: 'user', content: prompt }
+      ],
+      systemInstruction,
+      options: {
+        max_tokens: 3500,
+        temperature: 0.3,
+        response_format: { type: 'json_object' }
       }
-    };
+    });
 
-    let rawText = '';
-    try {
-      const model = genAI.getGenerativeModel({
-        model: preferredModelName,
-        systemInstruction: 'You are an expert clinical nutritionist and sports physiologist. Output strictly valid JSON matching the schema.',
-        generationConfig: {
-          responseMimeType: 'application/json'
-        }
-      });
-      const response = await callModelWithRetry(model, prompt);
-      rawText = response.text();
-    } catch (err) {
-      if (err.message && (err.message.includes('gemini-3.8-flash') || err.message.includes('404'))) {
-        const fallbackModel = genAI.getGenerativeModel({
-          model: 'gemini-3.8-flash',
-          systemInstruction: 'You are an expert clinical nutritionist and sports physiologist. Output strictly valid JSON matching the schema.',
-          generationConfig: {
-            responseMimeType: 'application/json'
-          }
-        });
-        const fallbackResponse = await callModelWithRetry(fallbackModel, prompt);
-        rawText = fallbackResponse.text();
-      } else {
-        throw err;
-      }
-    }
+    const rawText = result.content || '';
 
     // Clean any markdown formatting if present
-    const cleanedJson = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+    let cleanedJson = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+    const firstBrace = cleanedJson.indexOf('{');
+    const lastBrace = cleanedJson.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      cleanedJson = cleanedJson.substring(firstBrace, lastBrace + 1);
+    }
     const parsedData = JSON.parse(cleanedJson);
 
-    return res.status(200).json({ success: true, plan: parsedData, source: 'gemini' });
+    return res.status(200).json({ 
+      success: true, 
+      plan: parsedData, 
+      source: result.provider || 'groq',
+      model: result.model,
+      keyIndex: result.keyIndex,
+      totalKeys: result.totalKeys
+    });
   } catch (error) {
-    console.warn('Gemini API notice, generating verified metabolic fallback plan:', error.message);
+    console.warn('Groq AI generation notice, generating verified metabolic fallback plan:', error.message);
     
     // Generate verified fallback matching the exact schema
     const height = Number(req.body?.profile?.height) || 165;

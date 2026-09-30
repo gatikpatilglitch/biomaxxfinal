@@ -309,7 +309,7 @@ export function useAiFitnessPlan(profileData = {}, whoopData = {}) {
   }, [profileData.height, profileData.weight, profileData.age, profileData.gender, profileData.activityLevel, profileData.goal]);
 
   /**
-   * Calls Google Gemini via /api/fitness-plan to generate personalized AI nutrition & exercise protocol
+   * Calls Groq AI via /api/fitness-plan to generate personalized AI nutrition & exercise protocol
    */
   const generateAiPlan = useCallback(async (customProfile = null) => {
     const activeProfile = customProfile || profileData;
@@ -342,7 +342,7 @@ export function useAiFitnessPlan(profileData = {}, whoopData = {}) {
           localStorage.setItem(dynamicCacheKey, JSON.stringify(data.plan));
         } catch (e) {}
       } else {
-        throw new Error('No structured plan returned by Gemini.');
+        throw new Error('No structured plan returned by Groq AI.');
       }
     } catch (err) {
       console.warn('AI fitness generation notice, falling back to local metabolic engine:', err.message);

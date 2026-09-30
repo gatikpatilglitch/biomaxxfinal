@@ -93,7 +93,7 @@ export default function AiFitnessNutritionView({ userData = {}, whoopData = {} }
     <div className="space-y-4 font-mono">
       
       {/* ========================================================================= */}
-      {/* 1. TOP AI GEMINI CONTROL BANNER                                           */}
+      {/* 1. TOP AI GROQ CONTROL BANNER                                             */}
       {/* ========================================================================= */}
       <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-[#0c1424] via-[#0e172e] to-[#0c1424] border border-cyan-500/35 shadow-[0_0_25px_rgba(0,242,254,0.1)] relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -105,9 +105,9 @@ export default function AiFitnessNutritionView({ userData = {}, whoopData = {} }
                 <Sparkles className="w-4 h-4 text-cyan-300 animate-pulse" />
               </div>
               <h3 className="text-sm sm:text-base font-extrabold text-white font-sans tracking-tight flex items-center gap-2">
-                <span>Gemini AI Health & Fitness Engine</span>
+                <span>Groq AI Health & Fitness Engine</span>
                 <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold">
-                  {isAiGenerated ? 'AI ACTIVE' : 'METABOLIC BASELINE'}
+                  {isAiGenerated ? 'GROQ ROTATED' : 'METABOLIC BASELINE'}
                 </span>
               </h3>
             </div>
@@ -123,7 +123,7 @@ export default function AiFitnessNutritionView({ userData = {}, whoopData = {} }
             className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-400 hover:from-cyan-400 hover:to-teal-300 text-slate-950 font-bold text-xs flex items-center justify-center space-x-2 shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer disabled:opacity-50 shrink-0"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            <span>{loading ? 'Synthesizing with Gemini...' : isAiGenerated ? 'Re-generate with AI' : 'Generate with Gemini AI'}</span>
+            <span>{loading ? 'Synthesizing with Groq AI...' : isAiGenerated ? 'Re-generate with Groq AI' : 'Generate with Groq AI'}</span>
           </button>
         </div>
 

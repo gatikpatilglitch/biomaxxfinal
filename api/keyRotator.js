@@ -200,19 +200,24 @@ class KeyRotator {
       console.log(`[KeyRotator] Attempting Groq call with key #${index + 1} (${this.maskKey(key)}), model: ${model}...`);
 
       try {
-        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${key}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
+          const requestPayload = {
             model,
             messages,
-            temperature: options.temperature ?? 0.6,
+            temperature: options.temperature ?? 0.5,
             max_tokens: options.max_tokens ?? 1024
-          })
-        });
+          };
+          if (options.response_format) {
+            requestPayload.response_format = options.response_format;
+          }
+
+          const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${key}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestPayload)
+          });
 
         const data = await response.json();
 
@@ -321,7 +326,7 @@ class KeyRotator {
   /**
    * High-level handler: Groq with rotation first, then Gemini with rotation fallback
    */
-  async executeChat({ messages, systemInstruction, userQuery }) {
+  async executeChat({ messages, systemInstruction, userQuery, options = {} }) {
     // Dynamically refresh key pool in case new keys were added to "API keys/" folder or env
     this.reloadKeys();
 
@@ -338,7 +343,7 @@ class KeyRotator {
 
     // 2. Try Groq rotation first
     try {
-      return await this.callGroqWithRotation(fullMessages);
+      return await this.callGroqWithRotation(fullMessages, options);
     } catch (groqErr) {
       console.warn('[KeyRotator] Groq pool exhausted or failed, falling back to Gemini:', groqErr.message);
 
