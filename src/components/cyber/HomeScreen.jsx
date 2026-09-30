@@ -20,6 +20,7 @@ import { useWhoopData } from '../../context/WhoopDataContext';
 import { soundFx } from '../../utils/audioSynthesizer';
 import NextBadgeHomeCard from './NextBadgeHomeCard';
 import NextMedicationHomeCard from './NextMedicationHomeCard';
+import AiHealthInsightsCard from './AiHealthInsightsCard';
 
 export default function HomeScreen() {
   const { 
@@ -313,6 +314,11 @@ export default function HomeScreen() {
         </div>
 
       </div>
+
+      {/* ========================================================================= */}
+      {/* 3.5 AI HEALTH INSIGHTS (POWERED BY GOOGLE GEMINI 2.5 FLASH)               */}
+      {/* ========================================================================= */}
+      <AiHealthInsightsCard whoopData={whoopData} />
 
       {/* ========================================================================= */}
       {/* 4. TODAY'S RECOMMENDATION: BEST TIME TO WALK (CINEMATIC CARD)             */}

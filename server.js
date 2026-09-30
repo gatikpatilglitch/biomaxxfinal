@@ -17,6 +17,8 @@ import {
   getWhoopConfig,
   WHOOP_READ_SCOPES,
 } from './whoopService.js';
+import { handleHealthInsights } from './api/health-insights.js';
+import { handleFitnessPlan } from './api/fitness-plan.js';
 
 dotenv.config();
 
@@ -419,7 +421,14 @@ app.post('/api/whoop/disconnect', async (req, res) => {
 });
 
 // ==========================================
-// 5. BIOFEEDBACK & WEBSOCKET ENGINE
+// 5. GOOGLE GEMINI AI HEALTH & FITNESS ENGINE
+// ==========================================
+app.post('/api/health-insights', handleHealthInsights);
+app.post('/api/fitness-plan', handleFitnessPlan);
+app.post('/api/health/fitness-plan', handleFitnessPlan);
+
+// ==========================================
+// 6. BIOFEEDBACK & WEBSOCKET ENGINE
 // ==========================================
 
 // Save Biofeedback Session

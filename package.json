@@ -13,6 +13,7 @@
     "@capacitor/android": "^8.5.2",
     "@capacitor/cli": "^8.5.2",
     "@capacitor/core": "^8.5.2",
+    "@google/generative-ai": "^0.24.1",
     "@mediapipe/tasks-vision": "^1.0.1",
     "@supabase/supabase-js": "^2.117.2",
     "cors": "^2.8.5",
