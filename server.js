@@ -20,6 +20,7 @@ import {
 import { handleHealthInsights } from './api/health-insights.js';
 import { handleFitnessPlan } from './api/fitness-plan.js';
 import { handleAskAnything } from './api/ask-anything.js';
+import { handleDoctorTriage } from './api/doctor-triage.js';
 
 dotenv.config();
 
@@ -428,6 +429,7 @@ app.post('/api/health-insights', handleHealthInsights);
 app.post('/api/fitness-plan', handleFitnessPlan);
 app.post('/api/health/fitness-plan', handleFitnessPlan);
 app.post('/api/ask-anything', handleAskAnything);
+app.post('/api/doctor-triage', handleDoctorTriage);
 
 // ==========================================
 // 6. BIOFEEDBACK & WEBSOCKET ENGINE

@@ -22,6 +22,9 @@ import { soundFx } from '../../utils/audioSynthesizer';
 import NextBadgeHomeCard from './NextBadgeHomeCard';
 import NextMedicationHomeCard from './NextMedicationHomeCard';
 import AiHealthInsightsCard from './AiHealthInsightsCard';
+import HealthSentinelCard from './HealthSentinelCard';
+import DoctorAlertModal from './modals/DoctorAlertModal';
+import { useVitalsTriage } from '../../hooks/useVitalsTriage';
 
 export default function HomeScreen() {
   const { 
@@ -32,8 +35,12 @@ export default function HomeScreen() {
     setIsWalkingModalOpen,
     setActiveTab,
     setGuardianSubView,
-    setActionsSubView
+    setActionsSubView,
+    userData
   } = useWhoopData();
+
+  // Vitals Triage Engine — runs on every WHOOP data change
+  const triage = useVitalsTriage(whoopData);
 
   const handleOpenSleepDetails = () => {
     soundFx.playPopSound(1.2);
@@ -68,6 +75,7 @@ export default function HomeScreen() {
   };
 
   return (
+    <>
     <div className="space-y-4 pb-20 animate-in fade-in duration-300">
       
       {/* ========================================================================= */}
@@ -322,6 +330,15 @@ export default function HomeScreen() {
       <AiHealthInsightsCard whoopData={whoopData} />
 
       {/* ========================================================================= */}
+      {/* 3.6 HEALTH SENTINEL — VITALS TRIAGE & DOCTOR ALERT SYSTEM                 */}
+      {/* ========================================================================= */}
+      <HealthSentinelCard
+        triageResult={triage}
+        onOpenDoctorModal={triage.openDoctorModal}
+        userData={userData}
+      />
+
+      {/* ========================================================================= */}
       {/* 4. TODAY'S RECOMMENDATION: BEST TIME TO WALK (CINEMATIC CARD)             */}
       {/* ========================================================================= */}
       <div className="w-full rounded-3xl overflow-hidden border border-cyan-500/25 relative shadow-xl min-h-[160px] flex flex-col justify-between p-5 bg-[#0a1120]">
@@ -482,5 +499,15 @@ export default function HomeScreen() {
       </div>
 
     </div>
+
+    {/* Doctor Alert Modal — Full Vitals Triage Breakdown */}
+    <DoctorAlertModal
+      isOpen={triage.isDoctorModalOpen}
+      onClose={triage.closeDoctorModal}
+      triageResult={triage}
+      userData={userData}
+    />
+
+    </>
   );
 }
