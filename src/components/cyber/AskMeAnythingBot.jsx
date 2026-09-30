@@ -159,7 +159,7 @@ export default function AskMeAnythingBot({ isModal = false, onClose = null }) {
 
   return (
     <div className={`w-full rounded-3xl bg-[#0a1120]/95 border border-cyan-500/35 shadow-[0_0_30px_rgba(0,242,254,0.12)] flex flex-col justify-between overflow-hidden relative ${
-      isModal ? 'h-[85vh] max-h-[700px]' : 'min-h-[480px]'
+      isModal ? 'h-[calc(100dvh-11rem)] max-h-[700px]' : 'min-h-[480px]'
     }`}>
       
       {/* Background Ambient Glow */}
@@ -218,7 +218,7 @@ export default function AskMeAnythingBot({ isModal = false, onClose = null }) {
       {/* ========================================================================= */}
       {/* 2. CHAT STREAM AREA                                                       */}
       {/* ========================================================================= */}
-      <div className="flex-1 p-4 sm:p-5 overflow-y-auto space-y-3.5 relative z-10 max-h-[460px]">
+      <div className="flex-1 p-4 sm:p-5 overflow-y-auto min-h-0 space-y-3.5 relative z-10 max-h-[460px]">
         {messages.map((msg, index) => {
           const isUser = msg.role === 'user';
           return (
