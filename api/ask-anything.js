@@ -1,40 +1,5 @@
-// api/ask-anything.js - BioMaxxx "Ask Me Anything" AI Bot (local Ollama LLM)
-const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3.1:8b';
-// Optional "user:password" when Ollama sits behind a tunnel with basic auth (e.g. ngrok --basic-auth)
-const OLLAMA_BASIC_AUTH = process.env.OLLAMA_BASIC_AUTH;
-
-async function ollamaChat({ messages, systemInstruction }) {
-  let res;
-  try {
-    res = await fetch(`${OLLAMA_URL}/api/chat`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'ngrok-skip-browser-warning': '1',
-        ...(OLLAMA_BASIC_AUTH && {
-          Authorization: `Basic ${Buffer.from(OLLAMA_BASIC_AUTH).toString('base64')}`
-        })
-      },
-      body: JSON.stringify({
-        model: OLLAMA_MODEL,
-        stream: false,
-        messages: [{ role: 'system', content: systemInstruction }, ...messages],
-        options: { temperature: 0.4 }
-      }),
-      signal: AbortSignal.timeout(55000)
-    });
-  } catch (err) {
-    throw new Error(`Local LLM unreachable at ${OLLAMA_URL}. Is Ollama running? (${err.message})`);
-  }
-  if (!res.ok) {
-    throw new Error(`Ollama returned ${res.status}: ${(await res.text()).slice(0, 200)}`);
-  }
-  const data = await res.json();
-  const content = data?.message?.content?.trim();
-  if (!content) throw new Error('Local LLM returned an empty response.');
-  return { content, provider: 'ollama', model: OLLAMA_MODEL };
-}
+// api/ask-anything.js - BioMaxxx "Ask Me Anything" AI Bot with Dynamic Key Rotation
+import { keyRotator } from './keyRotator.js';
 
 export async function handleAskAnything(req, res) {
   if (req.method !== 'POST') {
@@ -111,13 +76,20 @@ STRICT APP-CONTEXT CONSTRAINTS:
     }
     formattedMessages.push({ role: 'user', content: message });
 
-    const result = await ollamaChat({ messages: formattedMessages, systemInstruction });
+    // Execute with automatic key rotation
+    const result = await keyRotator.executeChat({
+      messages: formattedMessages,
+      systemInstruction,
+      userQuery: message
+    });
 
     return res.status(200).json({
       success: true,
       answer: result.content,
       provider: result.provider,
-      model: result.model
+      model: result.model,
+      keyIndex: result.keyIndex,
+      totalKeys: result.totalKeys
     });
   } catch (error) {
     console.error('Error in ask-anything AI bot:', error);
